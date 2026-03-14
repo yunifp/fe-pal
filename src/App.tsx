@@ -62,6 +62,12 @@ import LogoutPage from "./features/Auth/pages/LogoutPage";
 import StatusAktifMahasiswaPage from "./features/status-aktif-mahasiswa/pages/StatusAktifMahasiswaPage";
 import PengajuanBiayaHidupPage from "./features/pengajuan-biaya-hidup/pages/PengajuanBiayaHidupPage";
 import PerguruanTinggiEditPage from "./features/perguruan-tinggi/pages/PerguruanTinggiEditPage";
+import PerguruanTinggiCreatePage from "./features/perguruan-tinggi/pages/PerguruanTinggiCreatePage";
+import ProgramStudiPage from "./features/program-studi/pages/ProgramStudiPage";
+import ProgramStudiCreatePage from "./features/program-studi/pages/ProgramStudiCreatePage";
+import ProgramStudiEditPage from "./features/program-studi/pages/ProgramStudiEditPage";
+import SettingKuotaPage from "./features/setting-kuota-butawarna/pages/SettingKuotaPage";
+import SettingJurusanProdiPage from "./features/setting-jurusan-prodi/pages/SettingJurusanProdiPage";
 import BatchBiayaHidupPage from "./features/batch-biaya-hidup/pages/BatchBiayaHidupPage";
 import PengajuanBiayaBukuPage from "./features/pengajuan-biaya-buku/pages/PengajuanBiayaBukuPage";
 import PengajuanBiayaPendidikanPage from "./features/pengajuan-biaya-pendidikan/pages/PengajuanBiayaPendidikanPage";
@@ -139,6 +145,18 @@ function App() {
                 path="/master/perguruan-tinggi/:id"
                 element={<PerguruanTinggiEditPage />}
               />
+              <Route
+                path="/master/perguruan-tinggi/create"
+                element={<PerguruanTinggiCreatePage />}
+              />
+              <Route path="/master/program-studi/:id_prodi/edit" element={<ProgramStudiEditPage />} />
+              <Route path="/master/program-studi" element={<ProgramStudiPage />} />
+              <Route path="/master/program-studi/create" element={<ProgramStudiCreatePage />} />
+              <Route path="/master/perguruan-tinggi/:id_pt/program-studi" element={<ProgramStudiPage />} />
+              <Route path="/master/perguruan-tinggi/:id_pt/program-studi/create" element={<ProgramStudiCreatePage />} />
+              <Route path="/master/perguruan-tinggi/:id_pt/program-studi/:id_prodi" element={<ProgramStudiEditPage />} />
+              <Route path="/setting_kuota" element={<SettingKuotaPage />} />
+              <Route path="/jurusan_prodi" element={<SettingJurusanProdiPage />} />
               <Route
                 path="/sekolah/jenjang-sekolah"
                 element={<JenjangSekolahPage />}

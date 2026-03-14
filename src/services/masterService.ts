@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   MASTER_SERVICE_BASE_URL,
   BEASISWA_SERVICE_BASE_URL,
@@ -79,6 +81,14 @@ export const masterService = {
     formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
     formData.append("npwp", data.npwp);
     formData.append("status_aktif", String(data.statusAktif));
+
+    // Tambahan Data Operator & Verifikator
+    formData.append("nama_operator", data.namaOperator);
+    formData.append("no_telepon_operator", data.noTeleponOperator);
+    formData.append("email_operator", data.emailOperator);
+    formData.append("nama_verifikator", data.namaVerifikator);
+    formData.append("no_telepon_verifikator", data.noTeleponVerifikator);
+    formData.append("email_verifikator", data.emailVerifikator);
 
     data.logoLembaga && formData.append("logo", data.logoLembaga);
 
@@ -263,6 +273,64 @@ export const masterService = {
     return response.data;
   },
 
+  deletePerguruanTinggi: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/perguruan-tinggi/${id}`,
+    );
+    return response.data;
+  },
+
+  createPerguruanTinggi: async (
+    data: PerguruanTinggiEditFormData, 
+  ): Promise<Response<null>> => {
+    const formData = new FormData();
+
+    formData.append("nama_pt", data.namaPerguruanTinggi);
+    formData.append("kode_pt", data.kodePerguruanTinggi);
+    formData.append("singkatan", data.singkatan);
+    formData.append("alamat", data.alamat);
+    formData.append("jenis", data.jenis);
+    formData.append("no_telepon_pt", data.noTeleponPt);
+    formData.append("fax_pt", data.faxPt);
+    formData.append("kota", data.kota);
+    formData.append("kode_pos", data.kodePos);
+    formData.append("email", data.alamatEmail);
+    formData.append("website", data.alamatWebsite || "");
+    formData.append("nama_pimpinan", data.namaDirektur);
+    formData.append("jabatan_pimpinan", data.jabatanPimpinan);
+    formData.append("no_telepon_pimpinan", data.noTeleponPimpinan);
+    formData.append("no_rekening", data.noRekeningLembaga);
+    formData.append("nama_bank", data.namaBank);
+    formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
+    formData.append("npwp", data.npwp);
+    formData.append("status_aktif", String(data.statusAktif));
+
+    // Tambahan Data Operator & Verifikator
+    formData.append("nama_operator", data.namaOperator);
+    formData.append("no_telepon_operator", data.noTeleponOperator);
+    formData.append("email_operator", data.emailOperator);
+    formData.append("nama_verifikator", data.namaVerifikator);
+    formData.append("no_telepon_verifikator", data.noTeleponVerifikator);
+    formData.append("email_verifikator", data.emailVerifikator);
+
+    if (data.logoLembaga) {
+      formData.append("logo", data.logoLembaga);
+    }
+
+    const response = await axiosInstanceFormData.post(
+      `${MASTER_SERVICE_BASE_URL}/perguruan-tinggi`,
+      formData,
+    );
+    return response.data;
+  },
+  getAllJurusanSekolah: async (): Promise<Response<IJurusanSekolah[]>> => {
+    // PERBAIKAN: Sesuaikan dengan rute backend yang Anda buat
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/setting-jurusan-prodi/jurusan-sekolah/all` 
+    );
+    return response.data;
+  },
+
   // Search sekolah (dropdown NPSN)
   getRefNpsn: async (params: {
     search?: string;
@@ -280,3 +348,4 @@ export const masterService = {
     return response.data;
   },
 };
+
