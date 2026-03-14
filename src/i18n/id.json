@@ -1,0 +1,107 @@
+{
+  "common": {
+    "welcome": "Selamat Datang",
+    "back": "Kembali",
+    "addData": "Tambah Data",
+    "exportExcel": "Ekspor Excel",
+    "column": "Kolom",
+    "search": "Cari", 
+    "submit": "Simpan",
+    "submiting": "Menyimpan",
+    "dropImageHere": "Letakkan gambar di sini",
+    "dragAndDrop": "Seret dan jatuhkan gambar ke sini, atau klik untuk memilih",
+    "crop": "Potong"
+  },
+  "landingPage": {
+    "navbar": {
+      "home": "Beranda",
+      "about": "Tentang",
+      "features": "Fitur"
+    },
+    "hero": {
+      "title": "Satu dashboard untuk mengelola semua data operasional Anda",
+      "description": "Monitor performa, kelola data pengguna, dan optimalkan operasi bisnis Anda dengan satu platform yang cepat, aman, dan efisien.",
+      "startNow": "Mulai Sekarang",
+      "viewDemo": "Lihat Demo"
+    },
+    "about": {
+      "badge": "Terpercaya oleh ribuan pengguna",
+      "title": "Tentang Kami",
+      "description": "adalah platform modern yang dirancang untuk membantu Anda mengelola aktivitas X, Y, dan Z dengan cepat, efisien, dan menyenangkan. Fokus kami adalah pengalaman pengguna yang intuitif dan desain yang bersih.",
+      "learnMore": "Pelajari Lebih Lanjut"
+    },
+    "feature": {
+      "tagline": "Kenapa Memilih Kami",
+      "title": "Fitur Unggulan untuk Kebutuhan Anda",
+      "description": "Kami menawarkan fitur-fitur terbaik untuk memastikan pengalaman Anda cepat, aman, dan mudah digunakan dalam setiap proses pengelolaan data.",
+      "items": {
+        "fast": {
+          "title": "Kecepatan Tinggi",
+          "description": "Akses dan kelola data dengan cepat tanpa hambatan."
+        },
+        "friendly": {
+          "title": "Penggunaan Mudah",
+          "description": "Desain antarmuka pengguna yang intuitif dan mudah digunakan."
+        },
+        "secure": {
+          "title": "Keamanan Terjamin",
+          "description": "Lindungi data Anda dengan teknologi keamanan terbaru."
+        }
+      }
+    },
+    "footer": {
+      "logoAlt": "Logo Bentang Inspira",
+      "brandName": "Bentang Inspira",
+      "description": "Solusi cerdas dan aman dalam pengelolaan data. Kami berkomitmen memberikan layanan terbaik untuk semua kebutuhan digital Anda.",
+      "contactTitle": "Kontak",
+      "contact": {
+        "phone": "+62 836-1263-1523",
+        "address": "Jl. Merak Ngibing No.12, Sukaluyu, Kec. Cibeunying Kaler, Kota Bandung, Jawa Barat 40123",
+        "email": "bentang@gmail.com"
+      },
+      "followUs": "Ikuti Kami",
+      "newsletterText": "Dapatkan update dan informasi terbaru:",
+      "emailPlaceholder": "Email Anda",
+      "sendButton": "Kirim",
+      "copyright": "Bentang Inspira © 2025 - All Rights Reserved",
+      "privacyPolicy": "Privacy Policy",
+      "termsConditions": "Terms & Conditions"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcome": "Selamat Datang !",
+      "description": "Masukkan e-mail dan kata sandi anda untuk mengakses aplikasi",
+      "title": "Masuk",
+      "email": "Email",
+      "insertEmail": "Masukkan Email",
+      "password": "Kata Sandi",
+      "insertPassword": "Masukkan Kata Sandi",
+      "forgotPassword": "Lupa Kata Sandi?",
+      "rememberMe": "Ingat Saya",
+      "login": "Masuk"
+    },
+    "register": {
+      "title": "Daftar",
+      "name": "Nama",
+      "email": "Email",
+      "password": "Kata Sandi",
+      "confirmPassword": "Konfirmasi Kata Sandi",
+      "register": "Daftar"
+    },
+    "myProfile": {
+      "title": "Profil Saya"
+    },
+    "logout": {
+      "title": "Keluar"
+    }
+  },
+  "user": {
+    "fullName": "Nama Lengkap",
+    "email": "Email",
+    "isActive": "Aktifkan Akun",
+    "selectRole": "Pilih Role",
+    "password": "Kata Sandi",
+    "confirmPassword": "Konfirmasi Kata Sandi"
+  }
+}

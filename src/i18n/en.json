@@ -1,0 +1,107 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "back": "Back",
+    "addData": "Add Data",
+    "exportExcel": "Export Excel",
+    "column": "Column",
+    "search": "Search",
+    "submit": "Submit",
+    "submiting": "Submiting",
+    "dropImageHere": "Drop image here",
+    "dragAndDrop": "Drag & drop an image here, or click to select",
+    "crop": "Crop"
+  },
+  "landingPage": {
+    "navbar": {
+      "home": "Home",
+      "about": "About",
+      "features": "Features"
+    },
+    "hero": {
+      "title": "One dashboard to manage all your operational data",
+      "description": "Monitor performance, manage user data, and optimize your business operations with one fast, secure, and efficient platform.",
+      "startNow": "Start Now",
+      "viewDemo": "View Demo"
+    },
+    "about": {
+      "badge": "Trusted by thousands of users",
+      "title": "About Us",
+      "description": "is a modern platform designed to help you manage activities X, Y, and Z quickly, efficiently, and enjoyably. Our focus is on an intuitive user experience and clean design.",
+      "learnMore": "Learn More"
+    },
+    "feature": {
+      "tagline": "Why Choose Us",
+      "title": "Outstanding Features for Your Needs",
+      "description": "We offer the best features to ensure your experience is fast, secure, and easy to use in every data management process.",
+      "items": {
+        "fast": {
+          "title": "High Speed",
+          "description": "Access and manage data quickly without obstacles."
+        },
+        "friendly": {
+          "title": "Easy to Use",
+          "description": "An intuitive and user-friendly interface design."
+        },
+        "secure": {
+          "title": "Guaranteed Security",
+          "description": "Protect your data with the latest security technology."
+        }
+      }
+    },
+    "footer": {
+      "logoAlt": "Bentang Inspira Logo",
+      "brandName": "Bentang Inspira",
+      "description": "Smart and secure solutions for data management. We are committed to providing the best service for all your digital needs.",
+      "contactTitle": "Contact",
+      "contact": {
+        "phone": "+62 836-1263-1523",
+        "address": "Jl. Merak Ngibing No.12, Sukaluyu, Kec. Cibeunying Kaler, Bandung City, West Java 40123",
+        "email": "bentang@gmail.com"
+      },
+      "followUs": "Follow Us",
+      "newsletterText": "Get updates and the latest information:",
+      "emailPlaceholder": "Your Email",
+      "sendButton": "Send",
+      "copyright": "Bentang Inspira © 2025 - All Rights Reserved",
+      "privacyPolicy": "Privacy Policy",
+      "termsConditions": "Terms & Conditions"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcome": "Welcome !",
+      "description": "Enter your email and password to access the application.",
+      "title": "Login",
+      "email": "Email",
+      "insertEmail": "Insert Email",
+      "password": "Password",
+      "insertPassword": "Insert Password",
+      "forgotPassword": "Forgot Password?",
+      "rememberMe": "Remember Me",
+      "login": "Login"
+    },
+    "register": {
+      "title": "Register",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "register": "Register"
+    },
+    "myProfile": {
+      "title": "My Profile"
+    },
+    "logout": {
+      "title": "Logout"
+    }
+  },
+  "user": {
+    "fullName": "Full Name",
+    "email": "Email",
+    "isActive": "Active Account",
+    "selectRole": "Select Role",
+    "password": "Password",
+    "confirmPassword": "Confirm Password"
+  }
+}
