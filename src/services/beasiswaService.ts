@@ -314,7 +314,6 @@ export const beasiswaService = {
       },
     );
 
-    // Create blob URL and trigger download
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
@@ -338,7 +337,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
-  // Di dalam object beasiswaService, tambahkan:
+
   getFlowBeasiswa: async (): Promise<Response<IFlowBeasiswa[]>> => {
     const response = await axiosInstanceJson.get(
       `${MASTER_SERVICE_BASE_URL}/beasiswa/flow-beasiswa`,
@@ -346,13 +345,21 @@ export const beasiswaService = {
     return response.data;
   },
 
-  getBebanVerifikator: async () => {
+  getBebanVerifikator: async (): Promise<
+    Response<
+      Array<{
+        id_verifikator: number;
+        total_beban: string;
+        nama_lengkap: string;
+      }>
+    >
+  > => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/verifikator/beban`,
     );
     return response.data;
   },
-  // Tambahkan di dalam object beasiswaService
+
   saveCatatanVerifikasi: async (
     idTrxBeasiswa: number,
     data: {
@@ -390,6 +397,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   updateTagDinasKabkota: async (
     idTrxBeasiswa: number,
     tag: "Y" | "N",
@@ -400,6 +408,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   updateTagDinasProvinsi: async (
     idTrxBeasiswa: number,
     tag: "Y" | "N",
@@ -410,6 +419,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   submitTagDinasKabkotaToProvinsi: async (
     idBeasiswa: number,
     filename: string,
@@ -420,6 +430,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   submitTagDinasProvinsiToDitjenbun: async (
     idBeasiswa: number,
     filename: string,
@@ -430,6 +441,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   getCountTagSiapKirimKabkota: async (
     idBeasiswa: number,
   ): Promise<Response<{ count: number }>> => {
@@ -438,6 +450,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   getCountTagSiapKirimProvinsi: async (
     idBeasiswa: number,
   ): Promise<Response<{ count: number }>> => {
@@ -446,6 +459,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   uploadFileSK: async (
     idBeasiswa: number,
     formData: FormData,
@@ -456,6 +470,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   uploadFileSKProvinsi: async (
     idBeasiswa: number,
     formData: FormData,
@@ -466,6 +481,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   getSkKabkotaByProvinsi: async (
     idBeasiswa: number,
   ): Promise<
@@ -488,6 +504,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   getPendaftarByProvinsi: async (
     idBeasiswa: number,
     kodeProvinsi: string,
@@ -506,11 +523,12 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   updateDokumenVerifikasiDinas: async (
     idTrxBeasiswa: number,
     data: {
       data_persyaratan_umum: Array<{
-        id: number | string; // ← terima keduanya
+        id: number | string;
         kategori: string;
         is_valid: "Y" | "N";
         catatan?: string;
@@ -522,12 +540,13 @@ export const beasiswaService = {
       {
         data_persyaratan_umum: data.data_persyaratan_umum.map((item) => ({
           ...item,
-          id: Number(item.id), // ← normalisasi di service layer
+          id: Number(item.id),
         })),
       },
     );
     return response.data;
   },
+
   uploadFileBA: async (
     beasiswaId: number,
     formData: FormData,
@@ -538,6 +557,7 @@ export const beasiswaService = {
     );
     return response.data;
   },
+
   getBaKabkotaByProvinsi: async (
     idBeasiswa: number,
   ): Promise<
@@ -557,6 +577,53 @@ export const beasiswaService = {
   > => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idBeasiswa}/ba-kabkota`,
+    );
+    return response.data;
+  },
+
+  // ── Manajemen Verifikator ──────────────────────────────────────────────────
+
+  /**
+   * List pendaftar untuk halaman assignment manual.
+   * GET /beasiswa/assignment/pendaftar
+   * Kondisi backend: id_ref_beasiswa = 1, id_flow != 1 (exclude draft)
+   */
+  getPendaftarForAssignment: async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filter?: "all" | "assigned" | "unassigned";
+  }): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/pendaftar`,
+      {
+        params: {
+          page: params.page ?? 1,
+          limit: params.limit ?? 10,
+          search: params.search ?? "",
+          filter: params.filter ?? "all",
+        },
+      },
+    );
+    return response.data;
+  },
+  assignVerifikatorByJumlah: async (
+    assignments: Array<{ id_verifikator: number; jumlah: number }>,
+  ): Promise<
+    Response<{ total_assigned: number; verifikator_assigned: number }>
+  > => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/assign-by-jumlah`,
+      { assignments },
+    );
+    return response.data;
+  },
+  getUsersByIds: async (
+    ids: number[],
+  ): Promise<Response<Array<{ id: number; nama_lengkap: string }>>> => {
+    const response = await axiosInstanceJson.get(
+      `${AUTH_SERVICE_BASE_URL}/users/by-ids`,
+      { params: { ids: ids.join(",") } },
     );
     return response.data;
   },

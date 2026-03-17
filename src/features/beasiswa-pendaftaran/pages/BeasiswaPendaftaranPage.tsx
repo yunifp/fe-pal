@@ -57,7 +57,7 @@ const BeasiswaPendaftaranPage = () => {
     insertedRef.current = true;
   }, [beasiswaAktif]);
 
-  console.log(existBeasiswa);
+  // console.log(existBeasiswa);
 
   return (
     <div className="container mx-auto w-full space-y-4">
@@ -81,7 +81,7 @@ const BeasiswaPendaftaranPage = () => {
       {existBeasiswa && (
         <>
           {/* Flow 1: Draft - Hanya Form */}
-          {existBeasiswa.id_flow === 1 && (
+          {existBeasiswa.id_flow === 0 && (
             <BeasiswaForm existBeasiswa={existBeasiswa} />
           )}
 
@@ -92,6 +92,7 @@ const BeasiswaPendaftaranPage = () => {
             existBeasiswa.id_flow === 5 ||
             existBeasiswa.id_flow === 11 ||
             existBeasiswa.id_flow === 10 ||
+            existBeasiswa.id_flow === 1 ||
             existBeasiswa.id_flow === 7) && (
             <>
               <AlertSudahSubmit />

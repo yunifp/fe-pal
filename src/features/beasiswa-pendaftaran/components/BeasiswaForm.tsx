@@ -81,6 +81,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       "suku",
       "berat_badan",
       "tinggi_badan",
+      "foto_depan", // ← tambahkan
+      "foto_samping_kiri", // ← tambahkan
+      "foto_samping_kanan", // ← tambahkan
+      "foto_belakang", // ← tambahkan
     ],
     1: [
       "tinggal_provinsi",
@@ -315,10 +319,16 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           (existBeasiswa.sekolah_kode_kab ?? "") +
           "#" +
           (existBeasiswa.sekolah_kab_kota ?? ""),
+        // jenjang_sekolah:
+        //   (existBeasiswa.id_jenjang_sekolah ?? "") +
+        //   "#" +
+        //   (existBeasiswa.jenjang_sekolah ?? ""),
         jenjang_sekolah:
-          (existBeasiswa.id_jenjang_sekolah ?? "") +
-          "#" +
-          (existBeasiswa.jenjang_sekolah ?? ""),
+          existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
+            ? existBeasiswa.id_jenjang_sekolah +
+              "#" +
+              existBeasiswa.jenjang_sekolah
+            : "",
         sekolah: existBeasiswa.sekolah ?? "",
         jurusan_sekolah: existBeasiswa.jurusan ?? "",
         tahun_lulus: existBeasiswa.tahun_lulus ?? "",
@@ -889,40 +899,42 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       if (data.foto_belakang instanceof File)
         formData.append("foto_belakang", data.foto_belakang);
 
-      let idVerifikator: number | null = null;
+      // let idVerifikator: number | null = null;
 
-      if (existBeasiswa.id_verifikator) {
-        idVerifikator = existBeasiswa.id_verifikator;
-      } else {
-        try {
-          const [resVerifikator, resBeban] = await Promise.all([
-            beasiswaService.getVerifikatorIds(),
-            beasiswaService.getBebanVerifikator(),
-          ]);
+      // if (existBeasiswa.id_verifikator) {
+      //   idVerifikator = existBeasiswa.id_verifikator;
+      // } else {
+      //   try {
+      //     const [resVerifikator, resBeban] = await Promise.all([
+      //       beasiswaService.getVerifikatorIds(),
+      //       beasiswaService.getBebanVerifikator(),
+      //     ]);
 
-          const verifikatorIds: number[] = resVerifikator?.data ?? [];
-          const bebanList: { id_verifikator: number; total_beban: string }[] =
-            resBeban?.data ?? [];
+      //     const verifikatorIds: number[] = resVerifikator?.data ?? [];
+      //     const bebanList: { id_verifikator: number; total_beban: string }[] =
+      //       resBeban?.data ?? [];
 
-          const bebanMap: Record<number, number> = {};
-          verifikatorIds.forEach((id) => (bebanMap[id] = 0));
-          bebanList.forEach((item) => {
-            if (bebanMap[item.id_verifikator] !== undefined) {
-              bebanMap[item.id_verifikator] = parseInt(item.total_beban);
-            }
-          });
+      //     const bebanMap: Record<number, number> = {};
+      //     verifikatorIds.forEach((id) => (bebanMap[id] = 0));
+      //     bebanList.forEach((item) => {
+      //       if (bebanMap[item.id_verifikator] !== undefined) {
+      //         bebanMap[item.id_verifikator] = parseInt(item.total_beban);
+      //       }
+      //     });
 
-          idVerifikator = verifikatorIds.reduce((leastId, currentId) =>
-            bebanMap[currentId] < bebanMap[leastId] ? currentId : leastId,
-          );
-        } catch (err) {
-          console.error("Gagal hitung verifikator:", err);
-        }
-      }
+      //     idVerifikator = verifikatorIds.reduce((leastId, currentId) =>
+      //       bebanMap[currentId] < bebanMap[leastId] ? currentId : leastId,
+      //     );
+      //   } catch (err) {
+      //     console.error("Gagal hitung verifikator:", err);
+      //   }
+      // }
 
-      if (idVerifikator !== null) {
-        formData.append("id_verifikator", idVerifikator.toString());
-      }
+      // if (idVerifikator !== null) {
+      //   formData.append("id_verifikator", idVerifikator.toString());
+      // }
+
+      // formData.append("id_verifikator", null);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");

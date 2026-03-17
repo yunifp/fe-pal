@@ -155,4 +155,11 @@ export const authService = {
     );
     return response.data;
   },
+
+  forgotPin: async (email: string): Promise<Response<null>> => {
+    const response = await axios.post(`${AUTH_SERVICE_BASE_URL}/auth/forgot-pin`, {
+      email,
+    });
+    return response.data;
+  },
 };

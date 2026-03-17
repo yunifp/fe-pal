@@ -7,15 +7,16 @@ export const settingJurusanProdiService = {
   getMappingJurusanProdi: async (
     idJurusanSekolah: number,
     page: number = 1,
-    search: string = ""
+    search: string = "",
+    mappedOnly: boolean = false,
+    idPt?: string 
   ): Promise<Response<PaginatedProgramStudiResponse>> => {
     const response = await axiosInstanceJson.get(
       `${MASTER_SERVICE_BASE_URL}/setting-jurusan-prodi/${idJurusanSekolah}`,
-      { params: { page, search } }
+      { params: { page, search, mapped_only: mappedOnly, id_pt: idPt } }
     );
     return response.data;
   },
-  
 
   toggleMappingProdi: async (payload: {
     id_jurusan_sekolah: number;

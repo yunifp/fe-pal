@@ -1,3 +1,4 @@
+import { useState } from "react"; // <-- Tambahkan useState
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import Navbar from "@/features/landing-alt/components/pendaftaran-beasiswa/Navbar";
 import Footer from "@/features/landing-alt/components/Footer";
+import { ForgotPinDialog } from "../components/ForgotPinDialog"; // <-- Import Dialog baru
 
 const loginSchema = z.object({
   user_id: z.string().min(1, { message: "User ID harus diisi" }),
@@ -28,7 +30,9 @@ const LoginPenerimaBeasiswaPage = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   const setMenus = useMenuStore((state) => state.setMenus);
 
-  // Setup untuk mendapatkan beasiswa aktif
+  // State untuk mengontrol Modal Lupa PIN
+  const [isForgotPinOpen, setIsForgotPinOpen] = useState(false);
+
   const { data: responseBeasiswaAktif, isLoading: isBeasiswaAktifLoading } =
     useQuery({
       queryKey: ["beasiswa-aktif"],
@@ -49,6 +53,7 @@ const LoginPenerimaBeasiswaPage = () => {
   });
 
   const handleLogin = async (data: LoginFormData) => {
+    // ... isi handleLogin sama seperti sebelumnya ...
     try {
       const payload: LoginRequest = {
         user_id: data.user_id,
@@ -116,7 +121,7 @@ const LoginPenerimaBeasiswaPage = () => {
           <div className="relative z-10 flex items-center justify-center min-h-screen px-4 md:px-0">
             <Card>
               <CardContent>
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 pt-6">
                   <img
                     src="/images/Ditjenbun.png"
                     alt="Brand Logo"
@@ -127,9 +132,8 @@ const LoginPenerimaBeasiswaPage = () => {
                   <span className="text-xl font-semibold">
                     Selamat Datang !
                   </span>
-                  <span className="text-sm text-gray-500 text-center">
-                    Masukkan username dan kata sandi anda untuk mengakses
-                    aplikasi
+                  <span className="text-sm text-gray-500 text-center max-w-[300px]">
+                    Masukkan username dan PIN Anda untuk mengakses aplikasi
                   </span>
                 </div>
                 <form onSubmit={handleSubmit(handleLogin)}>
@@ -138,7 +142,7 @@ const LoginPenerimaBeasiswaPage = () => {
                     <CustInput
                       label="User ID"
                       type="text"
-                      id="usert_id"
+                      id="user_id" // perbaikan typo dari "usert_id"
                       placeholder="Masukkan User ID"
                       error={!!errors.user_id}
                       errorMessage={errors.user_id?.message}
@@ -148,18 +152,22 @@ const LoginPenerimaBeasiswaPage = () => {
                     {/* PIN*/}
                     <CustInput
                       label="PIN"
-                      type="text"
+                      type="password" // Sebaiknya type password agar PIN tersembunyi
                       id="pin"
                       placeholder="Masukkan PIN"
                       error={!!errors.pin}
                       errorMessage={errors.pin?.message}
                       {...register("pin")}
                     />
-                    <div className="flex justify-between items-center -mt-2">
-                      <div></div>
-                      <span className="text-sm text-primary">
-                        Lupa Password ?
-                      </span>
+                    <div className="flex justify-end items-center -mt-2">
+                      {/* UBAH BAGIAN INI MENJADI BUTTON */}
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPinOpen(true)}
+                        className="text-sm text-primary hover:underline bg-transparent border-none cursor-pointer"
+                      >
+                        Lupa PIN?
+                      </button>
                     </div>
                     <Button type="submit" className="mt-2 w-full bg-primary">
                       Masuk
@@ -187,6 +195,11 @@ const LoginPenerimaBeasiswaPage = () => {
         </div>
         <Footer />
       </div>
+
+      <ForgotPinDialog
+        isOpen={isForgotPinOpen}
+        onClose={() => setIsForgotPinOpen(false)}
+      />
     </>
   );
 };

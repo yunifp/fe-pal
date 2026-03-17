@@ -17,8 +17,7 @@ import { AlertCircle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { CustSelect } from "@/components/ui/CustSelect";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-// import { validateExistingPilihan } from "@/utils/validationHelper";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PilihanJurusanProps {
@@ -39,36 +38,18 @@ const PilihanJurusan = ({
     { value: "N", label: "Tidak" },
   ];
 
-  // ============================================================
-  // REFS & STATE
-  // ============================================================
-
-  /**
-   * hasPopulatedRef: sudah populate untuk kondisi saat ini.
-   * Hanya direset ketika:
-   *   - idTrxBeasiswa berubah (buka data berbeda)
-   *   - kondisi_buta_warna berubah oleh user
-   * TIDAK direset karena perubahan async data (re-fetch PT, dll).
-   */
-  const hasPopulatedRef = useRef(false);
-  const prevButaWarnaRef = useRef<string | undefined>(undefined);
-  const prevIdTrxRef = useRef<number | undefined>(undefined);
-
-  /**
-   * isPopulating: kirim ke child agar child tidak menghapus
-   * nilai program_studi selama proses inject data berlangsung.
-   */
+  // ── State & Refs ────────────────────────────────────────────
   const [isPopulating, setIsPopulating] = useState(false);
+
+  // Track kondisi populate terakhir agar tidak double-run
+  const lastPopulateKeyRef = useRef<string>("");
 
   const { fields, remove, replace } = useFieldArray({
     control,
     name: "pilihan_program_studi",
   });
 
-  // ============================================================
-  // WATCHES
-  // ============================================================
-
+  // ── Watches ─────────────────────────────────────────────────
   const allPilihan = useWatch({ control, name: "pilihan_program_studi" });
   const selectedKondisiButaWarna = useWatch({
     control,
@@ -78,12 +59,12 @@ const PilihanJurusan = ({
     control,
     name: "jurusan_sekolah",
   });
-  const selectedIdJurusanSekolah = selectedIdJurusanSekolahRaw?.split("#")[0];
+  const selectedIdJurusanSekolah = useMemo(() => {
+    const id = selectedIdJurusanSekolahRaw?.split("#")[0];
+    return id && id !== "" ? id : undefined;
+  }, [selectedIdJurusanSekolahRaw]);
 
-  // ============================================================
-  // FETCH: daftar perguruan tinggi
-  // ============================================================
-
+  // ── Fetch: Perguruan Tinggi ──────────────────────────────────
   const {
     data: responsePerguruanTinggi,
     isLoading: isLoadingPT,
@@ -111,16 +92,7 @@ const PilihanJurusan = ({
   const hasPerguruanTinggi = perguruanTinggiOptions.length > 0;
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
 
-  // ============================================================
-  // FETCH: data pilihan existing — pakai useQuery, bukan fetch manual
-  //
-  // Keuntungan vs fetch di useEffect:
-  //   - React Query otomatis cache: refresh halaman → data langsung
-  //     tersedia dari cache tanpa fetch ulang jika masih fresh
-  //   - Tidak ada race condition dari multiple useEffect triggers
-  //   - isLoading/data tersedia sebagai nilai reaktif biasa
-  // ============================================================
-
+  // ── Fetch: Existing Pilihan ──────────────────────────────────
   const { data: responseExistingPilihan, isLoading: isLoadingExisting } =
     useQuery({
       queryKey: ["pilihan-program-studi-existing", idTrxBeasiswa],
@@ -132,272 +104,72 @@ const PilihanJurusan = ({
       staleTime: STALE_TIME,
     });
 
-  // Ref untuk baca allPilihan tanpa jadi dependency trigger
-  const allPilihanRef = useRef(allPilihan);
-  useEffect(() => {
-    allPilihanRef.current = allPilihan;
-  }, [allPilihan]);
-
-  // Ref untuk detect perubahan jurusan sekolah
-  const prevJurusanSekolahRef = useRef<string | undefined>(undefined);
-
-  // ============================================================
-  // POPULATE FIELDS — satu useEffect terpusat
-  //
-  // Triggered ketika SEMUA kondisi siap:
-  //   1. PT selesai di-fetch
-  //   2. Kondisi buta warna sudah dipilih
-  //   3. (Edit mode) data existing selesai di-fetch
-  //   4. Belum populate untuk kondisi saat ini
-  // ============================================================
-
-  // useEffect(() => {
-  //   if (isLoadingPTAny) return;
-  //   if (!hasPerguruanTinggi) return;
-  //   if (!selectedKondisiButaWarna) return;
-  //   if (idTrxBeasiswa && isLoadingExisting) return; // tunggu existing data
-
-  //   // Reset flag jika pindah ke data berbeda
-  //   if (prevIdTrxRef.current !== idTrxBeasiswa) {
-  //     hasPopulatedRef.current = false;
-  //     prevIdTrxRef.current = idTrxBeasiswa;
-  //   }
-
-  //   if (hasPopulatedRef.current) return;
-  //   hasPopulatedRef.current = true;
-
-  //   // Bangun template: satu row kosong per PT yang tersedia
-  //   const template: { perguruan_tinggi: string; program_studi: string }[] =
-  //     perguruanTinggiOptions.map(() => ({
-  //       perguruan_tinggi: "",
-  //       program_studi: "",
-  //     }));
-
-  //   // Edit mode: isi template dengan data existing yang valid
-  //   const rawExisting = responseExistingPilihan?.data ?? [];
-  //   if (
-  //     idTrxBeasiswa &&
-  //     responseExistingPilihan?.success &&
-  //     rawExisting.length
-  //   ) {
-  //     // 1. Dedupe: API kadang mengembalikan data duplikat.
-  //     //    Ambil hanya satu entry per perguruan_tinggi (yang pertama ditemukan).
-  //     const seen = new Set<string>();
-  //     const existingData = rawExisting.filter((item: any) => {
-  //       const key = item.perguruan_tinggi;
-  //       if (!key || seen.has(key)) return false;
-  //       seen.add(key);
-  //       return true;
-  //     });
-
-  //     // 2. Buat map: PT value → program_studi, untuk lookup O(1)
-  //     const existingMap = new Map<string, string>(
-  //       existingData.map((item: any) => [
-  //         item.perguruan_tinggi as string,
-  //         (item.program_studi ?? "") as string,
-  //       ]),
-  //     );
-
-  //     // 3. Isi template berdasarkan urutan perguruanTinggiOptions (bukan urutan API)
-  //     //    sehingga setiap row pasti cocok dengan PT yang ada di options
-  //     let hasInvalidData = false;
-  //     perguruanTinggiOptions.forEach((pt, i) => {
-  //       if (existingMap.has(pt.value)) {
-  //         template[i] = {
-  //           perguruan_tinggi: pt.value,
-  //           program_studi: existingMap.get(pt.value) ?? "",
-  //         };
-  //       } else if (existingMap.size > 0) {
-  //         // PT dari API tidak ditemukan di options saat ini
-  //         // (mungkin PT sudah dihapus dari master) — biarkan kosong
-  //         hasInvalidData = true;
-  //       }
-  //     });
-
-  //     if (hasInvalidData) {
-  //       toast.warning(
-  //         "Beberapa pilihan perguruan tinggi tidak valid dan telah direset",
-  //       );
-  //     }
-  //   }
-
-  //   // Set isPopulating sebelum replace agar child sudah tahu dari awal
-  //   setIsPopulating(true);
-  //   replace(template);
-
-  //   // Angkat flag setelah child punya cukup waktu fetch prodi & render
-  //   const timer = setTimeout(() => setIsPopulating(false), 1500);
-  //   return () => clearTimeout(timer);
-  // }, [
-  //   isLoadingPTAny,
-  //   hasPerguruanTinggi,
-  //   selectedKondisiButaWarna,
-  //   idTrxBeasiswa,
-  //   isLoadingExisting,
-  //   perguruanTinggiOptions,
-  //   responseExistingPilihan,
-  //   replace,
-  // ]);
+  // ── Populate Logic ───────────────────────────────────────────
+  // Key unik yang merepresentasikan kondisi populate saat ini.
+  // Populate HANYA jalan jika key berubah dari sebelumnya.
+  const populateKey = useMemo(() => {
+    if (!selectedIdJurusanSekolah) return "";
+    if (!selectedKondisiButaWarna) return "";
+    if (isLoadingPTAny) return "";
+    if (isFetchingPT) return "";
+    if (!hasPerguruanTinggi) return "";
+    if (idTrxBeasiswa && isLoadingExisting) return "";
+    return `${selectedIdJurusanSekolah}__${selectedKondisiButaWarna}__${perguruanTinggiOptions.length}__${idTrxBeasiswa ?? "new"}`;
+  }, [
+    selectedIdJurusanSekolah,
+    selectedKondisiButaWarna,
+    isLoadingPTAny,
+    isFetchingPT,
+    hasPerguruanTinggi,
+    perguruanTinggiOptions.length,
+    idTrxBeasiswa,
+    isLoadingExisting,
+  ]);
 
   useEffect(() => {
-    if (isLoadingPTAny) return;
-    if (!hasPerguruanTinggi) return;
-    if (!selectedKondisiButaWarna) return;
-    if (idTrxBeasiswa && isLoadingExisting) return;
-
-    if (prevIdTrxRef.current !== idTrxBeasiswa) {
-      hasPopulatedRef.current = false;
-      prevIdTrxRef.current = idTrxBeasiswa;
-    }
-
-    if (hasPopulatedRef.current) return;
-    hasPopulatedRef.current = true;
+    // Tidak ada yang perlu dilakukan jika key kosong atau sama
+    if (!populateKey) return;
+    if (lastPopulateKeyRef.current === populateKey) return;
+    lastPopulateKeyRef.current = populateKey;
 
     const validPtValues = new Set(perguruanTinggiOptions.map((pt) => pt.value));
 
-    // ─────────────────────────────────────────────────────────
-    // Tentukan sumber data:
-    //   - Jika form state sudah punya data (user pernah isi) → pakai form state
-    //   - Jika belum (first load / edit mode) → pakai data API
-    // ─────────────────────────────────────────────────────────
-    const currentFormPilihan = allPilihanRef.current ?? [];
-    const hasFormData = currentFormPilihan.some(
-      (p) => p?.perguruan_tinggi != null && p?.perguruan_tinggi !== "",
-    );
-
-    let existingValidRows: {
-      perguruan_tinggi: string;
-      program_studi: string;
-    }[] = [];
-
-    if (hasFormData) {
-      // Pertahankan semua row yang PT-nya masih ada di options baru
-      existingValidRows = currentFormPilihan.filter(
-        (p): p is { perguruan_tinggi: string; program_studi: string } =>
-          p?.perguruan_tinggi != null &&
-          p.perguruan_tinggi !== "" &&
-          validPtValues.has(p.perguruan_tinggi),
-      );
-
-      const removedCount =
-        currentFormPilihan.filter(
-          (p) => p?.perguruan_tinggi !== "" && p?.perguruan_tinggi != null,
-        ).length - existingValidRows.length;
-
-      if (removedCount > 0) {
-        toast.warning(
-          `${removedCount} pilihan perguruan tinggi tidak tersedia untuk jurusan ini dan telah dihapus`,
-        );
-      }
-    } else {
-      // Edit mode / first load — ambil dari API
-      const rawExisting = responseExistingPilihan?.data ?? [];
-      if (
-        idTrxBeasiswa &&
-        responseExistingPilihan?.success &&
-        rawExisting.length
-      ) {
-        const seen = new Set<string>();
-        existingValidRows = rawExisting
-          .filter((item: any) => {
-            const key = item.perguruan_tinggi;
-            if (!key || seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          })
-          .filter((item: any) => validPtValues.has(item.perguruan_tinggi))
-          .map((item: any) => ({
-            perguruan_tinggi: item.perguruan_tinggi as string,
-            program_studi: (item.program_studi ?? "") as string,
-          }));
-      }
+    // Ambil data existing dari API (edit mode)
+    let existingMap = new Map<string, string>();
+    const rawExisting = responseExistingPilihan?.data ?? [];
+    if (
+      idTrxBeasiswa &&
+      responseExistingPilihan?.success &&
+      rawExisting.length
+    ) {
+      const seen = new Set<string>();
+      rawExisting
+        .filter((item: any) => {
+          const key = item.perguruan_tinggi;
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .filter((item: any) => validPtValues.has(item.perguruan_tinggi))
+        .forEach((item: any) => {
+          existingMap.set(item.perguruan_tinggi, item.program_studi ?? "");
+        });
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Bangun array final:
-    //   1. Semua row yang sudah valid (urut sesuai options)
-    //   2. Tambah row kosong untuk PT baru yang belum dipilih
-    //
-    // Urutan mengikuti perguruanTinggiOptions agar konsisten
-    // ─────────────────────────────────────────────────────────
-    const filledPtValues = new Set(
-      existingValidRows.map((r) => r.perguruan_tinggi),
-    );
-
-    // Susun ulang existingValidRows sesuai urutan options
-    const orderedRows: { perguruan_tinggi: string; program_studi: string }[] =
-      [];
-
-    perguruanTinggiOptions.forEach((pt) => {
-      if (filledPtValues.has(pt.value)) {
-        // Pertahankan data yang sudah ada
-        const existing = existingValidRows.find(
-          (r) => r.perguruan_tinggi === pt.value,
-        );
-        if (existing) orderedRows.push(existing);
-      } else {
-        // PT baru yang belum ada di form state → tambah row kosong
-        orderedRows.push({ perguruan_tinggi: "", program_studi: "" });
-      }
-    });
+    // Bangun rows: satu per PT, isi dengan existing jika ada
+    const orderedRows = perguruanTinggiOptions.map((pt) => ({
+      perguruan_tinggi: existingMap.has(pt.value) ? pt.value : "",
+      program_studi: existingMap.get(pt.value) ?? "",
+    }));
 
     setIsPopulating(true);
     replace(orderedRows);
 
     const timer = setTimeout(() => setIsPopulating(false), 1500);
     return () => clearTimeout(timer);
-  }, [
-    isLoadingPTAny,
-    hasPerguruanTinggi,
-    selectedKondisiButaWarna,
-    idTrxBeasiswa,
-    isLoadingExisting,
-    perguruanTinggiOptions,
-    responseExistingPilihan,
-    replace,
-    // allPilihan sengaja tidak di sini — dibaca via ref
-  ]);
+  }, [populateKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ============================================================
-  // RESET SAAT USER MENGUBAH KONDISI BUTA WARNA
-  // Deteksi perubahan dari nilai sebelumnya, skip initial render
-  // ============================================================
-
-  useEffect(() => {
-    if (prevJurusanSekolahRef.current === undefined) {
-      prevJurusanSekolahRef.current = selectedIdJurusanSekolah;
-      return;
-    }
-    if (prevJurusanSekolahRef.current === selectedIdJurusanSekolah) return;
-
-    prevJurusanSekolahRef.current = selectedIdJurusanSekolah;
-
-    // Izinkan populate ulang dengan options baru
-    // Data form state akan di-preserve oleh logic merge di atas
-    hasPopulatedRef.current = false;
-  }, [selectedIdJurusanSekolah]);
-
-  useEffect(() => {
-    if (prevButaWarnaRef.current === undefined) {
-      prevButaWarnaRef.current = selectedKondisiButaWarna;
-      return;
-    }
-    if (prevButaWarnaRef.current === selectedKondisiButaWarna) return;
-
-    prevButaWarnaRef.current = selectedKondisiButaWarna;
-    hasPopulatedRef.current = false; // izinkan populate ulang
-
-    replace(
-      fields.length > 0
-        ? fields.map(() => ({ perguruan_tinggi: "", program_studi: "" }))
-        : [{ perguruan_tinggi: "", program_studi: "" }],
-    );
-  }, [selectedKondisiButaWarna]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ============================================================
-  // HANDLERS
-  // ============================================================
-
+  // ── Handlers ─────────────────────────────────────────────────
   const handleResult = (result: "Y" | "N") => {
     setValue("kondisi_buta_warna", result, {
       shouldDirty: true,
@@ -405,17 +177,22 @@ const PilihanJurusan = ({
     });
   };
 
-  // Skeleton tampil saat: PT masih loading ATAU existing data masih loading
+  // ── Derived UI state ─────────────────────────────────────────
   const showSkeleton =
     (isLoadingPTAny &&
       !!selectedIdJurusanSekolah &&
       !!selectedKondisiButaWarna) ||
-    (!!idTrxBeasiswa && isLoadingExisting && !!selectedKondisiButaWarna);
+    (!!idTrxBeasiswa && isLoadingExisting && !!selectedKondisiButaWarna) ||
+    (isPopulating && fields.length === 0);
 
-  // ============================================================
-  // UI
-  // ============================================================
+  const emptyCount = (allPilihan ?? []).filter(
+    (p) => !p?.perguruan_tinggi || !p?.program_studi,
+  ).length;
 
+  const hasEmptyRows =
+    !isPopulating && !showSkeleton && fields.length > 0 && emptyCount > 0;
+
+  // ── Skeleton Component ───────────────────────────────────────
   const PilihanSkeleton = () => (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
@@ -446,13 +223,8 @@ const PilihanJurusan = ({
       ))}
     </div>
   );
-  // Hitung jumlah row yang masih kosong untuk summary alert
-  const emptyCount = (allPilihan ?? []).filter(
-    (p) => !p?.perguruan_tinggi || !p?.program_studi,
-  ).length;
 
-  const hasEmptyRows =
-    !isPopulating && !showSkeleton && fields.length > 0 && emptyCount > 0;
+  // ── Render ───────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Info Card */}
@@ -513,8 +285,8 @@ const PilihanJurusan = ({
                 yang Anda pilih.
               </p>
               <p className="text-sm">
-                Silakan hubungi administrator untuk informasi lebih lanjut atau
-                pilih jurusan sekolah yang lain di step sebelumnya.
+                Silakan hubungi administrator atau pilih jurusan sekolah yang
+                lain.
               </p>
             </div>
           </AlertDescription>
@@ -619,7 +391,6 @@ const PilihanJurusan = ({
                         (opt) => !ptSudahDipilih.includes(opt.value),
                       );
 
-                    // Row kosong = PT belum dipilih ATAU prodi belum dipilih
                     const currentRow = allPilihan?.[index];
                     const isEmpty =
                       !currentRow?.perguruan_tinggi ||
@@ -635,7 +406,7 @@ const PilihanJurusan = ({
                         perguruanTinggiOptions={filteredPerguruanTinggiOptions}
                         setValue={setValue}
                         isPopulating={isPopulating}
-                        isEmpty={isEmpty} // ← tambah ini
+                        isEmpty={isEmpty}
                       />
                     );
                   })}

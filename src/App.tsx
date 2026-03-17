@@ -87,6 +87,8 @@ import KeuanganSwakelolaEditPage from "./features/keuangan-swakelola/pages/Keuan
 import PerubahanDataLembagaPendidikanPage from "./features/perubahan-data-lembaga-pendidikan/pages/PerubahanDataLembagaPendidikanPage";
 import VerifikasiHasilNasional from "./features/verifikasi-hasil-nasional/pages/VerifikasiHasilNasional";
 import DetailPendaftarPage from "./features/verifikasi-hasil-nasional/components/DetailPendaftarPage";
+import ResetPinPage from "./features/Auth/pages/ResetPinPage";
+import ManagamentVerifikator from "./features/list-pendaftar/pages/ManagamentVerifikators";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +111,7 @@ function App() {
           <Route element={<BaseLayout />}>
             <Route path="/login" element={<LoginPenerimaBeasiswaPage />} />
             <Route path="/login-instansi" element={<LoginInstansiPage />} />
+            <Route path="/reset-pin/:id/:token" element={<ResetPinPage />} />
             <Route
               path="/daftar-penerima-beasiswa"
               element={<RegisterPenerimaBeasiswaPage />}
@@ -149,14 +152,35 @@ function App() {
                 path="/master/perguruan-tinggi/create"
                 element={<PerguruanTinggiCreatePage />}
               />
-              <Route path="/master/program-studi/:id_prodi/edit" element={<ProgramStudiEditPage />} />
-              <Route path="/master/program-studi" element={<ProgramStudiPage />} />
-              <Route path="/master/program-studi/create" element={<ProgramStudiCreatePage />} />
-              <Route path="/master/perguruan-tinggi/:id_pt/program-studi" element={<ProgramStudiPage />} />
-              <Route path="/master/perguruan-tinggi/:id_pt/program-studi/create" element={<ProgramStudiCreatePage />} />
-              <Route path="/master/perguruan-tinggi/:id_pt/program-studi/:id_prodi" element={<ProgramStudiEditPage />} />
+              <Route
+                path="/master/program-studi/:id_prodi/edit"
+                element={<ProgramStudiEditPage />}
+              />
+              <Route
+                path="/master/program-studi"
+                element={<ProgramStudiPage />}
+              />
+              <Route
+                path="/master/program-studi/create"
+                element={<ProgramStudiCreatePage />}
+              />
+              <Route
+                path="/master/perguruan-tinggi/:id_pt/program-studi"
+                element={<ProgramStudiPage />}
+              />
+              <Route
+                path="/master/perguruan-tinggi/:id_pt/program-studi/create"
+                element={<ProgramStudiCreatePage />}
+              />
+              <Route
+                path="/master/perguruan-tinggi/:id_pt/program-studi/:id_prodi"
+                element={<ProgramStudiEditPage />}
+              />
               <Route path="/setting_kuota" element={<SettingKuotaPage />} />
-              <Route path="/jurusan_prodi" element={<SettingJurusanProdiPage />} />
+              <Route
+                path="/jurusan_prodi"
+                element={<SettingJurusanProdiPage />}
+              />
               <Route
                 path="/sekolah/jenjang-sekolah"
                 element={<JenjangSekolahPage />}
@@ -354,6 +378,10 @@ function App() {
               <Route
                 path="/verifikasi-hasil-nasional"
                 element={<VerifikasiHasilNasional />}
+              />
+              <Route
+                path="/list-pendaftar"
+                element={<ManagamentVerifikator />}
               />
               <Route
                 path="/verifikasi-hasil-nasional/pendaftar/provinsi/:kodeProvinsi"
