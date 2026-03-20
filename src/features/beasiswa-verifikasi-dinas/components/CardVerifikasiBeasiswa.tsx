@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CustTextArea } from "@/components/CustTextArea";
 import { beasiswaService } from "@/services/beasiswaService";
 import {
@@ -98,12 +99,13 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
       return;
     }
 
-    // Hapus selectedStatus sebelum kirim ke backend
-    const { selectedStatus: _, ...submitData } = data;
+    // Perbaikan: Gunakan spread operator dan delete untuk menghindari unused variable
+    const submitData = { ...data };
+    delete submitData.selectedStatus;
+    
     mutation.mutate(submitData);
   };
 
-  // Reset tagging fields ketika status berubah dan bukan Lulus Administrasi
   const handleStatusChange = (value: number) => {
     setSelectedStatus(value);
     setValue("selectedStatus", value);

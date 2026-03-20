@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   BEASISWA_SERVICE_BASE_URL,
   MASTER_SERVICE_BASE_URL,
@@ -624,6 +625,71 @@ export const beasiswaService = {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users/by-ids`,
       { params: { ids: ids.join(",") } },
+    );
+    return response.data;
+  },
+  getRekapLulusAdministrasi: async (
+    flag?: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = "",
+  ): Promise<any> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/rekap-administrasi`,
+      { params: { flag, page, limit, search } },
+    );
+    return response.data;
+  },
+
+  getDetailLulusAdministrasi: async (
+    tinggalKodeKab: string,
+  ): Promise<Response<any[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/rekap-administrasi/${tinggalKodeKab}`,
+    );
+    return response.data;
+  },
+
+  updateFlagKewilayahan: async (payload: {
+    id_trx_beasiswa?: number | number[];
+    flag_kewilayahan: number;
+    is_global?: boolean;
+  }): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.put(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/rekap-administrasi/flag`,
+      payload,
+    );
+    return response.data;
+  },
+
+  getLastLogKewilayahan: async (): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/rekap-administrasi/log`,
+    );
+    return response.data;
+  },
+  // Ganti dua method di bagian bawah beasiswaService.ts
+
+  updateKluster: async (
+    idTrxBeasiswa: number,
+    id_kluster: number,
+  ): Promise<Response<{ id_kluster: number; nama_kluster: string }>> => {
+    const response = await axiosInstanceJson.put(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/kluster`,
+      { id_kluster },
+    );
+    return response.data;
+  },
+
+  updateKlusterBulk: async (
+    ids: number[],
+    id_kluster: number,
+  ): Promise<
+    Response<{ updated: number; id_kluster: number; nama_kluster: string }>
+  > => {
+    const response = await axiosInstanceJson.put(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/kluster/bulk`,
+      { ids, id_kluster },
     );
     return response.data;
   },

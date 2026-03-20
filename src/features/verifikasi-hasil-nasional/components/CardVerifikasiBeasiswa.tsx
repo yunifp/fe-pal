@@ -44,7 +44,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
 
   const statusOptions = [
     {
-      value: 14,
+      value: 10,
       label: "Lulus",
       icon: Check,
       color: "emerald",

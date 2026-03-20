@@ -89,6 +89,8 @@ import VerifikasiHasilNasional from "./features/verifikasi-hasil-nasional/pages/
 import DetailPendaftarPage from "./features/verifikasi-hasil-nasional/components/DetailPendaftarPage";
 import ResetPinPage from "./features/Auth/pages/ResetPinPage";
 import ManagamentVerifikator from "./features/list-pendaftar/pages/ManagamentVerifikators";
+import PembagianWilayahPage from "./features/pembagian-wilayah/pages/PembagianWilayahPage";
+import PembagianWilayahDetailPage from "./features/pembagian-wilayah/pages/PembagianWilayahDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -140,6 +142,8 @@ function App() {
               <Route path="/menus/create" element={<MenuCreatePage />} />
               <Route path="/menus/:id" element={<MenuEditPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/pembagian_wilayah" element={<PembagianWilayahPage />} />
+              <Route path="/pembagian_wilayah/:kodeKab" element={<PembagianWilayahDetailPage />} />
               <Route
                 path="/master/perguruan-tinggi"
                 element={<PerguruanTinggiPage />}

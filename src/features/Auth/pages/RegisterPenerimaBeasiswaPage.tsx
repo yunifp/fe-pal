@@ -1,3 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -7,7 +11,7 @@ import * as z from "zod";
 import { CustInput } from "@/components/CustInput";
 import { useQuery } from "@tanstack/react-query";
 import { STALE_TIME } from "@/constants/reactQuery";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type RegisterResponse, type RegisterRequest } from "../types/auth";
 import { toast } from "sonner";
 import { authService } from "../services/authService";
@@ -17,7 +21,9 @@ import { TidakAdaBeasiswaAktif } from "../components/TidakAdaBeasiswaAktif";
 import Navbar from "@/features/landing-alt/components/pendaftaran-beasiswa/Navbar";
 import Footer from "@/features/landing-alt/components/Footer";
 import { toUpperCase } from "@/utils/stringFormatter";
+import { RefreshCcw } from "lucide-react"; // Icon untuk refresh captcha
 
+// 1. Tambahkan validasi captcha di schema
 const registerSchema = z.object({
   nama: z
     .string()
@@ -35,6 +41,8 @@ const registerSchema = z.object({
     .min(8, "No HP minimal 8 digit")
     .max(15, "No HP maksimal 15 digit")
     .regex(/^(\+62|62|0)8[1-9][0-9]{6,12}$/, "Format nomor HP tidak valid"),
+
+  captchaAnswer: z.string().min(1, "Jawaban keamanan wajib diisi"),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -44,7 +52,9 @@ const RegisterPenerimaBeasiswaPage = () => {
   const [registerResponse, setRegisterResponse] =
     useState<RegisterResponse | null>(null);
 
-  // Setup untuk mendapatkan beasiswa aktif
+  // 2. State untuk menyimpan data captcha dari backend
+  const [captchaData, setCaptchaData] = useState<{ id: string; question: string } | null>(null);
+
   const { data: responseBeasiswaAktif, isLoading: isBeasiswaAktifLoading } =
     useQuery({
       queryKey: ["beasiswa-aktif"],
@@ -66,13 +76,34 @@ const RegisterPenerimaBeasiswaPage = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  // 3. Fungsi untuk mengambil captcha dari backend
+  const fetchCaptcha = async () => {
+    try {
+      const res = await authService.getCaptcha();
+      if (res.success && res.data) {
+        setCaptchaData({ id: res.data.captchaId, question: res.data.question });
+        setValue("captchaAnswer", ""); // Kosongkan inputan sebelumnya
+      }
+    } catch (error) {
+      console.error("Gagal memuat captcha", error);
+    }
+  };
+
+  // Muat captcha saat komponen pertama kali dirender
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const payload: RegisterRequest = {
+      // 4. Masukkan captchaId dan answer ke payload
+      const payload: RegisterRequest & { captchaId: string; answer: number } = {
         nama_lengkap: data.nama,
         email: data.email,
         no_hp: data.noHp,
         jenis_akun: "beasiswa",
+        captchaId: captchaData?.id || "",
+        answer: parseInt(data.captchaAnswer),
       };
 
       const response = await authService.register(payload);
@@ -80,10 +111,13 @@ const RegisterPenerimaBeasiswaPage = () => {
         setRegisterResponse(response.data);
         setShowDialog(true);
         reset();
+        fetchCaptcha(); // Refresh captcha setelah berhasil
       } else {
         toast.error(response.message);
+        fetchCaptcha(); // Refresh captcha jika gagal/salah
       }
     } catch (error: any) {
+      fetchCaptcha(); // Refresh captcha jika error dari server
       if (error.response) {
         toast.error(error.response.message);
       } else {
@@ -99,7 +133,6 @@ const RegisterPenerimaBeasiswaPage = () => {
         isBeasiswaLoading={isBeasiswaAktifLoading}
       />
       <div className="relative overflow-hidden">
-        {/* Background Image */}
         <div
           className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
           style={{
@@ -111,7 +144,7 @@ const RegisterPenerimaBeasiswaPage = () => {
           }}>
           <div className="relative z-10 flex items-center justify-center min-h-screen px-4 md:px-0">
             {beasiswaAktif ? (
-              <Card className="shadow-none mt-[100px] mb-[50px]">
+              <Card className="shadow-none mt-[100px] mb-[50px] w-full max-w-md">
                 <CardContent>
                   <div className="flex justify-center mb-6">
                     <img
@@ -131,8 +164,7 @@ const RegisterPenerimaBeasiswaPage = () => {
                   </div>
 
                   <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                    <div className="grid w-full items-center gap-6">
-                      {/* Nama */}
+                    <div className="grid w-full items-center gap-5">
                       <CustInput
                         label="Nama Lengkap"
                         type="text"
@@ -148,7 +180,6 @@ const RegisterPenerimaBeasiswaPage = () => {
                         })}
                       />
 
-                      {/* Email */}
                       <CustInput
                         label="Email"
                         type="email"
@@ -159,7 +190,6 @@ const RegisterPenerimaBeasiswaPage = () => {
                         {...register("email")}
                       />
 
-                      {/* No HP */}
                       <CustInput
                         label="No HP"
                         type="text"
@@ -170,11 +200,39 @@ const RegisterPenerimaBeasiswaPage = () => {
                         {...register("noHp")}
                       />
 
-                      {/* Submit Button */}
+                      {/* 5. UI Input Captcha */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium leading-none text-gray-700">
+                          Pertanyaan Keamanan: <span className="font-bold text-black">{captchaData ? captchaData.question : "Memuat..."}</span>
+                        </label>
+                        <div className="flex gap-2 items-start">
+                          <div className="flex-1">
+                            <CustInput
+                              type="number"
+                              id="captchaAnswer"
+                              placeholder="Masukkan hasil hitungan"
+                              error={!!errors.captchaAnswer}
+                              errorMessage={errors.captchaAnswer?.message}
+                              {...register("captchaAnswer")}
+                            />
+                          </div>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            onClick={fetchCaptcha}
+                            title="Refresh Captcha"
+                            className="shrink-0 h-10 w-10 mt-1"
+                          >
+                            <RefreshCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
                       <Button
                         type="submit"
                         className="mt-2 w-full bg-primary"
-                        disabled={isSubmitting}>
+                        disabled={isSubmitting || !captchaData}>
                         Daftar
                       </Button>
                     </div>

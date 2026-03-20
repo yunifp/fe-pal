@@ -121,6 +121,7 @@ export interface ITrxBeasiswa {
   flow?: string | null;
 
   id_users?: number | null;
+  id_kluster?: number | null;
 
   // =====================
   // Foto
@@ -834,22 +835,22 @@ export const verifikasiSchema = z
     fileSuratKeputusan: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.selectedStatus === 6) {
-      if (!data.kode_dinas_provinsi || data.kode_dinas_provinsi.trim() === "") {
-        ctx.addIssue({
-          path: ["kode_dinas_provinsi"],
-          message: "Provinsi wajib diisi untuk status Lulus Administrasi",
-          code: z.ZodIssueCode.custom,
-        });
-      }
-      if (!data.kode_dinas_kabkota || data.kode_dinas_kabkota.trim() === "") {
-        ctx.addIssue({
-          path: ["kode_dinas_kabkota"],
-          message: "Kabupaten/Kota wajib diisi untuk status Lulus Administrasi",
-          code: z.ZodIssueCode.custom,
-        });
-      }
-    }
+    // if (data.selectedStatus === 6) {
+    //   if (!data.kode_dinas_provinsi || data.kode_dinas_provinsi.trim() === "") {
+    //     ctx.addIssue({
+    //       path: ["kode_dinas_provinsi"],
+    //       message: "Provinsi wajib diisi untuk status Lulus Administrasi",
+    //       code: z.ZodIssueCode.custom,
+    //     });
+    //   }
+    //   if (!data.kode_dinas_kabkota || data.kode_dinas_kabkota.trim() === "") {
+    //     ctx.addIssue({
+    //       path: ["kode_dinas_kabkota"],
+    //       message: "Kabupaten/Kota wajib diisi untuk status Lulus Administrasi",
+    //       code: z.ZodIssueCode.custom,
+    //     });
+    //   }
+    // }
 
     const rules = [
       {

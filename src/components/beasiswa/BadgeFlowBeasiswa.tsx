@@ -39,9 +39,10 @@ const DEFAULT_COLORS: Record<number, string> = {
   12: "bg-green-50 text-green-700 border-green-200",
   14: "bg-blue-50 text-blue-700 border-blue-200",
   17: "bg-green-50 text-green-700 border-green-200",
+  13: "bg-green-50 text-green-700 border-green-200",
 };
 
-const ADMIN_LULUS = [6, 7, 9, 10, 11, 12];
+const ADMIN_LULUS = [6, 7, 9, 10, 11, 12, 13];
 
 export const BadgeFlowBeasiswa: FC<BadgeFlowBeasiswaProps> = ({
   id,

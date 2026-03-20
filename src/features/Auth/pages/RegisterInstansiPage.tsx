@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -9,7 +11,7 @@ import { CustInput } from "@/components/CustInput";
 import { useQuery } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
 import { STALE_TIME } from "@/constants/reactQuery";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { type RegisterRequest } from "../types/auth";
 import { toast } from "sonner";
 import { authService } from "../services/authService";
@@ -19,6 +21,7 @@ import Footer from "@/features/landing-alt/components/Footer";
 import { CustPassword } from "@/components/CustPassword";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { RefreshCcw } from "lucide-react";
 
 const registerSchema = z
   .object({
@@ -49,6 +52,8 @@ const registerSchema = z
     username: z.string().min(3, "Username minimal 3 karakter"),
     password: z.string().min(6, "Password minimal 6 karakter"),
     confirmPassword: z.string().min(6, "Konfirmasi password wajib diisi"),
+
+    captchaAnswer: z.string().min(1, "Jawaban keamanan wajib diisi"),
 
     // Tambahan file Surat Penunjukan
     surat_penunjukan: z
@@ -109,6 +114,8 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterInstansiPage = () => {
+  const [captchaData, setCaptchaData] = useState<{ id: string; question: string } | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -121,9 +128,25 @@ const RegisterInstansiPage = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  const fetchCaptcha = async () => {
+    try {
+      const res = await authService.getCaptcha();
+      if (res.success && res.data) {
+        setCaptchaData({ id: res.data.captchaId, question: res.data.question });
+        setValue("captchaAnswer", ""); 
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const payload: RegisterRequest = {
+      const payload: RegisterRequest & { captchaId: string; answer: number } = {
         nama_lengkap: data.nama,
         email: data.email,
         no_hp: data.noHp,
@@ -137,23 +160,25 @@ const RegisterInstansiPage = () => {
 
         username: data.username,
         password: data.password,
-
         surat_penunjukan: data.surat_penunjukan,
+
+        captchaId: captchaData?.id || "",
+        answer: parseInt(data.captchaAnswer),
       };
 
       const response = await authService.register(payload);
       if (response.success) {
         toast.success(response.message);
         reset();
+        fetchCaptcha();
       } else {
         toast.error(response.message);
+        fetchCaptcha();
       }
     } catch (error: any) {
-      if (error.response) {
-        toast.error(error.response.message);
-      } else {
-        toast.error(error.message);
-      }
+      fetchCaptcha();
+      const errorMessage = error?.response?.data?.message || error?.message || "Terjadi kesalahan sistem";
+      toast.error(errorMessage);
     }
   };
 
@@ -259,9 +284,9 @@ const RegisterInstansiPage = () => {
             backgroundRepeat: "no-repeat",
           }}>
           <div className="relative z-10 flex items-center justify-center min-h-screen px-4 md:px-0">
-            <Card className="shadow-none mt-[100px] mb-[50px]">
+            <Card className="shadow-none mt-[100px] mb-[50px] w-full max-w-lg">
               <CardContent>
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-6 pt-4">
                   <img
                     src="/images/Ditjenbun.png"
                     alt="Brand Logo"
@@ -279,7 +304,7 @@ const RegisterInstansiPage = () => {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                  <div className="grid w-full items-center gap-6">
+                  <div className="grid w-full items-center gap-5">
                     {/* Jenis Akun */}
                     <CustSelect
                       name="jenis_akun"
@@ -434,11 +459,41 @@ const RegisterInstansiPage = () => {
                       )}
                     </div>
 
+                    {/* Captcha Section */}
+                    <div className="flex flex-col gap-1.5 pt-2">
+                      <label className="text-sm font-medium text-gray-700">Pertanyaan Keamanan</label>
+                      <div className="flex items-start gap-2">
+                        <div className="flex items-center justify-center bg-green-50 border border-green-200 text-green-800 font-bold tracking-wider rounded-md h-10 px-4 min-w-[100px] select-none">
+                          {captchaData ? captchaData.question : "..."}
+                        </div>
+                        <div className="flex-1 flex flex-col gap-1">
+                          <Input
+                            type="number"
+                            id="captchaAnswer"
+                            placeholder="Jawaban"
+                            className={`h-10 ${errors.captchaAnswer ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                            {...register("captchaAnswer")}
+                          />
+                          {errors.captchaAnswer && (
+                            <span className="text-xs text-red-500 font-medium">{errors.captchaAnswer.message}</span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0 h-10 w-10 text-gray-500 hover:text-gray-900 transition-colors"
+                          onClick={fetchCaptcha}>
+                          <RefreshCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
                     {/* Submit Button */}
                     <Button
                       type="submit"
-                      className="mt-2 w-full bg-primary"
-                      disabled={isSubmitting}>
+                      className="mt-4 w-full bg-primary h-11"
+                      disabled={isSubmitting || !captchaData}>
                       Daftar
                     </Button>
                   </div>

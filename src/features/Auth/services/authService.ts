@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import axios from "axios";
 import { AUTH_SERVICE_BASE_URL } from "@/constants/api";
 import type {
@@ -15,12 +16,14 @@ import type { IUser } from "@/features/user/types/user";
 
 export const authService = {
   login: async (payload: LoginRequest): Promise<Response<LoginResponse>> => {
+  
     const response = await axios.post(
       `${AUTH_SERVICE_BASE_URL}/auth/login`,
       payload,
     );
     return response.data;
   },
+  
   getCaptcha: async (): Promise<
     Response<{ captchaId: string; question: string }>
   > => {
@@ -30,6 +33,7 @@ export const authService = {
 
     return response.data;
   },
+  
   verifyCaptcha: async (payload: {
     captchaId: string;
     answer: string;
@@ -40,14 +44,14 @@ export const authService = {
     );
 
     if (!response.data.success) {
-      // opsional: throw error supaya bisa ditangani di component
       throw new Error(response.data.message);
     }
 
-    return response.data.data!; // boolean
+    return response.data.data!; 
   },
+  
   register: async (
-    data: RegisterRequest,
+    data: RegisterRequest & { captchaId?: string; answer?: number }, // Pastikan tipe data menerima captcha
   ): Promise<Response<RegisterResponse | null>> => {
     const formData = new FormData();
     formData.append("jenis_akun", data.jenis_akun);
@@ -75,6 +79,14 @@ export const authService = {
       formData.append("surat_penunjukan", data.surat_penunjukan);
     }
 
+  
+    if (data.captchaId) {
+      formData.append("captchaId", data.captchaId);
+    }
+    if (data.answer !== undefined) {
+      formData.append("answer", data.answer.toString());
+    }
+
     for (const [key, value] of formData.entries()) {
       console.log(key, value);
     }
@@ -89,6 +101,7 @@ export const authService = {
 
     return response.data;
   },
+  
   refreshToken: async (refreshToken: string) => {
     const response = await axios.post(
       `${AUTH_SERVICE_BASE_URL}/auth/refresh-token`,
@@ -98,12 +111,14 @@ export const authService = {
     );
     return response.data;
   },
+  
   getProfile: async (): Promise<Response<IProfile>> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/auth/profile`,
     );
     return response.data;
   },
+  
   updateProfile: async (
     payload: ProfileFormData,
   ): Promise<Response<IProfile>> => {
@@ -131,6 +146,7 @@ export const authService = {
 
     return response.data;
   },
+  
   logout: async (
     refreshToken: string,
   ): Promise<Response<{ message: string }>> => {

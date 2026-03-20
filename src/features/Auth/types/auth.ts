@@ -6,6 +6,8 @@ export interface LoginRequest {
   user_id: string;
   pin: string;
   jenis_akun: "instansi" | "penerima-beasiswa";
+  captchaId?: string;
+  answer?: number;
 }
 
 export interface RegisterRequest {
@@ -23,6 +25,8 @@ export interface RegisterRequest {
 
   username?: string;
   password?: string;
+  captchaId?: string;
+  answer?: number;
 
   // Tambahan untuk file
   surat_penunjukan?: File;

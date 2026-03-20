@@ -22,6 +22,7 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { wilayahService } from "@/services/wilayahService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
+import KlusterSelector from "../components/KlusterSelector";
 import type {
   ITrxBeasiswa,
   ITrxDokumenUmum,
@@ -201,7 +202,10 @@ const DetailPendaftarPage = () => {
           </div>
         </div>
       </div>
-
+      <KlusterSelector
+        idTrxBeasiswa={pendaftar.id_trx_beasiswa}
+        currentKluster={pendaftar.id_kluster}
+      />
       <div className="mt-5 space-y-4">
         {/* Data Pribadi */}
         <SectionCard icon={<User className="h-4 w-4" />} title="Data Pribadi">

@@ -88,7 +88,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
 
   const statusOptions = [
     {
-      value: 6,
+      value: 13,
       label: "Lulus Administrasi",
       icon: Check,
       color: "emerald",
@@ -127,13 +127,13 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
     setSelectedStatus(value);
     setValue("selectedStatus", value);
 
-    if (value !== 6) {
+    if (value !== 1000) {
       reset({
         ...getValues(),
         catatan: watch("catatan"),
         selectedStatus: value,
-        kode_dinas_provinsi: undefined,
-        kode_dinas_kabkota: undefined,
+        kode_dinas_provinsi: "",
+        kode_dinas_kabkota: "",
       });
     }
   };
@@ -205,64 +205,6 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
             })}
           </div>
           {/* Dropdown Provinsi dan Kabkot - Tampil jika Lulus Administrasi */}
-          {selectedStatus === 6 && (
-            <div className="space-y-4 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl">
-              <div className="flex items-center gap-2 mb-3">
-                {/* <Check className="w-5 h-5 text-emerald-600" /> */}
-                <h4 className="font-semibold text-emerald-900"></h4>
-              </div>
-
-              {/* Dropdown Provinsi */}
-              <div className="space-y-2">
-                {/* <label className="text-sm font-medium text-emerald-900 block">
-                  Provinsi
-                  <span className="text-red-500 ml-1">*</span>
-                </label> */}
-                <CustSelect
-                  name="kode_dinas_provinsi"
-                  label="Provinsi"
-                  control={control}
-                  options={provinsiOptions}
-                  placeholder="Pilih Provinsi"
-                  error={errors.kode_dinas_provinsi}
-                />
-              </div>
-
-              {/* Dropdown Kabupaten/Kota */}
-              <div className="space-y-2">
-                {/* <label className="text-sm font-medium text-emerald-900 block">
-                  Kabupaten/Kota 
-                  <span className="text-red-500 ml-1">*</span>
-                </label> */}
-                <CustSelect
-                  name="kode_dinas_kabkota"
-                  label="Kabupaten/Kota"
-                  control={control}
-                  options={kabkotOptions}
-                  placeholder={
-                    selectedProvinsi
-                      ? "Pilih Kabupaten/Kota"
-                      : "Pilih provinsi terlebih dahulu"
-                  }
-                  error={errors.kode_dinas_kabkota}
-                  // disabled={!selectedProvinsi}
-                />
-                {!selectedProvinsi && (
-                  <p className="text-xs text-emerald-600 bg-white/50 p-2 rounded">
-                    Pilih provinsi terlebih dahulu untuk memilih kabupaten/kota
-                  </p>
-                )}
-              </div>
-
-              <div className="bg-white/50 p-3 rounded-lg border border-emerald-200">
-                <p className="text-xs text-emerald-700">
-                  <strong>Catatan:</strong> Provinsi dan kabupaten/kota ini akan
-                  digunakan untuk menentukan lokasi data yang lulus
-                  administrasi.
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Catatan */}
           <div className="space-y-2">

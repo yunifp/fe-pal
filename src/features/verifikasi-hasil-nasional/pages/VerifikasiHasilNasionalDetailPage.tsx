@@ -157,7 +157,7 @@ const VerifikasiHasilNasionalDetailPage = () => {
       <CustBreadcrumb
         items={[
           {
-            name: "Verifikasi Kabupaten / Kota",
+            name: "Verifikasi Kabupaten / Kotas",
             url: "/beasiswa_verifikasi_dinas_kota",
           },
           { name: "Detail", url: "#" },
@@ -165,7 +165,7 @@ const VerifikasiHasilNasionalDetailPage = () => {
       />
 
       <p className="text-xl font-semibold mt-4">
-        Seleksi Administratif Kabupaten / Kota
+        Seleksi Administratif Kabupaten / Kotaa
       </p>
 
       <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
