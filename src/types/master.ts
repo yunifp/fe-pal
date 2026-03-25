@@ -188,6 +188,46 @@ export const perguruanEditTinggiSchema = z.object({
   emailVerifikator: z.string().min(1, "Email verifikator wajib diisi"),
 });
 
+// --- Interface ---
+export interface INpsn {
+  id: number;
+  id_jenjang: number;
+  sekolah: string;
+  npsn: string | null;
+  jenis_sekolah: string | null;
+}
+
+export interface PaginatedNpsnResponse {
+  result: INpsn[];
+  total: number;
+  current_page: number;
+  total_pages: number;
+}
+
+// --- Zod Schema ---
+export const npsnSchema = z.object({
+  id_jenjang: z
+    .number({ invalid_type_error: "ID jenjang harus berupa angka" })
+    .int("ID jenjang harus bilangan bulat")
+    .min(1, "ID jenjang wajib diisi"),
+  sekolah: z
+    .string()
+    .min(1, "Nama sekolah wajib diisi")
+    .max(255, "Nama sekolah maksimal 255 karakter"),
+  npsn: z
+    .string()
+    .max(20, "NPSN maksimal 20 karakter")
+    .optional()
+    .or(z.literal("")),
+  jenis_sekolah: z
+    .string()
+    .max(100, "Jenis sekolah maksimal 100 karakter")
+    .optional()
+    .or(z.literal("")),
+});
+
+export type NpsnFormData = z.infer<typeof npsnSchema>;
+
 export type PerguruanTinggiEditFormData = z.infer<
   typeof perguruanEditTinggiSchema
 >;

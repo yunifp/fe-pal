@@ -91,6 +91,17 @@ import ResetPinPage from "./features/Auth/pages/ResetPinPage";
 import ManagamentVerifikator from "./features/list-pendaftar/pages/ManagamentVerifikators";
 import PembagianWilayahPage from "./features/pembagian-wilayah/pages/PembagianWilayahPage";
 import PembagianWilayahDetailPage from "./features/pembagian-wilayah/pages/PembagianWilayahDetailPage";
+import RekapProvinsiPage from "./features/verifikasi-hasil-nasional-v2/pages/RekapProvinsiPage";
+import DetailProvinsiPage from "./features/verifikasi-hasil-nasional-v2/pages/DetailProvinsiPage";
+import BeasiswaProsesLembagaSeleksiDetailPage from "./features/beasiswa-proses-lembaga-seleksi/pages/BeasiswaProsesLembagaSeleksiDetailPage";
+import BeasiswaProsesLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/pages/BeasiswaProsesLembagaSeleksiPage";
+import PendaftarByProvinsiLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/pages/BeasiswaSeleksiPendaftarByProvinsiLembagaSeleksiPage";
+import DetailPendaftarLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/components/DetailPendaftarLembagaSeleksiPage";
+import BeasiswaPenetapanPage from "./features/beasiswa-penetapan/pages/BeasiswaPenetapanPage";
+// import BeasiswaPenetapanDetailPage from "./features/beasiswa-penetapan/pages/BeasiswaPenetapanDetailPage";
+// import MasterNpsn from "./features/master-npsn/pages/MasterNpsnPage";
+// import MasterNpsnCreate from "./features/master-npsn/pages/MasterNpsnCreatePage";
+// import MasterNpsnEdit from "./features/master-npsn/pages/MasterNpsnEditPage";
 
 const queryClient = new QueryClient();
 
@@ -142,8 +153,22 @@ function App() {
               <Route path="/menus/create" element={<MenuCreatePage />} />
               <Route path="/menus/:id" element={<MenuEditPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/pembagian_wilayah" element={<PembagianWilayahPage />} />
-              <Route path="/pembagian_wilayah/:kodeKab" element={<PembagianWilayahDetailPage />} />
+              <Route
+                path="/pembagian_wilayah"
+                element={<PembagianWilayahPage />}
+              />
+              <Route
+                path="/pembagian_wilayah/:kodeKab"
+                element={<PembagianWilayahDetailPage />}
+              />
+              <Route
+                path="/verifikasi-nasional-v2"
+                element={<RekapProvinsiPage />}
+              />
+              <Route
+                path="/verifikasi-nasional-v2/:kode_prov"
+                element={<DetailProvinsiPage />}
+              />
               <Route
                 path="/master/perguruan-tinggi"
                 element={<PerguruanTinggiPage />}
@@ -395,6 +420,34 @@ function App() {
                 path="/verifikasi-hasil-nasional/pendaftar/provinsi/:kodeProvinsi/detail/:idTrxBeasiswa"
                 element={<DetailPendaftarPage />}
               />
+              <Route
+                path="/proses_lembaga_seleksi"
+                element={<BeasiswaProsesLembagaSeleksiPage />}
+              />
+              {/* <Route
+                path="/proses_lembaga_seleksi/detail/:idTrxBeasiswa"
+                element={<BeasiswaProsesLembagaSeleksiDetailPage />}
+              /> */}
+              <Route
+                path="/proses_lembaga_seleksi/pendaftar/:idTrxBeasiswa"
+                element={<BeasiswaProsesLembagaSeleksiDetailPage />}
+              />
+              <Route
+                path="/proses_lembaga_seleksi/pendaftar/provinsi/:kodeProvinsi"
+                element={<PendaftarByProvinsiLembagaSeleksiPage />}
+              />
+              <Route
+                path="proses_lembaga_seleksi/pendaftar/provinsi/:kodeProvinsi/detail/:idTrxBeasiswa"
+                element={<DetailPendaftarLembagaSeleksiPage />}
+              />
+              <Route path="penetapan" element={<BeasiswaPenetapanPage />} />
+              {/* <Route
+                path="penetapan_beasiswa/detail/:id"
+                element={<BeasiswaPenetapanDetailPage />}
+              />
+              <Route path="master-npsn" element={<MasterNpsn />} />
+              <Route path="master-npsn/create" element={<MasterNpsnCreate />} />
+              <Route path="master-npsn/:id" element={<MasterNpsnEdit />} /> */}
             </Route>
           </Route>
 

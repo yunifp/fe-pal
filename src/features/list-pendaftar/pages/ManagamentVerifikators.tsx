@@ -192,7 +192,7 @@ const ManajemenVerifikator = () => {
       .filter((item) => item.jumlah > 0);
 
     if (payload.length === 0) {
-      toast.error("Masukkan jumlah minimal untuk satu verifikator");
+      toast.error("Masukkan jumlah minimal untuk satu selektor");
       return;
     }
 
@@ -230,16 +230,16 @@ const ManajemenVerifikator = () => {
 
   return (
     <div className="pb-10">
-      <CustBreadcrumb items={[{ name: "Manajemen Verifikator" }]} />
+      <CustBreadcrumb items={[{ name: "Manajemen Selektor" }]} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            Manajemen Verifikator
+            Manajemen Selektor
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Pembagian dan monitoring beban verifikator
+            Pembagian dan monitoring beban selektor
           </p>
         </div>
         <Button
@@ -264,8 +264,8 @@ const ManajemenVerifikator = () => {
             <span className="font-semibold">
               {totalBelumAssign.toLocaleString("id-ID")}
             </span>{" "}
-            pendaftar belum memiliki verifikator. Gunakan form di bawah untuk
-            membagi ke verifikator.
+            pendaftar belum memiliki selektor. Gunakan form di bawah untuk
+            membagi ke selektor.
           </p>
         </div>
       )}
@@ -276,7 +276,7 @@ const ManajemenVerifikator = () => {
           <div className="mt-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
             <p className="text-sm text-emerald-800">
-              Semua pendaftar sudah memiliki verifikator.
+              Semua pendaftar sudah memiliki selektor.
             </p>
           </div>
         )}
@@ -288,9 +288,9 @@ const ManajemenVerifikator = () => {
           <div className="px-5 py-4 border-b flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
             <div>
-              <h2 className="text-sm font-semibold">Beban Verifikator</h2>
+              <h2 className="text-sm font-semibold">Beban Selektor</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {verifikatorList.length} verifikator aktif ·{" "}
+                {verifikatorList.length} selektor aktif ·{" "}
                 {totalBeban.toLocaleString("id-ID")} ter-assign
               </p>
             </div>
@@ -302,7 +302,7 @@ const ManajemenVerifikator = () => {
               ))
             ) : verifikatorList.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                Belum ada verifikator aktif
+                Belum ada selektor aktif
               </div>
             ) : (
               verifikatorList
@@ -430,11 +430,11 @@ const ManajemenVerifikator = () => {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
             <div>
               <h2 className="text-sm font-semibold">
-                Distribusi Pendaftar ke Verifikator
+                Distribusi Pendaftar ke Selektor
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Masukkan jumlah pendaftar yang akan di-assign secara acak ke
-                masing-masing verifikator
+                masing-masing selektor
               </p>
             </div>
           </div>
@@ -461,7 +461,7 @@ const ManajemenVerifikator = () => {
             </div>
           ) : verifikatorList.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              Tidak ada verifikator aktif
+              Tidak ada selektor aktif
             </div>
           ) : (
             <>
@@ -567,7 +567,7 @@ const ManajemenVerifikator = () => {
                           ).length
                         }
                       </span>{" "}
-                      verifikator
+                      selektor
                     </span>
                   )}
                 </div>

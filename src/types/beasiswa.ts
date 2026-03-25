@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+export interface DetailPendaftarRow {
+  id_trx_beasiswa: number;
+  nama_lengkap: string;
+  nik: string;
+  kode_pendaftaran: string;
+  jalur: string;
+  is_3t: boolean;
+  is_sktm: boolean;
+  nama_kluster: string | null;
+}
+
+export interface RekapProvinsiRow {
+  kode_dinas_provinsi: string;
+  nama_dinas_provinsi: string;
+  jumlah_pendaftar: number;
+}
 export interface IBeasiswa {
   id: number;
   nama_beasiswa: string;
@@ -122,6 +138,7 @@ export interface ITrxBeasiswa {
 
   id_users?: number | null;
   id_kluster?: number | null;
+  tag_sktm?: number | null;
 
   // =====================
   // Foto

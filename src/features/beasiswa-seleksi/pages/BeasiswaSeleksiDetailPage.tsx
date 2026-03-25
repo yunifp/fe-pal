@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import CardVerifikasiBeasiswa from "../components/CardVerifikasiBeasiswa";
 import FullDataBeasiswaCatatan from "../components/FullDataBeasiswaCatatan";
 import FullDataBeasiswa from "../../../components/beasiswa/FullDataBeasiswa";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, type FieldErrors } from "react-hook-form";
 import { verifikasiSchema, type VerifikasiFormData } from "@/types/beasiswa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -21,22 +21,37 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
 import { STALE_TIME } from "@/constants/reactQuery";
 
-const extractErrorMessages = (errors: any, parentKey = ""): string[] => {
-  let messages: string[] = [];
+const extractErrorMessages = (
+  errors: FieldErrors<VerifikasiFormData>,
+  parentKey = ""
+): string[] => {
+  const messages: string[] = [];
 
-  Object.entries(errors).forEach(([key, value]: any) => {
+  // Menggunakan type assertion yang lebih aman ketimbang 'any'
+  Object.entries(errors as Record<string, unknown>).forEach(([key, value]) => {
     if (!value) return;
 
     const fieldPath = parentKey ? `${parentKey}.${key}` : key;
+    const typedValue = value as Record<string, unknown>;
 
-    if (value.message) {
-      messages.push(value.message);
+    if (typeof typedValue.message === "string") {
+      messages.push(typedValue.message);
     } else if (Array.isArray(value)) {
       value.forEach((item, index) => {
-        messages.push(...extractErrorMessages(item, `${fieldPath}[${index}]`));
+        messages.push(
+          ...extractErrorMessages(
+            item as FieldErrors<VerifikasiFormData>,
+            `${fieldPath}[${index}]`
+          )
+        );
       });
     } else if (typeof value === "object") {
-      messages.push(...extractErrorMessages(value, fieldPath));
+      messages.push(
+        ...extractErrorMessages(
+          value as FieldErrors<VerifikasiFormData>,
+          fieldPath
+        )
+      );
     }
   });
 
@@ -68,7 +83,7 @@ const BeasiswaSeleksiDetailPage = () => {
   const idFlow = fullData?.data?.data_beasiswa?.id_flow ?? null;
   const isViewOnly = idFlow !== null && VIEW_ONLY_FLOWS.includes(idFlow);
 
-  // ✅ Gunakan methods object agar bisa di-spread ke FormProvider
+  // Gunakan methods object agar bisa di-spread ke FormProvider
   const methods = useForm<VerifikasiFormData>({
     resolver: zodResolver(verifikasiSchema),
     defaultValues: {
@@ -124,7 +139,7 @@ const BeasiswaSeleksiDetailPage = () => {
         selectedStatus!,
         data.catatan || "",
         data,
-        "ditjenbun",
+        "ditjenbun"
       );
     },
     onSuccess: (res) => {
@@ -136,9 +151,11 @@ const BeasiswaSeleksiDetailPage = () => {
         toast.error(res.message);
       }
     },
-    onError: (error: any) => {
-      if (error?.response?.data?.message) {
-        toast.error(error.response.data.message);
+    onError: (error: unknown) => {
+      // Type safe error handling untuk Axios/Custom error
+      const errResponse = (error as { response?: { data?: { message?: string } } })?.response;
+      if (errResponse?.data?.message) {
+        toast.error(errResponse.data.message);
       } else {
         toast.error("Terjadi kesalahan saat menyimpan data");
       }
@@ -146,12 +163,17 @@ const BeasiswaSeleksiDetailPage = () => {
   });
 
   const onSubmit = (data: VerifikasiFormData) => {
-    const { selectedStatus: _, ...submitData } = data;
+    // Menyalin data agar tidak memanipulasi object aslinya secara langsung
+    const submitData = { ...data };
+    
+    // Menghapus field selectedStatus tanpa perlu mendeklarasikan variabel yang tidak dipakai (unused-vars)
+    delete submitData.selectedStatus;
+
     mutation.mutate(submitData);
   };
 
   return (
-    // ✅ Bungkus semua dengan FormProvider agar useFormContext bisa dipakai di child
+    // Bungkus semua dengan FormProvider agar useFormContext bisa dipakai di child
     <FormProvider {...methods}>
       <>
         <CustBreadcrumb
@@ -187,7 +209,7 @@ const BeasiswaSeleksiDetailPage = () => {
                 setValue={setValue}
                 watch={watch}
                 getValues={getValues}
-                control={control}
+                // 'control' dihapus karena tidak dibutuhkan oleh CardVerifikasiBeasiswaProps yang sudah diperbaiki sebelumnya
               />
             </div>
           </div>

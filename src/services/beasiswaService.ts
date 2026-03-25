@@ -4,6 +4,7 @@ import {
   MASTER_SERVICE_BASE_URL,
   AUTH_SERVICE_BASE_URL,
 } from "@/constants/api";
+import axiosInstanceBeasiswa from "@/lib/axiosInstanceBeasiswa";
 import axiosInstanceFormData from "@/lib/axiosInstanceFormData";
 import axiosInstanceJson from "@/lib/axiosInstanceJson";
 import type {
@@ -242,6 +243,14 @@ export const beasiswaService = {
   ): Promise<Response<IProvinsiCount[]>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/count-by-provinsi/${idBeasiswa}`,
+    );
+    return response.data;
+  },
+  getCountByProvinsiProsesLembagaSeleksi: async (
+    idBeasiswa: number,
+  ): Promise<Response<IProvinsiCount[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/count-by-provinsi-proses-lembaga-seleksi/${idBeasiswa}`,
     );
     return response.data;
   },
@@ -525,6 +534,25 @@ export const beasiswaService = {
     return response.data;
   },
 
+  getPendaftarByProvinsiLembagaSeleksi: async (
+    idBeasiswa: number,
+    kodeProvinsi: string,
+    page: number = 1,
+    search: string = "",
+  ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/pendaftar-by-provinsi-lembaga-seleksi/${idBeasiswa}`,
+      {
+        params: {
+          kodeProvinsi,
+          page,
+          search,
+        },
+      },
+    );
+    return response.data;
+  },
+
   updateDokumenVerifikasiDinas: async (
     idTrxBeasiswa: number,
     data: {
@@ -690,6 +718,90 @@ export const beasiswaService = {
     const response = await axiosInstanceJson.put(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/kluster/bulk`,
       { ids, id_kluster },
+    );
+    return response.data;
+  },
+kirimPembagianWilayah: async (): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.put(
+      `/verifikasi-nasional-v2/rekap-administrasi/kirim`
+    );
+    return response.data;
+  },
+  getRekapProvinsiV2: async (): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/rekap-provinsi`
+    );
+    return response.data;
+  },
+  getDetailProvinsiV2: async (
+    kode_prov: string,
+    params?: { page?: number; limit?: number; search?: string },
+  ): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/detail-provinsi/${kode_prov}`,
+      { params }
+    );
+    return response.data;
+  },
+  ubahStatusKlusterV2: async (
+    idTrxBeasiswa: number,
+    nama_kluster: string,
+  ): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.put(
+      `/verifikasi-nasional-v2/ubah-kluster/${idTrxBeasiswa}`,
+      { nama_kluster } 
+    );
+    return response.data;
+  },
+  kirimSeleksiV2: async (): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.put(
+      `/verifikasi-nasional-v2/kirim-seleksi`
+    );
+    return response.data;
+  },
+  exportDetailV2: async (): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/export-detail`
+    );
+    return response.data;
+  },
+  getPendaftarPenetapanByProvinsi: async (
+    idBeasiswa: number,
+    kodeProvinsi: string,
+    page: number = 1,
+    search: string = "",
+  ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/pendaftar-penetapan-by-provinsi/${idBeasiswa}`,
+      {
+        params: {
+          kodeProvinsi,
+          page,
+          search,
+        },
+      },
+    );
+    return response.data;
+  },
+  getPendaftarPenetapan: async (
+    idBeasiswa: number,
+    page: number = 1,
+    search: string = "",
+  ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/pendaftar-penetapan/${idBeasiswa}`,
+      {
+        params: { page, search },
+      },
+    );
+    return response.data;
+  },
+  getDetailPenetapan: async (
+    idTrxBeasiswa: number,
+  ): Promise<Response<FullDataBeasiswa>> => {
+    // FullDataBeasiswa sudah cocok strukturnya
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/detail-penetapan/${idTrxBeasiswa}`,
     );
     return response.data;
   },

@@ -21,6 +21,9 @@ import type {
   PaginatedJurusanSekolahResponse,
   PaginatedPerguruanTinggiResponse,
   PerguruanTinggiEditFormData,
+  NpsnFormData,
+  INpsn,
+  PaginatedNpsnResponse,
 } from "@/types/master";
 import type { Response } from "@/types/response";
 
@@ -281,7 +284,7 @@ export const masterService = {
   },
 
   createPerguruanTinggi: async (
-    data: PerguruanTinggiEditFormData, 
+    data: PerguruanTinggiEditFormData,
   ): Promise<Response<null>> => {
     const formData = new FormData();
 
@@ -326,7 +329,7 @@ export const masterService = {
   getAllJurusanSekolah: async (): Promise<Response<IJurusanSekolah[]>> => {
     // PERBAIKAN: Sesuaikan dengan rute backend yang Anda buat
     const response = await axiosInstanceJson.get(
-      `${MASTER_SERVICE_BASE_URL}/setting-jurusan-prodi/jurusan-sekolah/all` 
+      `${MASTER_SERVICE_BASE_URL}/setting-jurusan-prodi/jurusan-sekolah/all`,
     );
     return response.data;
   },
@@ -347,5 +350,49 @@ export const masterService = {
     );
     return response.data;
   },
-};
+  getNpsnByPagination: async (
+    page: number = 1,
+    search: string = "",
+  ): Promise<Response<PaginatedNpsnResponse>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/npsn`,
+      {
+        params: { page, search },
+      },
+    );
+    return response.data;
+  },
 
+  getNpsnById: async (id: number): Promise<Response<INpsn>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/npsn/${id}`,
+    );
+    return response.data;
+  },
+
+  createNpsn: async (data: NpsnFormData): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/npsn`,
+      data,
+    );
+    return response.data;
+  },
+
+  updateNpsnById: async (
+    id: number,
+    data: NpsnFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/npsn/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  deleteNpsn: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/npsn/${id}`,
+    );
+    return response.data;
+  },
+};
