@@ -18,6 +18,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const BeasiswaVerifikasiKotaPage = () => {
   useRedirectIfHasNotAccess("R");
@@ -30,6 +37,9 @@ const BeasiswaVerifikasiKotaPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
+
+  const [filterIdFlow, setFilterIdFlow] = useState<string>("all");
+  const [filterIdJalur, setFilterIdJalur] = useState<string>("all");
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -44,6 +54,22 @@ const BeasiswaVerifikasiKotaPage = () => {
   });
 
   const beasiswaAktif = responseBeasiswaAktif?.data ?? null;
+
+  const { data: responseFlow } = useQuery({
+    queryKey: ["flow-beasiswa"],
+    queryFn: () => beasiswaService.getFlowBeasiswa(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const { data: responseJalur } = useQuery({
+    queryKey: ["jalur"],
+    queryFn: () => beasiswaService.getJalur(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
 
   const {
     data: response,
@@ -74,8 +100,41 @@ const BeasiswaVerifikasiKotaPage = () => {
     staleTime: STALE_TIME,
   });
 
-  const data: ITrxBeasiswa[] = response?.data?.result ?? [];
+  const allData: ITrxBeasiswa[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.total_pages ?? 0;
+
+  // const filteredData = useMemo(() => {
+  //   return allData.filter((row) => {
+  //     const flowMatch =
+  //       filterIdFlow === "all" ? true : row.id_flow === Number(filterIdFlow);
+  //     const jalurMatch =
+  //       filterIdJalur === "all" ? true : row.id_jalur === Number(filterIdJalur);
+  //     return flowMatch && jalurMatch;
+  //   });
+  // }, [allData, filterIdFlow, filterIdJalur]);
+
+  // tambah ke filteredData
+  // update filteredData
+  // update filteredData
+  const filteredData = useMemo(() => {
+    const ADMIN_LULUS = [6, 7, 9, 10, 11, 12, 13, 17];
+
+    return allData.filter((row) => {
+      const flowMatch = (() => {
+        if (filterIdFlow === "all") return true;
+        if (filterIdFlow === "lulus")
+          return ADMIN_LULUS.includes(row.id_flow ?? 0);
+        if (filterIdFlow === "tidak_lulus")
+          return !ADMIN_LULUS.includes(row.id_flow ?? 0);
+        return row.id_flow === Number(filterIdFlow);
+      })();
+
+      const jalurMatch =
+        filterIdJalur === "all" ? true : row.id_jalur === Number(filterIdJalur);
+
+      return flowMatch && jalurMatch;
+    });
+  }, [allData, filterIdFlow, filterIdJalur]);
 
   const { data: countSiapKirimRes } = useQuery({
     queryKey: ["count-tag-kabkota", beasiswaAktif?.id],
@@ -93,6 +152,10 @@ const BeasiswaVerifikasiKotaPage = () => {
       toast.error(error.message || "Terjadi kesalahan saat memuat data.");
     }
   }, [isError, error]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterIdFlow, filterIdJalur]);
 
   const handleFileChange = (file: File | null) => {
     if (!file) return;
@@ -115,7 +178,6 @@ const BeasiswaVerifikasiKotaPage = () => {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      // 1. Upload file SK → simpan ke trx_sk_dinas_kabkota
       const formData = new FormData();
       formData.append("file", selectedFile!);
 
@@ -128,7 +190,6 @@ const BeasiswaVerifikasiKotaPage = () => {
       const filename = uploadRes.data?.filename;
       if (!filename) throw new Error("Gagal mendapatkan nama file");
 
-      // 2. Update flow bulk + simpan filename ke trx_beasiswa
       return beasiswaService.submitTagDinasKabkotaToProvinsi(
         beasiswaAktif?.id ?? 0,
         filename,
@@ -150,6 +211,40 @@ const BeasiswaVerifikasiKotaPage = () => {
   });
 
   const columns = useMemo(() => getColumns(), []);
+
+  const filterContent = (
+    <>
+      <Select value={filterIdFlow} onValueChange={setFilterIdFlow}>
+        <SelectTrigger className="w-[175px]">
+          <SelectValue placeholder="Filter Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua Status</SelectItem>
+          {(responseFlow?.data ?? []).map((opt) => (
+            <SelectItem key={opt.id} value={String(opt.id)}>
+              {opt.flow}
+            </SelectItem>
+          ))}
+          <SelectItem value="lulus">Lulus Administrasi</SelectItem>
+          <SelectItem value="tidak_lulus">Tidak Lulus Administrasi</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filterIdJalur} onValueChange={setFilterIdJalur}>
+        <SelectTrigger className="w-[175px]">
+          <SelectValue placeholder="Filter Jalur" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua Jalur</SelectItem>
+          {(responseJalur?.data ?? []).map((opt) => (
+            <SelectItem key={opt.id} value={String(opt.id)}>
+              {opt.jalur}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
+  );
 
   return (
     <>
@@ -187,18 +282,18 @@ const BeasiswaVerifikasiKotaPage = () => {
             <DataTable
               isLoading={isLoading}
               columns={columns}
-              data={data}
+              data={filteredData}
               pageCount={totalPages}
               pageIndex={page - 1}
               onPageChange={(newPage) => setPage(newPage + 1)}
               searchValue={search}
               onSearchChange={(value) => setSearch(value)}
+              leftHeaderContent={filterContent}
             />
           </>
         )}
       </div>
 
-      {/* Dialog Upload SK */}
       <Dialog open={showUploadDialog} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-md font-inter">
           <DialogHeader>
@@ -214,7 +309,6 @@ const BeasiswaVerifikasiKotaPage = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Area Upload */}
             {!selectedFile ? (
               <div
                 className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer"
@@ -265,7 +359,6 @@ const BeasiswaVerifikasiKotaPage = () => {
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
               <button
                 type="button"

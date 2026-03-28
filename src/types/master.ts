@@ -120,6 +120,11 @@ export interface IJenjangKuliah {
   nama: string;
 }
 
+export interface IJenjang {
+  id_jenjang: number;
+  nama_jenjang: string;
+}
+
 export interface IAlasanTidakAktif {
   id: number;
   nama: string;

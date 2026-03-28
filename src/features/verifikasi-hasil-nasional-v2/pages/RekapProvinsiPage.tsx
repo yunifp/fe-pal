@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { DataTable } from "@/components/DataTable";
@@ -17,6 +18,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { RekapProvinsiRow } from "@/types/beasiswa";
 
 const RekapProvinsiPage: React.FC = () => {
@@ -25,23 +33,34 @@ const RekapProvinsiPage: React.FC = () => {
     afirmasi: 0,
     reguler: 0,
   });
+  
+  // State untuk dropdown filter
+  const [listKabkota, setListKabkota] = useState<{kode_dinas_kabkota: string, nama_dinas_kabkota: string}[]>([]);
+  const [selectedKabkota, setSelectedKabkota] = useState<string>("all");
+  
   const [loading, setLoading] = useState<boolean>(false);
   const [openKirimDialog, setOpenKirimDialog] = useState<boolean>(false);
 
+  // Re-fetch data setiap kali dropdown (selectedKabkota) berubah
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedKabkota]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await beasiswaService.getRekapProvinsiV2();
+      const res = await beasiswaService.getRekapProvinsiV2(selectedKabkota);
       if (res?.data) {
         setData(res.data.rekap || []);
         setStats({
           afirmasi: res.data.total_afirmasi || 0,
           reguler: res.data.total_reguler || 0,
         });
+        
+        // Render list dropdown hanya sekali saat pertama kali di load (agar tidak tertimpa/hilang saat difilter)
+        if (listKabkota.length === 0 && res.data.list_kabkota) {
+          setListKabkota(res.data.list_kabkota);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -97,17 +116,34 @@ const RekapProvinsiPage: React.FC = () => {
   return (
     <>
       <div className="p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Header dengan Dropdown Filter */}
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-800">
             Verifikasi Nasional V2
           </h1>
-          <div className="space-x-2">
-            <Button variant="outline" onClick={handleExportDetail}>
+          
+          <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+            {/* Filter Kabupaten */}
+            <Select value={selectedKabkota} onValueChange={setSelectedKabkota}>
+              <SelectTrigger className="w-full sm:w-[250px] bg-white border-gray-300">
+                <SelectValue placeholder="Pilih Kabupaten/Kota" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kabupaten/Kota</SelectItem>
+                {listKabkota.map((kab) => (
+                  <SelectItem key={kab.kode_dinas_kabkota} value={kab.kode_dinas_kabkota}>
+                    {kab.nama_dinas_kabkota}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={handleExportDetail} className="w-full sm:w-auto">
               Export Data Detail
             </Button>
             <Button 
               onClick={() => setOpenKirimDialog(true)} 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
             >
               Kirim ke Lembaga Seleksi
             </Button>
@@ -183,7 +219,7 @@ const RekapProvinsiPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Pengiriman</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin mengirim semua data ke Lembaga Seleksi (Flow 10)? 
+              Apakah Anda yakin ingin mengirim semua data ke Lembaga Seleksi ? 
               Pastikan seluruh verifikasi kluster sudah sesuai sebelum melanjutkan.
             </AlertDialogDescription>
           </AlertDialogHeader>

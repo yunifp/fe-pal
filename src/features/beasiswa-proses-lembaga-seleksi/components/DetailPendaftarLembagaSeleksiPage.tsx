@@ -201,12 +201,12 @@ const DetailPendaftarLembagaSeleksiPage = () => {
   };
 
   // ── URLs & breadcrumb ─────────────────────────────────────────────────
-  const backUrl = `/beasiswa-hasil-verifikasi-daerah/pendaftar/provinsi/${kodeProvinsi}?nama=${encodeURIComponent(namaProvinsi)}`;
+  const backUrl = `/proses_lembaga_seleksi/pendaftar/provinsi/${kodeProvinsi}?nama=${encodeURIComponent(namaProvinsi)}`;
 
   const breadcrumbItems = [
     {
       name: "Hasil Verifikasi Daerah",
-      url: "/beasiswa-hasil-verifikasi-daerah",
+      url: "/proses_lembaga_seleksi",
     },
     { name: namaProvinsi, url: backUrl },
     { name: "Detail Pendaftar" },

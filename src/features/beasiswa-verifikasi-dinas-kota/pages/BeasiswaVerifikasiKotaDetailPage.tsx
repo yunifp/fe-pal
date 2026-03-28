@@ -53,6 +53,7 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
       data_tempat_tinggal_is_valid: "1",
       data_orang_tua_is_valid: "1",
       data_tempat_bekerja_is_valid: "1",
+      data_tempat_tinggal_bekerja_is_valid: "1",
       data_pendidikan_is_valid: "1",
       data_program_studi_is_valid: "1",
       data_persyaratan_umum: [],

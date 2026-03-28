@@ -234,6 +234,12 @@ const NavbarLanding = ({
               style={S.mobileLink()}>
               Jalur Pendaftaran
             </a>
+            <a
+              href="cek-status"
+              onClick={handleLinkClick}
+              style={S.mobileLink()}>
+              Cek Status
+            </a>
             {/* <a href="/pendaftaran-beasiswa" style={S.navLink()}>
               Beasiswa
             </a> */}

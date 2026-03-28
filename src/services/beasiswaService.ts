@@ -621,7 +621,13 @@ export const beasiswaService = {
     page?: number;
     limit?: number;
     search?: string;
-    filter?: "all" | "assigned" | "unassigned";
+    filter?:
+      | "all"
+      | "assigned"
+      | "unassigned"
+      | "filter-assigned"
+      | "filter-unassigned";
+    id_verifikator?: number; // ✅ tambah type ini
   }): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/pendaftar`,
@@ -631,15 +637,24 @@ export const beasiswaService = {
           limit: params.limit ?? 10,
           search: params.search ?? "",
           filter: params.filter ?? "all",
+          id_verifikator: params.id_verifikator, // ✅ tambah ini
         },
       },
     );
     return response.data;
   },
   assignVerifikatorByJumlah: async (
-    assignments: Array<{ id_verifikator: number; jumlah: number }>,
+    assignments: Array<{
+      id_verifikator: number;
+      jumlah: number;
+      verifikator_nama: string;
+    }>,
   ): Promise<
-    Response<{ total_assigned: number; verifikator_assigned: number }>
+    Response<{
+      total_assigned: number;
+      verifikator_assigned: number;
+      verifikator_nama: string;
+    }>
   > => {
     const response = await axiosInstanceJson.post(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/assign-by-jumlah`,
@@ -721,15 +736,19 @@ export const beasiswaService = {
     );
     return response.data;
   },
-kirimPembagianWilayah: async (): Promise<any> => {
+  kirimPembagianWilayah: async (): Promise<any> => {
     const response = await axiosInstanceBeasiswa.put(
-      `/verifikasi-nasional-v2/rekap-administrasi/kirim`
+      `/verifikasi-nasional-v2/rekap-administrasi/kirim`,
     );
     return response.data;
   },
-  getRekapProvinsiV2: async (): Promise<any> => {
+  getRekapProvinsiV2: async (kode_kabkota?: string): Promise<any> => {
+    const params =
+      kode_kabkota && kode_kabkota !== "all" ? { kode_kabkota } : {};
+
     const response = await axiosInstanceBeasiswa.get(
-      `/verifikasi-nasional-v2/rekap-provinsi`
+      `/verifikasi-nasional-v2/rekap-provinsi`,
+      { params },
     );
     return response.data;
   },
@@ -739,7 +758,7 @@ kirimPembagianWilayah: async (): Promise<any> => {
   ): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
       `/verifikasi-nasional-v2/detail-provinsi/${kode_prov}`,
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -749,19 +768,19 @@ kirimPembagianWilayah: async (): Promise<any> => {
   ): Promise<any> => {
     const response = await axiosInstanceBeasiswa.put(
       `/verifikasi-nasional-v2/ubah-kluster/${idTrxBeasiswa}`,
-      { nama_kluster } 
+      { nama_kluster },
     );
     return response.data;
   },
   kirimSeleksiV2: async (): Promise<any> => {
     const response = await axiosInstanceBeasiswa.put(
-      `/verifikasi-nasional-v2/kirim-seleksi`
+      `/verifikasi-nasional-v2/kirim-seleksi`,
     );
     return response.data;
   },
   exportDetailV2: async (): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
-      `/verifikasi-nasional-v2/export-detail`
+      `/verifikasi-nasional-v2/export-detail`,
     );
     return response.data;
   },
@@ -804,5 +823,115 @@ kirimPembagianWilayah: async (): Promise<any> => {
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/detail-penetapan/${idTrxBeasiswa}`,
     );
     return response.data;
+  },
+  downloadPendaftarAssignment: async (params: {
+    filter?: string;
+    search?: string;
+    id_verifikator?: number;
+  }): Promise<void> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/download`,
+      {
+        params,
+        responseType: "blob",
+      },
+    );
+
+    const label =
+      params.filter === "filter-unassigned"
+        ? "belum_assign"
+        : params.filter === "filter-assigned"
+          ? "sudah_assign"
+          : "semua";
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `pendaftar_${label}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  // tambah di beasiswaService, setelah downloadPendaftarAssignment
+
+  downloadVerifikasiKabkota: async (params: {
+    idBeasiswa: number;
+    kodeProvinsi?: string;
+    kodeKabkota?: string;
+    search?: string;
+    idFlow?: number;
+    idJalur?: number;
+    statusLulus?: "Y" | "N";
+  }): Promise<void> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-verifikasi-kabkota`,
+      {
+        params: {
+          idBeasiswa: params.idBeasiswa,
+          kodeProvinsi: params.kodeProvinsi,
+          kodeKabkota: params.kodeKabkota,
+          search: params.search ?? "",
+          ...(params.idFlow !== undefined && { idFlow: params.idFlow }),
+          ...(params.idJalur !== undefined && { idJalur: params.idJalur }),
+          ...(params.statusLulus !== undefined && {
+            statusLulus: params.statusLulus,
+          }),
+        },
+        responseType: "blob",
+      },
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `verifikasi-kabkota-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  downloadVerifikasiProvinsi: async (params: {
+    idBeasiswa: number;
+    kodeProvinsi?: string;
+    kodeKabkota?: string;
+    search?: string;
+    idFlow?: number;
+    idJalur?: number;
+    statusLulus?: "Y" | "N";
+  }): Promise<void> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-verifikasi-provinsi`,
+      {
+        params: {
+          idBeasiswa: params.idBeasiswa,
+          kodeProvinsi: params.kodeProvinsi,
+          kodeKabkota: params.kodeKabkota,
+          search: params.search ?? "",
+          ...(params.idFlow !== undefined && { idFlow: params.idFlow }),
+          ...(params.idJalur !== undefined && { idJalur: params.idJalur }),
+          ...(params.statusLulus !== undefined && {
+            statusLulus: params.statusLulus,
+          }),
+        },
+        responseType: "blob",
+      },
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `verifikasi-provinsi-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };

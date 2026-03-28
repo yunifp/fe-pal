@@ -303,6 +303,7 @@ export interface ITrxBeasiswa {
   status_akhir_kelulusan?: "Y" | "N" | null;
 
   verifikator_catatan?: string | null;
+  verifikator_nama?: string | null;
   verifikator_dinas_catatan?: string | null;
 
   created_at?: Date | string | null;
@@ -756,6 +757,9 @@ export interface CatatanDataSection {
   data_tempat_bekerja_is_valid: "Y" | "N" | null;
   data_tempat_bekerja_catatan: string | null;
 
+  data_tempat_tinggal_bekerja_is_valid: "Y" | "N" | null;
+  data_tempat_tinggal_bekerja_catatan: string | null;
+
   data_orang_tua_is_valid: "Y" | "N" | null;
   data_orang_tua_catatan: string | null;
 
@@ -823,7 +827,8 @@ export const verifikasiSchema = z
 
     data_tempat_tinggal_is_valid: z
       .string()
-      .min(1, "Kesesuaian Data Tempat Tinggal wajib dipilih"),
+      .optional(),
+      // .min(1, "Kesesuaian Data Tempat Tinggal wajib dipilih"),
     data_tempat_tinggal_catatan: z.string().optional(),
 
     data_orang_tua_is_valid: z
@@ -833,8 +838,14 @@ export const verifikasiSchema = z
 
     data_tempat_bekerja_is_valid: z
       .string()
-      .min(1, "Kesesuaian Data Tempat Bekerja / Kebun wajib dipilih"),
+      // .min(1, "Kesesuaian Data Tempat Bekerja / Kebun wajib dipilih"),
+      .optional(),
     data_tempat_bekerja_catatan: z.string().optional(),
+
+    data_tempat_tinggal_bekerja_is_valid: z
+      .string()
+      .min(1, "Kesesuaian Data Tempat Tinggal & Bekerja / Kebun wajib dipilih"),
+    data_tempat_tinggal_bekerja_catatan: z.string().optional(),
 
     data_pendidikan_is_valid: z
       .string()
@@ -897,6 +908,13 @@ export const verifikasiSchema = z
         field: "data_tempat_bekerja_catatan",
         message:
           "Catatan wajib diisi jika Data Tempat Bekerja / Kebun dinyatakan tidak sesuai",
+      },
+      {
+        isValid: data.data_tempat_tinggal_bekerja_is_valid,
+        catatan: data.data_tempat_tinggal_bekerja_catatan,
+        field: "data_tempat_tinggal_bekerja_catatan",
+        message:
+          "Catatan wajib diisi jika Data Tempat Tinggal dan Bekerja / Kebun dinyatakan tidak sesuai",
       },
       {
         isValid: data.data_pendidikan_is_valid,

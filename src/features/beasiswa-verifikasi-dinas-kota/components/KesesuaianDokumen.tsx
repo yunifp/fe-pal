@@ -146,7 +146,7 @@ export const KesesuaianDokumen = ({
                     ) : (
                       <>
                         <Clock className="w-3 h-3" />
-                        Pernah diverifikasi: Perlu Diperbaiki
+                        Pernah diverifikasi: Tidak Sesuai
                       </>
                     )}
                     {existingNama && ` — ${existingNama}`}
@@ -182,7 +182,7 @@ export const KesesuaianDokumen = ({
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="N" id={`${nameValid}-N`} />
-                <Label htmlFor={`${nameValid}-N`}>Perlu Diperbaiki</Label>
+                <Label htmlFor={`${nameValid}-N`}>Tidak Sesuai</Label>
               </div>
             </RadioGroup>
 
@@ -191,7 +191,7 @@ export const KesesuaianDokumen = ({
             )}
 
             {/* Catatan jika N */}
-            {status === "N" && (
+            {/* {status === "N" && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700">
                   Catatan Perbaikan
@@ -202,7 +202,7 @@ export const KesesuaianDokumen = ({
                   {...register(nameCatatan)}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Info sesuai */}
             {status === "Y" && (

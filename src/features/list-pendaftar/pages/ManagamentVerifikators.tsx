@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { STALE_TIME } from "@/constants/reactQuery";
@@ -6,7 +6,6 @@ import { beasiswaService } from "@/services/beasiswaService";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,10 +15,21 @@ import {
   ArrowRight,
   Loader2,
   BarChart3,
-  GitBranch,
+  // GitBranch,
   AlertCircle,
   CheckCircle2,
+  Download,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDebounce } from "@/hooks/useDebounce";
+import { DataTable } from "../../../components/DataTable";
+import { getPendaftarColumns } from "../components/pendaftarColumns"; // sesuaikan path
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -139,24 +149,69 @@ const ManajemenVerifikator = () => {
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
   });
-  const allPendaftar: ITrxBeasiswa[] = responsePendaftar?.data?.result ?? [];
+
+  // const [searchUnassigned, setSearchUnassigned] = useState("");
+  // const [pageUnassigned, setPageUnassigned] = useState(1);
+  // const debouncedSearchUnassigned = useDebounce(searchUnassigned, 500);
+
+  // const { data: responseUnassignedTable, isLoading: isLoadingTable } = useQuery(
+  //   {
+  //     queryKey: [
+  //       "pendaftar-unassigned-table",
+  //       pageUnassigned,
+  //       debouncedSearchUnassigned,
+  //     ],
+  //     queryFn: () =>
+  //       beasiswaService.getPendaftarForAssignment({
+  //         page: pageUnassigned,
+  //         limit: 10,
+  //         filter: "all",
+  //         search: debouncedSearchUnassigned,
+  //       }),
+  //     retry: false,
+  //     refetchOnWindowFocus: false,
+  //     staleTime: STALE_TIME,
+  //   },
+  // );
+
+  // useEffect(() => {
+  //   setPageUnassigned(1);
+  // }, [debouncedSearchUnassigned]);
+
+  // const unassignedRows: ITrxBeasiswa[] =
+  //   responseUnassignedTable?.data?.result ?? [];
+  // const unassignedTotalPages: number =
+  //   responseUnassignedTable?.data?.total_pages ?? 0;
+
+  // const unassignedRows: ITrxBeasiswa[] =
+  //   responseUnassignedTable?.data?.result ?? [];
+  // const unassignedTotal: number = responseUnassignedTable?.data?.total ?? 0;
+  // const unassignedTotalPages: number =
+  //   responseUnassignedTable?.data?.total_pages ?? 1;
+
+  // const columnsUnassigned = useMemo(
+  //   () => getPendaftarColumns(() => {}), // kosongkan handler jika tidak perlu detail
+  //   [],
+  // );
+
+  // const allPendaftar: ITrxBeasiswa[] = responsePendaftar?.data?.result ?? [];
   const totalPendaftar: number = responsePendaftar?.data?.total ?? 0;
   const unassigneds: number = unassigned?.data?.total ?? 0;
   // const totalBelumAssign = Math.max(0, totalPendaftar - totalBeban);
   const totalBelumAssign = Math.max(0, unassigneds);
 
   // ── Breakdown per Jalur ────────────────────────────────────────────────────
-  const jalurBreakdown = useMemo(() => {
-    const map: Record<string, number> = {};
-    allPendaftar.forEach((p) => {
-      const key = p.jalur ?? "Tidak Diketahui";
-      map[key] = (map[key] ?? 0) + 1;
-    });
-    return Object.entries(map)
-      .map(([jalur, jumlah]) => ({ jalur, jumlah }))
-      .sort((a, b) => b.jumlah - a.jumlah);
-  }, [allPendaftar]);
-  const totalJalur = jalurBreakdown.reduce((a, j) => a + j.jumlah, 0);
+  // const jalurBreakdown = useMemo(() => {
+  //   const map: Record<string, number> = {};
+  //   allPendaftar.forEach((p) => {
+  //     const key = p.jalur ?? "Tidak Diketahui";
+  //     map[key] = (map[key] ?? 0) + 1;
+  //   });
+  //   return Object.entries(map)
+  //     .map(([jalur, jumlah]) => ({ jalur, jumlah }))
+  //     .sort((a, b) => b.jumlah - a.jumlah);
+  // }, [allPendaftar]);
+  // const totalJalur = jalurBreakdown.reduce((a, j) => a + j.jumlah, 0);
 
   // ── Validasi input ─────────────────────────────────────────────────────────
   // Total jumlah yang diinput tidak boleh melebihi pendaftar yang belum assign
@@ -187,6 +242,9 @@ const ManajemenVerifikator = () => {
     const payload = Object.entries(jumlahMap)
       .map(([id, val]) => ({
         id_verifikator: Number(id),
+        verifikator_nama:
+          verifikatorList.find((v) => v.id === Number(id))?.nama ??
+          `Selektor #${id}`,
         jumlah: parseInt(val),
       }))
       .filter((item) => item.jumlah > 0);
@@ -200,14 +258,26 @@ const ManajemenVerifikator = () => {
     try {
       await beasiswaService.assignVerifikatorByJumlah(payload);
 
+      // ── Buat ringkasan nama + jumlah untuk toast ──────────────────────────
+      const ringkasan = payload
+        .map((item) => {
+          const nama =
+            verifikatorList.find((v) => v.id === item.id_verifikator)?.nama ??
+            `Selektor #${item.id_verifikator}`;
+          return `${nama} (${item.jumlah})`;
+        })
+        .join(", ");
+
       toast.success(
-        `Berhasil mengassign ${totalDiInput} pendaftar ke ${payload.length} verifikator`,
+        `Berhasil mengassign ${totalDiInput} pendaftar: ${ringkasan}`,
       );
+
       setJumlahMap({});
       queryClient.invalidateQueries({ queryKey: ["beban-verifikator"] });
       queryClient.invalidateQueries({
         queryKey: ["pendaftar-assignment-stats"],
       });
+      queryClient.invalidateQueries({ queryKey: ["pendaftar-list-table"] });
     } catch {
       toast.error("Gagal melakukan assignment");
     } finally {
@@ -219,14 +289,76 @@ const ManajemenVerifikator = () => {
 
   const isLoadingInfo = isLoadingV || isLoadingBeban;
 
-  const JALUR_COLORS = [
-    "bg-blue-500",
-    "bg-emerald-500",
-    "bg-violet-500",
-    "bg-amber-400",
-    "bg-rose-500",
-    "bg-cyan-500",
-  ];
+  // const JALUR_COLORS = [
+  //   "bg-blue-500",
+  //   "bg-emerald-500",
+  //   "bg-violet-500",
+  //   "bg-amber-400",
+  //   "bg-rose-500",
+  //   "bg-cyan-500",
+  // ];
+
+  const [pageList, setPageList] = useState(1);
+  const [searchList, setSearchList] = useState("");
+  const [filterSelektor, setFilterSelektor] = useState<string>("all"); // "all" | id verifikator
+  const [filterAssign, setFilterAssign] = useState<
+    "filter-assigned" | "filter-unassigned"
+  >("filter-unassigned");
+
+  const debouncedSearchList = useDebounce(searchList, 500);
+
+  const { data: responseListTable, isLoading: isLoadingListTable } = useQuery({
+    queryKey: [
+      "pendaftar-list-table",
+      pageList,
+      debouncedSearchList,
+      filterSelektor,
+      filterAssign,
+    ],
+    queryFn: () =>
+      beasiswaService.getPendaftarForAssignment({
+        page: pageList,
+        limit: 10,
+        filter: filterAssign, // "filter-assigned" / "filter-unassigned" — backend sudah handle
+        search: debouncedSearchList,
+        // ✅ hanya kirim id_verifikator jika mode assigned DAN selektor dipilih
+        ...(filterAssign === "filter-assigned" && filterSelektor !== "all"
+          ? { id_verifikator: Number(filterSelektor) }
+          : {}),
+      }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const listRows: ITrxBeasiswa[] = responseListTable?.data?.result ?? [];
+  const listTotalPages: number = responseListTable?.data?.total_pages ?? 0;
+
+  useEffect(() => {
+    setPageList(1);
+  }, [debouncedSearchList, filterSelektor, filterAssign]);
+  // queryClient.invalidateQueries({ queryKey: ["pendaftar-list-table"] });
+
+  const columnsListTable = useMemo(() => getPendaftarColumns(), []);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await beasiswaService.downloadPendaftarAssignment({
+        filter: filterAssign,
+        search: debouncedSearchList,
+        ...(filterAssign === "filter-assigned" && filterSelektor !== "all"
+          ? { id_verifikator: Number(filterSelektor) }
+          : {}),
+      });
+      toast.success("File berhasil diunduh");
+    } catch {
+      toast.error("Gagal mengunduh file");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="pb-10">
@@ -281,145 +413,111 @@ const ManajemenVerifikator = () => {
           </div>
         )}
 
-      {/* ── Dua panel info ──────────────────────────────────────────────────── */}
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Beban Verifikator */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="px-5 py-4 border-b flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+      {/* ── Tabel List Pendaftar + Filter Selektor ──────────────────────────── */}
+      <div className="mt-5 rounded-xl border bg-card shadow-sm">
+        {/* Header */}
+        <div className="px-5 py-4 border-b flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
             <div>
-              <h2 className="text-sm font-semibold">Beban Selektor</h2>
+              <h2 className="text-sm font-semibold">Daftar Pendaftar</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {verifikatorList.length} selektor aktif ·{" "}
-                {totalBeban.toLocaleString("id-ID")} ter-assign
+                Filter berdasarkan selektor dan status assignment
               </p>
             </div>
           </div>
-          <div className="px-5 py-4 space-y-4">
-            {isLoadingInfo ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 rounded-lg" />
-              ))
-            ) : verifikatorList.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Belum ada selektor aktif
-              </div>
-            ) : (
-              verifikatorList
-                .slice()
-                .sort((a, b) => b.total_beban - a.total_beban)
-                .map((v) => {
-                  const pct = (v.total_beban / maxBeban) * 100;
-                  const pctTotal =
-                    totalBeban > 0
-                      ? ((v.total_beban / totalBeban) * 100).toFixed(1)
-                      : "0";
-                  const barColor =
-                    pct > 80
-                      ? "bg-red-500"
-                      : pct > 50
-                        ? "bg-amber-400"
-                        : "bg-blue-500";
-                  return (
-                    <div key={v.id} className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            {v.nama.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-sm font-medium truncate">
-                            {v.nama}
+
+          {/* Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Switch assigned / unassigned */}
+            <div className="flex items-center rounded-lg border bg-muted p-0.5 gap-0.5">
+              <button
+                onClick={() => {
+                  setFilterAssign("filter-unassigned");
+                  setFilterSelektor("all");
+                }}
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
+                  filterAssign === "filter-unassigned"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}>
+                Belum Ter-assign
+              </button>
+              <button
+                onClick={() => setFilterAssign("filter-assigned")}
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
+                  filterAssign === "filter-assigned"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}>
+                Sudah Ter-assign
+              </button>
+            </div>
+
+            {/* Dropdown filter selektor — hanya muncul saat mode assigned */}
+            {filterAssign === "filter-assigned" && (
+              <Select
+                value={filterSelektor}
+                onValueChange={(val) => {
+                  setFilterSelektor(val);
+                  setPageList(1);
+                }}>
+                <SelectTrigger className="h-8 text-xs w-48">
+                  <SelectValue placeholder="Semua selektor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua selektor</SelectItem>
+                  {isLoadingInfo ? (
+                    <SelectItem value="loading" disabled>
+                      Memuat...
+                    </SelectItem>
+                  ) : (
+                    verifikatorList.map((v) => (
+                      <SelectItem key={v.id} value={String(v.id)}>
+                        <div className="flex items-center gap-2">
+                          <span>{v.nama}</span>
+                          <span className="text-muted-foreground">
+                            ({v.total_beban})
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-sm font-bold tabular-nums">
-                            {/* {v.total_beban.toLocaleString("id-ID")} */}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({pctTotal}%)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             )}
-            {!isLoadingInfo && verifikatorList.length > 0 && (
-              <div className="pt-1 border-t flex justify-between text-xs text-muted-foreground">
-                <span>
-                  Rata-rata:{" "}
-                  <span className="font-medium text-foreground">
-                    {Math.round(
-                      totalBeban / verifikatorList.length,
-                    ).toLocaleString("id-ID")}
-                  </span>
-                </span>
-                <span>
-                  Belum assign:{" "}
-                  <span className="font-medium text-foreground">
-                    {totalBelumAssign.toLocaleString("id-ID")}
-                  </span>
-                </span>
-              </div>
-            )}
+
+            {/* Tombol download — letakkan di dalam div Controls, setelah Select selektor */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={isDownloading || isLoadingListTable}>
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Download
+            </Button>
           </div>
         </div>
 
-        {/* Breakdown Jalur */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="px-5 py-4 border-b flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <h2 className="text-sm font-semibold">Breakdown per Jalur</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Distribusi pendaftar berdasarkan jalur penerimaan
-              </p>
-            </div>
-          </div>
-          <div className="px-5 py-4 space-y-4">
-            {isLoadingPendaftar ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 rounded-lg" />
-              ))
-            ) : jalurBreakdown.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Belum ada data jalur
-              </div>
-            ) : (
-              jalurBreakdown.map(({ jalur, jumlah }, idx) => {
-                const pct = totalJalur > 0 ? (jumlah / totalJalur) * 100 : 0;
-                return (
-                  <div key={jalur} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium truncate">
-                        {jalur}
-                      </span>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-sm font-bold tabular-nums">
-                          {/* {jumlah.toLocaleString("id-ID")} */}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          ({pct.toFixed(1)}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${JALUR_COLORS[idx % JALUR_COLORS.length]}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+        {/* Tabel */}
+        <div className="px-5 py-5">
+          <DataTable
+            isLoading={isLoadingListTable}
+            columns={columnsListTable}
+            data={listRows}
+            pageCount={listTotalPages}
+            pageIndex={pageList - 1}
+            onPageChange={(newPage) => setPageList(newPage + 1)}
+            searchValue={searchList}
+            onSearchChange={(value) => {
+              setSearchList(value);
+              setPageList(1);
+            }}
+          />
         </div>
       </div>
 
@@ -597,6 +695,146 @@ const ManajemenVerifikator = () => {
             </>
           )}
         </div>
+      </div>
+
+      {/* ── Dua panel info ──────────────────────────────────────────────────── */}
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-1 gap-5">
+        {/* Beban Verifikator */}
+        <div className="rounded-xl border bg-card shadow-sm">
+          <div className="px-5 py-4 border-b flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <h2 className="text-sm font-semibold">Beban Selektor</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {verifikatorList.length} selektor aktif ·{" "}
+                {totalBeban.toLocaleString("id-ID")} ter-assign
+              </p>
+            </div>
+          </div>
+          <div className="px-5 py-4 space-y-4">
+            {isLoadingInfo ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))
+            ) : verifikatorList.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Belum ada selektor aktif
+              </div>
+            ) : (
+              verifikatorList
+                .slice()
+                .sort((a, b) => b.total_beban - a.total_beban)
+                .map((v) => {
+                  const pct = (v.total_beban / maxBeban) * 100;
+                  const pctTotal =
+                    totalBeban > 0
+                      ? ((v.total_beban / totalBeban) * 100).toFixed(1)
+                      : "0";
+                  const barColor =
+                    pct > 80
+                      ? "bg-red-500"
+                      : pct > 50
+                        ? "bg-amber-400"
+                        : "bg-blue-500";
+                  return (
+                    <div key={v.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {v.nama.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-medium truncate">
+                            {v.nama}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-sm font-bold tabular-nums">
+                            {/* {v.total_beban.toLocaleString("id-ID")} */}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({pctTotal}%)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+            {!isLoadingInfo && verifikatorList.length > 0 && (
+              <div className="pt-1 border-t flex justify-between text-xs text-muted-foreground">
+                <span>
+                  Rata-rata:{" "}
+                  <span className="font-medium text-foreground">
+                    {Math.round(
+                      totalBeban / verifikatorList.length,
+                    ).toLocaleString("id-ID")}
+                  </span>
+                </span>
+                <span>
+                  Belum assign:{" "}
+                  <span className="font-medium text-foreground">
+                    {totalBelumAssign.toLocaleString("id-ID")}
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Breakdown Jalur */}
+        {/* <div className="rounded-xl border bg-card shadow-sm">
+          <div className="px-5 py-4 border-b flex items-center gap-2">
+            <GitBranch className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <h2 className="text-sm font-semibold">Breakdown per Jalur</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Distribusi pendaftar berdasarkan jalur penerimaan
+              </p>
+            </div>
+          </div>
+          <div className="px-5 py-4 space-y-4">
+            {isLoadingPendaftar ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 rounded-lg" />
+              ))
+            ) : jalurBreakdown.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Belum ada data jalur
+              </div>
+            ) : (
+              jalurBreakdown.map(({ jalur, jumlah }, idx) => {
+                const pct = totalJalur > 0 ? (jumlah / totalJalur) * 100 : 0;
+                return (
+                  <div key={jalur} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium truncate">
+                        {jalur}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-sm font-bold tabular-nums"></span>
+                        <span className="text-xs text-muted-foreground">
+                          ({pct.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${JALUR_COLORS[idx % JALUR_COLORS.length]}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div> */}
       </div>
     </div>
   );

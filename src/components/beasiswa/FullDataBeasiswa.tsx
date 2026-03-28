@@ -262,8 +262,106 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal */}
+      {/* Data Tempat Tinggal & Bekerja */}
       <CollapsibleSection
+        title="Data Tempat Tinggal & Bekerja / Kebun"
+        icon={MapPin}
+        defaultOpen={false}>
+        <>
+          {/* Data Tempat Tinggal */}
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Data Tempat Tinggal
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            <InfoItem
+              icon={MapPin}
+              label="Provinsi"
+              value={data_beasiswa.tinggal_prov}
+            />
+            <InfoItem
+              icon={MapPin}
+              label="Kabupaten / Kota"
+              value={data_beasiswa.tinggal_kab_kota}
+            />
+            <InfoItem
+              icon={MapPin}
+              label="Kecamatan"
+              value={data_beasiswa.tinggal_kec}
+            />
+            <InfoItem
+              icon={MapPin}
+              label="Kelurahan"
+              value={data_beasiswa.tinggal_kel}
+            />
+            <InfoItem
+              icon={Home}
+              label="Dusun"
+              value={data_beasiswa.tinggal_dusun}
+            />
+            <InfoItem
+              icon={Hash}
+              label="Kode Pos"
+              value={data_beasiswa.tinggal_kode_pos}
+            />
+            <InfoItem icon={Hash} label="RT" value={data_beasiswa.tinggal_rt} />
+            <InfoItem icon={Hash} label="RW" value={data_beasiswa.tinggal_rw} />
+            <InfoItem
+              icon={Map}
+              label="Alamat Lengkap"
+              value={data_beasiswa.tinggal_alamat}
+            />
+          </div>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* Data Tempat Bekerja */}
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Data Tempat Bekerja / Kebun
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            <InfoItem
+              icon={Briefcase}
+              label="Provinsi"
+              value={data_beasiswa.kerja_prov}
+            />
+            <InfoItem
+              icon={Briefcase}
+              label="Kabupaten / Kota"
+              value={data_beasiswa.kerja_kab_kota}
+            />
+            <InfoItem
+              icon={Briefcase}
+              label="Kecamatan"
+              value={data_beasiswa.kerja_kec}
+            />
+            <InfoItem
+              icon={Briefcase}
+              label="Kelurahan"
+              value={data_beasiswa.kerja_kel}
+            />
+            <InfoItem
+              icon={Home}
+              label="Dusun"
+              value={data_beasiswa.kerja_dusun}
+            />
+            <InfoItem
+              icon={Hash}
+              label="Kode Pos"
+              value={data_beasiswa.kerja_kode_pos}
+            />
+            <InfoItem icon={Hash} label="RT" value={data_beasiswa.kerja_rt} />
+            <InfoItem icon={Hash} label="RW" value={data_beasiswa.kerja_rw} />
+            <InfoItem
+              icon={Map}
+              label="Alamat Lengkap"
+              value={data_beasiswa.kerja_alamat}
+            />
+          </div>
+        </>
+      </CollapsibleSection>
+
+      {/* Data Tempat Tinggal */}
+      {/* <CollapsibleSection
         title="Data Tempat Tinggal"
         icon={MapPin}
         defaultOpen={false}>
@@ -308,10 +406,10 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
             />
           </div>
         </>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
 
       {/* Data Tempat Bekerja / Kebun */}
-      <CollapsibleSection
+      {/* <CollapsibleSection
         title="Data Tempat Bekerja"
         icon={MapPin}
         defaultOpen={false}>
@@ -356,7 +454,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
             />
           </div>
         </>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
 
       {/* Data Orang Tua */}
       <CollapsibleSection

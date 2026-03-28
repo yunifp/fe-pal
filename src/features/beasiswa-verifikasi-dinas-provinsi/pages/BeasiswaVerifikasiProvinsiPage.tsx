@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Users,
+  Download,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +34,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "@/components/ui/select";
 
 type ViewState =
   | { mode: "kabkota-list" }
@@ -43,12 +53,18 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   const authUser = useAuthStore((state) => state.user);
   const kodeProvinsi = authUser?.kode_prov || "";
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<ViewState>({ mode: "kabkota-list" });
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
+
+  // Filter state
+  const [filterIdFlow, setFilterIdFlow] = useState<string>("all");
+  const [filterIdJalur, setFilterIdJalur] = useState<string>("all");
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -72,6 +88,24 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   });
 
   const beasiswaAktif = responseBeasiswaAktif?.data ?? null;
+
+  // ─── Fetch opsi flow/status ───────────────────────────────────────────────
+  const { data: responseFlow } = useQuery({
+    queryKey: ["flow-beasiswa"],
+    queryFn: () => beasiswaService.getFlowBeasiswa(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  // ─── Fetch opsi jalur ─────────────────────────────────────────────────────
+  const { data: responseJalur } = useQuery({
+    queryKey: ["jalur"],
+    queryFn: () => beasiswaService.getJalur(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
 
   // ─── List kabkota di provinsi user ───────────────────────────────────────
   const { data: kabkotaListRes, isLoading: isLoadingKabkota } = useQuery({
@@ -130,8 +164,29 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     staleTime: STALE_TIME,
   });
 
-  const data: ITrxBeasiswa[] = response?.data?.result ?? [];
+  const allData: ITrxBeasiswa[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.total_pages ?? 0;
+
+  // ─── Filter client-side ───────────────────────────────────────────────────
+  const filteredData = useMemo(() => {
+    const ADMIN_LULUS = [6, 7, 9, 10, 11, 12, 13, 17];
+
+    return allData.filter((row) => {
+      const flowMatch = (() => {
+        if (filterIdFlow === "all") return true;
+        if (filterIdFlow === "lulus")
+          return ADMIN_LULUS.includes(row.id_flow ?? 0);
+        if (filterIdFlow === "tidak_lulus")
+          return !ADMIN_LULUS.includes(row.id_flow ?? 0);
+        return row.id_flow === Number(filterIdFlow);
+      })();
+
+      const jalurMatch =
+        filterIdJalur === "all" ? true : row.id_jalur === Number(filterIdJalur);
+
+      return flowMatch && jalurMatch;
+    });
+  }, [allData, filterIdFlow, filterIdJalur]);
 
   // ─── Count siap kirim ─────────────────────────────────────────────────────
   const { data: countSiapKirimRes } = useQuery({
@@ -178,7 +233,15 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   useEffect(() => {
     setPage(1);
     setSearch("");
+    // Reset filter saat berpindah kabkota
+    setFilterIdFlow("all");
+    setFilterIdJalur("all");
   }, [kodeKabkotaSelected]);
+
+  // Reset ke halaman 1 saat filter berubah
+  useEffect(() => {
+    setPage(1);
+  }, [filterIdFlow, filterIdJalur]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectKabkota = (kode: string, nama: string) => {
@@ -296,6 +359,91 @@ const BeasiswaVerifikasiProvinsiPage = () => {
           { name: view.nama },
         ];
 
+  const handleDownloadCSV = async () => {
+    setIsDownloading(true);
+    try {
+      await beasiswaService.downloadVerifikasiProvinsi({
+        idBeasiswa: beasiswaAktif?.id ?? 0,
+        kodeProvinsi,
+        // kodeKabkota: kodeKabkotaSelected,
+        search: debouncedSearch,
+        ...(filterIdFlow !== "all" &&
+          filterIdFlow !== "lulus" &&
+          filterIdFlow !== "tidak_lulus" && { idFlow: Number(filterIdFlow) }),
+        ...(filterIdJalur !== "all" && { idJalur: Number(filterIdJalur) }),
+        ...(filterIdFlow === "lulus" && { statusLulus: "Y" }),
+        ...(filterIdFlow === "tidak_lulus" && { statusLulus: "N" }),
+      });
+      toast.success("File berhasil diunduh");
+    } catch {
+      toast.error("Gagal mengunduh file");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // ─── Filter node (dipakai di DataTable pendaftar) ─────────────────────────
+  const filterContent = (
+    <>
+      <Select value={filterIdFlow} onValueChange={setFilterIdFlow}>
+        <SelectTrigger className="w-[175px]">
+          <SelectValue placeholder="Filter Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua Status</SelectItem>
+          {(responseFlow?.data ?? []).map((opt) => (
+            <SelectItem key={opt.id} value={String(opt.id)}>
+              {opt.flow}
+            </SelectItem>
+          ))}
+          <SelectSeparator />
+          <SelectItem value="lulus">Lulus Administrasi</SelectItem>
+          <SelectItem value="tidak_lulus">Tidak Lulus Administrasi</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filterIdJalur} onValueChange={setFilterIdJalur}>
+        <SelectTrigger className="w-[175px]">
+          <SelectValue placeholder="Filter Jalur" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua Jalur</SelectItem>
+          {(responseJalur?.data ?? []).map((opt) => (
+            <SelectItem key={opt.id} value={String(opt.id)}>
+              {opt.jalur}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <button
+        type="button"
+        onClick={handleDownloadCSV}
+        disabled={filteredData.length === 0 || isDownloading}
+        className={`
+        flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+        transition-all duration-200
+        ${
+          filteredData.length > 0 && !isDownloading
+            ? "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm"
+            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+        }
+      `}>
+        {isDownloading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Download className="w-4 h-4" />
+        )}
+        Download CSV
+        {filteredData.length > 0 && !isDownloading && (
+          <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
+            {filteredData.length}
+          </span>
+        )}
+      </button>
+    </>
+  );
+
   return (
     <>
       <CustBreadcrumb items={breadcrumbItems} />
@@ -373,12 +521,13 @@ const BeasiswaVerifikasiProvinsiPage = () => {
             <DataTable
               isLoading={isLoading}
               columns={pendaftarColumns}
-              data={data}
+              data={filteredData}
               pageCount={totalPages}
               pageIndex={page - 1}
               onPageChange={(newPage) => setPage(newPage + 1)}
               searchValue={search}
               onSearchChange={(value) => setSearch(value)}
+              leftHeaderContent={filterContent}
             />
           )}
         </>

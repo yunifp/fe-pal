@@ -12,6 +12,7 @@ import type {
   IBank,
   IJenjangKuliah,
   IJenjangSekolah,
+  IJenjang,
   IJurusanSekolah,
   ILembagaPendidikan,
   IPerguruanTinggi,
@@ -392,6 +393,12 @@ export const masterService = {
   deleteNpsn: async (id: number): Promise<Response<null>> => {
     const response = await axiosInstanceJson.delete(
       `${MASTER_SERVICE_BASE_URL}/npsn/${id}`,
+    );
+    return response.data;
+  },
+  getRefJenjang: async (): Promise<Response<IJenjang[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/npsn/ref-jenjang`,
     );
     return response.data;
   },

@@ -403,8 +403,135 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
         </>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal */}
+      {/* Data Tempat Tinggal & Bekerja / Kebun */}
       <CollapsibleSection
+        title="Data Tempat Tinggal & Tempat Bekerja / Kebun"
+        icon={MapPin}
+        defaultOpen={false}>
+        <>
+          {/* Data Tempat Tinggal */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Data Tempat Tinggal
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+              <InfoItem
+                icon={MapPin}
+                label="Provinsi"
+                value={data_beasiswa.tinggal_prov}
+              />
+              <InfoItem
+                icon={MapPin}
+                label="Kabupaten / Kota"
+                value={data_beasiswa.tinggal_kab_kota}
+              />
+              <InfoItem
+                icon={MapPin}
+                label="Kecamatan"
+                value={data_beasiswa.tinggal_kec}
+              />
+              <InfoItem
+                icon={MapPin}
+                label="Kelurahan"
+                value={data_beasiswa.tinggal_kel}
+              />
+              <InfoItem
+                icon={Home}
+                label="Dusun"
+                value={data_beasiswa.tinggal_dusun}
+              />
+              <InfoItem
+                icon={Hash}
+                label="Kode Pos"
+                value={data_beasiswa.tinggal_kode_pos}
+              />
+              <InfoItem
+                icon={Hash}
+                label="RT"
+                value={data_beasiswa.tinggal_rt}
+              />
+              <InfoItem
+                icon={Hash}
+                label="RW"
+                value={data_beasiswa.tinggal_rw}
+              />
+              <InfoItem
+                icon={Map}
+                label="Alamat Lengkap"
+                value={data_beasiswa.tinggal_alamat}
+              />
+            </div>
+          </div>
+
+          <hr className="border-gray-200 my-4" />
+
+          {/* Data Tempat Bekerja / Kebun */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Data Tempat Bekerja / Kebun
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+              <InfoItem
+                icon={Briefcase}
+                label="Provinsi"
+                value={data_beasiswa.kerja_prov}
+              />
+              <InfoItem
+                icon={Briefcase}
+                label="Kabupaten / Kota"
+                value={data_beasiswa.kerja_kab_kota}
+              />
+              <InfoItem
+                icon={Briefcase}
+                label="Kecamatan"
+                value={data_beasiswa.kerja_kec}
+              />
+              <InfoItem
+                icon={Briefcase}
+                label="Kelurahan"
+                value={data_beasiswa.kerja_kel}
+              />
+              <InfoItem
+                icon={Home}
+                label="Dusun"
+                value={data_beasiswa.kerja_dusun}
+              />
+              <InfoItem
+                icon={Hash}
+                label="Kode Pos"
+                value={data_beasiswa.kerja_kode_pos}
+              />
+              <InfoItem icon={Hash} label="RT" value={data_beasiswa.kerja_rt} />
+              <InfoItem icon={Hash} label="RW" value={data_beasiswa.kerja_rw} />
+              <InfoItem
+                icon={Map}
+                label="Alamat Lengkap"
+                value={data_beasiswa.kerja_alamat}
+              />
+            </div>
+            <KesesuaianSection
+              title="Kesesuaian Data Tempat Tinggal Bekerja / Kebun"
+              nameValid="data_tempat_tinggal_bekerja_is_valid"
+              nameCatatan="data_tempat_tinggal_bekerja_catatan"
+              control={control}
+              register={register}
+              errors={errors}
+              textareaPlaceholder="Contoh: Alamat kurang lengkap, mohon ditambahkan nama jalan dan nomor rumah. RT/RW tidak sesuai dengan KK yang diupload."
+              sectionCatatan={{
+                isValid:
+                  data_beasiswa.catatan_data_section
+                    ?.data_tempat_tinggal_bekerja_is_valid,
+                catatan:
+                  data_beasiswa.catatan_data_section
+                    ?.data_tempat_tinggal_bekerja_catatan,
+              }}
+            />
+          </div>
+        </>
+      </CollapsibleSection>
+
+      {/* Data Tempat Tinggal */}
+      {/* <CollapsibleSection
         title="Data Tempat Tinggal"
         icon={MapPin}
         defaultOpen={false}>
@@ -466,10 +593,10 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             }}
           />
         </>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
 
       {/* Data Tempat Bekerja / Kebun */}
-      <CollapsibleSection
+      {/* <CollapsibleSection
         title="Data Tempat Bekerja / Kebun"
         icon={MapPin}
         defaultOpen={false}>
@@ -531,7 +658,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             }}
           />
         </>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
 
       {/* Data Orang Tua */}
       <CollapsibleSection

@@ -25,7 +25,6 @@ import BeasiswaPendaftaranPage from "./features/beasiswa-pendaftaran/pages/Beasi
 import BeasiswaSeleksiDetailPage from "./features/beasiswa-seleksi/pages/BeasiswaSeleksiDetailPage";
 import BeasiswaSeleksiPage from "./features/beasiswa-seleksi/pages/BeasiswaSeleksiPage";
 import BeasiswaWawancaraPage from "./features/beasiswa-wawancara/pages/BeasiswaWawancaraPage";
-import BeasiswaProsesWawancaraPage from "./features/beasiswa-wawancara/pages/BeasiswaProsesWawancaraPage";
 import BeasiswaVerifikasiDinasPage from "./features/beasiswa-verifikasi-dinas/pages/BeasiswaVerifikasiDinasPage";
 import BeasiswaVerifikasiDinasDetailPage from "./features/beasiswa-verifikasi-dinas/pages/BeasiswaVerifikasiDinasDetailPage";
 import BeasiswaVerifikasiKotaPage from "./features/beasiswa-verifikasi-dinas-kota/pages/BeasiswaVerifikasiKotaPage";
@@ -97,11 +96,18 @@ import BeasiswaProsesLembagaSeleksiDetailPage from "./features/beasiswa-proses-l
 import BeasiswaProsesLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/pages/BeasiswaProsesLembagaSeleksiPage";
 import PendaftarByProvinsiLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/pages/BeasiswaSeleksiPendaftarByProvinsiLembagaSeleksiPage";
 import DetailPendaftarLembagaSeleksiPage from "./features/beasiswa-proses-lembaga-seleksi/components/DetailPendaftarLembagaSeleksiPage";
-import BeasiswaPenetapanPage from "./features/beasiswa-penetapan/pages/BeasiswaPenetapanPage";
+// import BeasiswaPenetapanPage from "./features/beasiswa-penetapan/pages/BeasiswaPenetapanPage";
+import WawancaraSeleksiPage from "./features/wawancara-seleksi/pages/WawancaraSeleksiPage";
+import PenelaahanPage from "./features/penelaahan/pages/PenelaahanPage";
+import RekomtekPage from "./features/rekomtek/pages/RekomtekPage";
 // import BeasiswaPenetapanDetailPage from "./features/beasiswa-penetapan/pages/BeasiswaPenetapanDetailPage";
-// import MasterNpsn from "./features/master-npsn/pages/MasterNpsnPage";
-// import MasterNpsnCreate from "./features/master-npsn/pages/MasterNpsnCreatePage";
-// import MasterNpsnEdit from "./features/master-npsn/pages/MasterNpsnEditPage";
+import MasterNpsn from "./features/master-npsn/pages/MasterNpsnPage";
+import MasterNpsnCreate from "./features/master-npsn/pages/MasterNpsnCreatePage";
+import MasterNpsnEdit from "./features/master-npsn/pages/MasterNpsnEditPage";
+import PenetapanDetailPage from "./features/penetapan/pages/PenetapanDetailPage";
+import PenetapanMainPage from "./features/penetapan/pages/PenetapanMainPage";
+import CekDataPage from "./features/cek_data/pages";
+import CekStatusPage from "./features/landing-alt/pages/CekStatusPublicPage";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +124,7 @@ function App() {
               path="/pendaftaran-beasiswa"
               element={<PendaftaranBeasiswa />}
             />
+            <Route path="/cek-status" element={<CekStatusPage />} />
           </Route>
 
           {/* Routes dengan BaseLayout */}
@@ -189,6 +196,9 @@ function App() {
                 path="/master/program-studi"
                 element={<ProgramStudiPage />}
               />
+              <Route path="/cek-data" element={<CekDataPage />} />
+              <Route path="/penetapan" element={<PenetapanMainPage />} />
+              <Route path="/penetapan/detail/:id" element={<PenetapanDetailPage />} />
               <Route
                 path="/master/program-studi/create"
                 element={<ProgramStudiCreatePage />}
@@ -236,10 +246,6 @@ function App() {
                 element={<BeasiswaWawancaraPage />}
               />
               <Route
-                path="/beasiswa_proses_wawancara"
-                element={<BeasiswaProsesWawancaraPage />}
-              />
-              <Route
                 path="/beasiswa_verifikasi_dinas"
                 element={<BeasiswaVerifikasiDinasPage />}
               />
@@ -271,6 +277,7 @@ function App() {
                 path="/beasiswa_hasil_verifikasi_daerah/kabkota/:kodeProvinsi"
                 element={<KabkotaListPage />}
               />
+              <Route path="/rekomendasi-teknis" element={<RekomtekPage />} />
               <Route
                 path="/beasiswa_hasil_verifikasi_daerah/pendaftar/:kodeKabkota"
                 element={<PendaftarListPage />}
@@ -424,6 +431,11 @@ function App() {
                 path="/proses_lembaga_seleksi"
                 element={<BeasiswaProsesLembagaSeleksiPage />}
               />
+              <Route path="/penelaahan" element={<PenelaahanPage />} />
+              <Route
+                path="/beasiswa_proses_wawancara"
+                element={<WawancaraSeleksiPage />}
+              />
               {/* <Route
                 path="/proses_lembaga_seleksi/detail/:idTrxBeasiswa"
                 element={<BeasiswaProsesLembagaSeleksiDetailPage />}
@@ -440,14 +452,14 @@ function App() {
                 path="proses_lembaga_seleksi/pendaftar/provinsi/:kodeProvinsi/detail/:idTrxBeasiswa"
                 element={<DetailPendaftarLembagaSeleksiPage />}
               />
-              <Route path="penetapan" element={<BeasiswaPenetapanPage />} />
+              {/* <Route path="penetapan" element={<BeasiswaPenetapanPage />} /> */}
               {/* <Route
                 path="penetapan_beasiswa/detail/:id"
                 element={<BeasiswaPenetapanDetailPage />}
-              />
+              /> */}
               <Route path="master-npsn" element={<MasterNpsn />} />
               <Route path="master-npsn/create" element={<MasterNpsnCreate />} />
-              <Route path="master-npsn/:id" element={<MasterNpsnEdit />} /> */}
+              <Route path="master-npsn/:id" element={<MasterNpsnEdit />} />
             </Route>
           </Route>
 
