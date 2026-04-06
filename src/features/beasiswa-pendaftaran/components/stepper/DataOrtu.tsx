@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
 import { CustSelect } from "@/components/ui/CustSelect";
 // import { CustCurrencyInput } from "@/components/ui/CustCurrencyInput";

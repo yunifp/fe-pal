@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -6,14 +6,24 @@ import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/DataTable";
-import { getPenetapanColumns } from "../components/columns"; // Pastikan path ini benar
+import { getPenetapanColumns } from "../components/columns"; 
 import { penetapanService } from "../../../services/penetapanService";
 import { ArrowLeft, Eye, Users } from "lucide-react";
+import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api"; // <-- 1. Import Base URL API
 
-const BACKEND_PUBLIC_URL = "http://localhost:3003/uploads"; 
+const getUploadUrl = () => {
+  try {
+    const origin = new URL(BEASISWA_SERVICE_BASE_URL).origin;
+    return `${origin}/uploads`;
+  } catch (error) {
+    return "/uploads";
+  }
+};
+
+const BACKEND_PUBLIC_URL = getUploadUrl(); // <-- 3. Gunakan fungsinya disini
 
 const PenetapanDetailPage = () => {
-  const { id } = useParams(); // Ambil ID dari URL
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
@@ -42,7 +52,7 @@ const PenetapanDetailPage = () => {
       <div className="max-w-screen-2xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-6">
         
         <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Penetapan" }, { name: "Detail Peserta" }]} />
-        {/* Tombol Kembali & Header */}
+        
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate("/penetapan")} className="text-slate-500 hover:text-slate-800">
             <ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Daftar Penetapan

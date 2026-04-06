@@ -25,7 +25,8 @@ export const getRekapColumns = (): ColumnDef<any>[] => [
     }
   },
   { accessorKey: "jml_ktp", header: "Sesuai KTP (Jumlah)" },
-  { accessorKey: "jml_kebun", header: "Sesuai Kebun (Jumlah)" },
+  // UBAH DISINI: key dan header disesuaikan
+  { accessorKey: "jml_bekerja", header: "Sesuai Bekerja (Jumlah)" }, 
 ];
 
 // 2. Kolom untuk Tabel Detail dengan Combobox
@@ -38,7 +39,8 @@ export const getDetailColumns = (
   { id: "no", header: "No", cell: ({ row }) => row.index + 1 },
   { accessorKey: "nama_lengkap", header: "Nama Lengkap" },
   { accessorKey: "ktp", header: "Alamat KTP" },
-  { accessorKey: "kerja_kab_kota", header: "Alamat Berkebun" },
+  // UBAH DISINI: header disesuaikan
+  { accessorKey: "kerja_kab_kota", header: "Alamat Bekerja" }, 
   {
     id: "aksi",
     header: () => (
@@ -66,7 +68,8 @@ export const getDetailColumns = (
       const flag = row.original.flag_kewilayahan;
       return (
         <span className="font-semibold text-gray-700">
-          {flag === 1 ? "BERKEBUN" : "SESUAI KTP"}
+          {/* UBAH DISINI: Label disesuaikan */}
+          {flag === 1 ? "BEKERJA" : "SESUAI KTP"}
         </span>
       );
     },

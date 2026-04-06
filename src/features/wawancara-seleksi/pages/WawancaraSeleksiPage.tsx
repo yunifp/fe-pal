@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { DataTable } from "@/components/DataTable";
 import { getWawancaraColumns } from "../components/columns";
 import { wawancaraService } from "../../../services/wawancaraService";
 import { toast } from "sonner";
-import { FileDown, FileUp, Send, Users } from "lucide-react";
+import { FileDown, Send, Users } from "lucide-react";
 
 const WawancaraSeleksiPage = () => {
   const queryClient = useQueryClient();
@@ -18,11 +18,8 @@ const WawancaraSeleksiPage = () => {
   const pageSize = 10;
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: response, isLoading, isError } = useQuery({
     queryKey: ["wawancara-list", pageIndex, search],
@@ -35,7 +32,25 @@ const WawancaraSeleksiPage = () => {
   const totalPages = response?.data?.total_pages || 1;
   const totalData = response?.data?.total || 0;
 
-  const columns = useMemo(() => getWawancaraColumns(pageIndex, pageSize), [pageIndex, pageSize]);
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number, status: string }) => 
+      wawancaraService.updateStatusWawancara(id, status),
+    onSuccess: () => {
+      toast.success("Status rekomendasi berhasil diperbarui.");
+      queryClient.invalidateQueries({ queryKey: ["wawancara-list"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Gagal memperbarui status.");
+    }
+  });
+
+  const handleUpdateStatus = (id: number, status: string) => {
+    updateStatusMutation.mutate({ id, status });
+  };
+
+  const columns = useMemo(() => 
+    getWawancaraColumns(pageIndex, pageSize, handleUpdateStatus), 
+  [pageIndex, pageSize]);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -44,37 +59,15 @@ const WawancaraSeleksiPage = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "Data_Wawancara_Seleksi.xlsx");
+      link.setAttribute("download", "Rekap_Wawancara.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Template berhasil diunduh!");
+      toast.success("Data berhasil diunduh!");
     } catch (error) {
-      toast.error("Gagal mengunduh template Excel.");
+      toast.error("Gagal mengunduh data Excel.");
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await wawancaraService.uploadExcel(formData);
-      if (res.success) {
-        toast.success(res.message || "Data nilai berhasil diperbarui!");
-        queryClient.invalidateQueries({ queryKey: ["wawancara-list"] });
-      }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Gagal mengupload file Excel.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -105,35 +98,19 @@ const WawancaraSeleksiPage = () => {
             Penilaian Wawancara Seleksi
           </h2>
           <p className="text-sm text-gray-500 mt-1 md:ml-8">
-            Unduh template Excel, masukkan nilai pendaftar, dan upload kembali.
+            Pilih status rekomendasi wawancara pada tabel di bawah ini.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-2 shadow-sm bg-white">
             <FileDown className="h-4 w-4" />
-            {isDownloading ? "Mengunduh..." : "Download Excel"}
-          </Button>
-
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleUpload}
-          />
-          <Button 
-            variant="outline" 
-            onClick={() => fileInputRef.current?.click()} 
-            disabled={isUploading} 
-            className="flex items-center gap-2"
-          >
-            <FileUp className="h-4 w-4" />
-            {isUploading ? "Mengupload..." : "Upload Nilai"}
+            {isDownloading ? "Mengunduh..." : "Download Rekap"}
           </Button>
 
           <Button 
             onClick={() => setShowConfirmModal(true)} 
+            disabled={totalData === 0 || isSending}
             className="flex items-center gap-2 shadow-sm font-semibold bg-green-600 hover:bg-green-700"
           >
             <Send className="h-4 w-4" />
@@ -145,12 +122,12 @@ const WawancaraSeleksiPage = () => {
       <Card className="shadow-sm border-gray-200 overflow-hidden">
         <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
           <CardTitle className="text-base text-gray-800">Daftar Pendaftar Wawancara ({totalData} Total)</CardTitle>
-          <CardDescription>Menampilkan daftar pendaftar yang siap dinilai pada tahap ini.</CardDescription>
+          <CardDescription>Ubah status rekomendasi peserta secara langsung melalui kolom Status Wawancara.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="rounded-md border border-gray-100 bg-white shadow-sm">
             <DataTable
-              isLoading={isLoading || isUploading}
+              isLoading={isLoading || updateStatusMutation.isPending}
               columns={columns}
               data={rawData}
               pageCount={totalPages}
@@ -175,10 +152,10 @@ const WawancaraSeleksiPage = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Selesaikan Wawancara?</h3>
             </div>
-            <p className="text-gray-600 mb-6 text-sm">
-              Apakah Anda yakin semua pendaftar telah dinilai? Data pendaftar pada tahap ini akan dipindahkan ke tahap selanjutnya.
+            <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+              Apakah Anda yakin proses wawancara telah selesai? Data pendaftar pada tahap ini akan dipindahkan ke tahap selanjutnya.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
               <Button variant="outline" onClick={() => setShowConfirmModal(false)} disabled={isSending}>
                 Batal
               </Button>

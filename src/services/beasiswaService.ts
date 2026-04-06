@@ -24,6 +24,7 @@ import type {
   VerifikasiDinasFormData,
   VerifikasiFormData,
   IFlowBeasiswa,
+  INilaiRapor,
 } from "@/types/beasiswa";
 import type { Response } from "@/types/response";
 
@@ -576,17 +577,6 @@ export const beasiswaService = {
     return response.data;
   },
 
-  uploadFileBA: async (
-    beasiswaId: number,
-    formData: FormData,
-  ): Promise<Response<{ filename: string }>> => {
-    const response = await axiosInstanceFormData.post(
-      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${beasiswaId}/upload-ba-kabkota`,
-      formData,
-    );
-    return response.data;
-  },
-
   getBaKabkotaByProvinsi: async (
     idBeasiswa: number,
   ): Promise<
@@ -610,13 +600,6 @@ export const beasiswaService = {
     return response.data;
   },
 
-  // ── Manajemen Verifikator ──────────────────────────────────────────────────
-
-  /**
-   * List pendaftar untuk halaman assignment manual.
-   * GET /beasiswa/assignment/pendaftar
-   * Kondisi backend: id_ref_beasiswa = 1, id_flow != 1 (exclude draft)
-   */
   getPendaftarForAssignment: async (params: {
     page?: number;
     limit?: number;
@@ -627,7 +610,7 @@ export const beasiswaService = {
       | "unassigned"
       | "filter-assigned"
       | "filter-unassigned";
-    id_verifikator?: number; // ✅ tambah type ini
+    id_verifikator?: number;
   }): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/pendaftar`,
@@ -781,6 +764,9 @@ export const beasiswaService = {
   exportDetailV2: async (): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
       `/verifikasi-nasional-v2/export-detail`,
+      {
+        responseType: "blob",
+      },
     );
     return response.data;
   },
@@ -853,7 +839,6 @@ export const beasiswaService = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
-  // tambah di beasiswaService, setelah downloadPendaftarAssignment
 
   downloadVerifikasiKabkota: async (params: {
     idBeasiswa: number;
@@ -933,5 +918,102 @@ export const beasiswaService = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  },
+  uploadFileBA: async (
+    idBeasiswa: number,
+    formData: FormData,
+  ): Promise<Response<{ filename: string; file: string }>> => {
+    const response = await axiosInstanceFormData.post(
+      `${BEASISWA_SERVICE_BASE_URL}/persyaratan/upload-file-ba/${idBeasiswa}`,
+      formData,
+    );
+    return response.data;
+  },
+  uploadFileBAProvinsi: async (
+    idBeasiswa: number,
+    formData: FormData,
+  ): Promise<Response<{ filename: string; file: string }>> => {
+    const response = await axiosInstanceFormData.post(
+      `${BEASISWA_SERVICE_BASE_URL}/persyaratan/upload-file-ba-provinsi/${idBeasiswa}`,
+      formData,
+    );
+    return response.data;
+  },
+  getNilaiRapor: async (
+    idTrxBeasiswa: number,
+  ): Promise<Response<INilaiRapor | null>> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/nilai-rapor`,
+    );
+    return response.data;
+  },
+
+  saveNilaiRapor: async (
+    idTrxBeasiswa: number,
+    payload: {
+      id_ref_beasiswa: number;
+      nilai_semester_1?: string;
+      nilai_semester_2?: string;
+      nilai_semester_3?: string;
+      nilai_semester_4?: string;
+      nilai_semester_5?: string;
+    },
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/nilai-rapor`,
+      payload,
+    );
+    return response.data;
+  },
+  toggleLockSelektor: async (
+    id_trx_beasiswa: number | number[],
+    lock: boolean,
+  ): Promise<Response<{ updated: number; locked: boolean }>> => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/lock`,
+      { id_trx_beasiswa, lock },
+    );
+    return response.data;
+  },
+
+  toggleLockSelektorGlobal: async (
+    lock: boolean,
+  ): Promise<Response<{ updated: number; locked: boolean }>> => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/lock-global`,
+      { lock },
+    );
+    return response.data;
+  },
+  kembalikanKeAdminDitjenbun: async (
+    idTrxBeasiswa: number,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.patch(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/kembalikan-ke-admin`,
+    );
+    return response.data;
+  },
+  downloadPendaftarZip: async (
+    idTrxBeasiswa: number,
+    kategori: "all" | "foto" | "dokumen_umum" | "dokumen_khusus",
+  ): Promise<import("axios").AxiosResponse<Blob>> => {
+    return axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download/pendaftar-zip/${idTrxBeasiswa}`,
+      {
+        params: { kategori },
+        responseType: "blob",
+      },
+    );
+  },
+  downloadBulkZip: async (params: {
+    id_trx_beasiswa_list: number[];
+    kategori: "all" | "foto" | "dokumen_umum" | "dokumen_khusus";
+    id_jalur?: number;
+  }): Promise<import("axios").AxiosResponse<Blob>> => {
+    return axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download/bulk-zip`,
+      params,
+      { responseType: "blob" },
+    );
   },
 };

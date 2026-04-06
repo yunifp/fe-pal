@@ -13,6 +13,7 @@ import type { ITrxBeasiswa } from "@/types/beasiswa";
 import {
   getKabkotaColumns,
   type ISkKabkota,
+  type IBaKabkota,
 } from "../components/kabkotaColumns";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -20,8 +21,8 @@ import {
   Upload,
   X,
   FileText,
-  FolderOpen,
-  ChevronRight,
+  // FolderOpen,
+  // ChevronRight,
   ChevronLeft,
   Users,
   Download,
@@ -67,14 +68,19 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   const [filterIdJalur, setFilterIdJalur] = useState<string>("all");
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showSkDialog, setShowSkDialog] = useState(false);
-  const [selectedKabkotaSk, setSelectedKabkotaSk] = useState<{
-    kode: string;
-    nama: string;
-  } | null>(null);
+  const [selectedSKFile, setSelectedSKFile] = useState<File | null>(null);
+  const [selectedBAFile, setSelectedBAFile] = useState<File | null>(null);
+  const fileSKInputRef = useRef<HTMLInputElement>(null);
+  const fileBAInputRef = useRef<HTMLInputElement>(null);
+
+  // const [showSkDialog, setShowSkDialog] = useState(false);
+  // const [selectedKabkotaSk, setSelectedKabkotaSk] = useState<{
+  //   kode: string;
+  //   nama: string;
+  // } | null>(null);
 
   const baseFileUrl = import.meta.env.VITE_BEASISWA_SERVICE_URL;
 
@@ -200,25 +206,20 @@ const BeasiswaVerifikasiProvinsiPage = () => {
 
   const totalSiapKirim = countSiapKirimRes?.data?.count ?? 0;
 
-  // ─── SK list untuk dialog ─────────────────────────────────────────────────
-  const { data: skListRes, isLoading: isLoadingSk } = useQuery({
-    queryKey: ["sk-kabkota", beasiswaAktif?.id, selectedKabkotaSk?.kode],
-    queryFn: () =>
-      beasiswaService.getSkKabkotaByProvinsi(beasiswaAktif?.id ?? 0),
-    enabled: !!beasiswaAktif?.id && !!selectedKabkotaSk,
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  const skList = (skListRes?.data ?? []).filter(
-    (sk) => sk.kode_dinas_kabkota === selectedKabkotaSk?.kode,
-  );
-
   // ─── Fetch semua SK sekaligus untuk tabel kabkota ─────────────────────────
   const { data: allSkRes } = useQuery({
     queryKey: ["sk-kabkota-all", beasiswaAktif?.id],
     queryFn: () =>
       beasiswaService.getSkKabkotaByProvinsi(beasiswaAktif?.id ?? 0),
+    enabled: !!beasiswaAktif?.id,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: allBaRes } = useQuery({
+    queryKey: ["ba-kabkota-all", beasiswaAktif?.id],
+    queryFn: () =>
+      beasiswaService.getBaKabkotaByProvinsi(beasiswaAktif?.id ?? 0),
     enabled: !!beasiswaAktif?.id,
     retry: false,
     refetchOnWindowFocus: false,
@@ -252,7 +253,29 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     setView({ mode: "kabkota-list" });
   };
 
-  const handleFileChange = (file: File | null) => {
+  // const handleFileChange = (file: File | null) => {
+  //   if (!file) return;
+  //   if (file.type !== "application/pdf") {
+  //     toast.error("File harus berformat PDF");
+  //     return;
+  //   }
+  //   if (file.size > 5 * 1024 * 1024) {
+  //     toast.error("Ukuran file maksimal 5MB");
+  //     return;
+  //   }
+  //   setSelectedFile(file);
+  // };
+
+  // const handleCloseUploadDialog = () => {
+  //   setShowUploadDialog(false);
+  //   setSelectedFile(null);
+  //   if (fileInputRef.current) fileInputRef.current.value = "";
+  // };
+
+  const validateAndSetFile = (
+    file: File | null,
+    setter: (f: File | null) => void,
+  ) => {
     if (!file) return;
     if (file.type !== "application/pdf") {
       toast.error("File harus berformat PDF");
@@ -262,38 +285,83 @@ const BeasiswaVerifikasiProvinsiPage = () => {
       toast.error("Ukuran file maksimal 5MB");
       return;
     }
-    setSelectedFile(file);
+    setter(file);
   };
 
   const handleCloseUploadDialog = () => {
     setShowUploadDialog(false);
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setSelectedSKFile(null);
+    setSelectedBAFile(null);
+    if (fileSKInputRef.current) fileSKInputRef.current.value = "";
+    if (fileBAInputRef.current) fileBAInputRef.current.value = "";
   };
 
-  const handleCloseSkDialog = () => {
-    setShowSkDialog(false);
-    setSelectedKabkotaSk(null);
-  };
+  // const handleCloseSkDialog = () => {
+  //   setShowSkDialog(false);
+  //   setSelectedKabkotaSk(null);
+  // };
 
   // ─── Mutations ────────────────────────────────────────────────────────────
+  // const submitMutation = useMutation({
+  //   mutationFn: async () => {
+  //     const formData = new FormData();
+  //     formData.append("file", selectedFile!);
+
+  //     const uploadRes = await beasiswaService.uploadFileSKProvinsi(
+  //       beasiswaAktif?.id ?? 0,
+  //       formData,
+  //     );
+  //     if (!uploadRes.success) throw new Error(uploadRes.message);
+
+  //     const filename = uploadRes.data?.filename;
+  //     if (!filename) throw new Error("Gagal mendapatkan nama file");
+
+  //     return beasiswaService.submitTagDinasProvinsiToDitjenbun(
+  //       beasiswaAktif?.id ?? 0,
+  //       filename,
+  //     );
+  //   },
+  //   onSuccess: (res) => {
+  //     if (res.success) {
+  //       toast.success(res.message);
+  //       queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
+  //       queryClient.invalidateQueries({ queryKey: ["count-tag-provinsi"] });
+  //       handleCloseUploadDialog();
+  //     } else {
+  //       toast.error(res.message);
+  //     }
+  //   },
+  //   onError: (error: any) => {
+  //     toast.error(error?.message ?? "Gagal mengirim data");
+  //   },
+  // });
+
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const formData = new FormData();
-      formData.append("file", selectedFile!);
-
-      const uploadRes = await beasiswaService.uploadFileSKProvinsi(
+      // Upload SK Provinsi
+      const skFormData = new FormData();
+      skFormData.append("file", selectedSKFile!);
+      const skRes = await beasiswaService.uploadFileSKProvinsi(
         beasiswaAktif?.id ?? 0,
-        formData,
+        skFormData,
       );
-      if (!uploadRes.success) throw new Error(uploadRes.message);
+      if (!skRes.success) throw new Error(skRes.message);
+      const skFilename = skRes.data?.filename;
+      if (!skFilename) throw new Error("Gagal mendapatkan nama file SK");
 
-      const filename = uploadRes.data?.filename;
-      if (!filename) throw new Error("Gagal mendapatkan nama file");
+      // Upload BA Provinsi
+      const baFormData = new FormData();
+      baFormData.append("file", selectedBAFile!);
+      const baRes = await beasiswaService.uploadFileBAProvinsi(
+        beasiswaAktif?.id ?? 0,
+        baFormData,
+      );
+      if (!baRes.success) throw new Error(baRes.message);
 
+      // Submit ke Ditjenbun
       return beasiswaService.submitTagDinasProvinsiToDitjenbun(
         beasiswaAktif?.id ?? 0,
-        filename,
+        skFilename,
       );
     },
     onSuccess: (res) => {
@@ -330,6 +398,15 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     return map;
   }, [allSkRes]);
 
+  const baMap = useMemo(() => {
+    const map: Record<string, IBaKabkota[]> = {};
+    (allBaRes?.data ?? []).forEach((ba) => {
+      if (!map[ba.kode_dinas_kabkota]) map[ba.kode_dinas_kabkota] = [];
+      map[ba.kode_dinas_kabkota].push(ba);
+    });
+    return map;
+  }, [allBaRes]);
+
   const countMap = useMemo(() => {
     return (kabkotaCountRes?.data ?? []).reduce(
       (acc, item) => {
@@ -340,9 +417,21 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     );
   }, [kabkotaCountRes]);
 
+  // const kabkotaColumns = useMemo(
+  //   () => getKabkotaColumns(handleSelectKabkota, skMap, baseFileUrl, countMap),
+  //   [skMap, baseFileUrl, countMap],
+  // );
+
   const kabkotaColumns = useMemo(
-    () => getKabkotaColumns(handleSelectKabkota, skMap, baseFileUrl, countMap),
-    [skMap, baseFileUrl, countMap],
+    () =>
+      getKabkotaColumns(
+        handleSelectKabkota,
+        skMap,
+        // baseFileUrl,
+        countMap,
+        baMap,
+      ),
+    [skMap, baseFileUrl, countMap, baMap],
   );
 
   const pendaftarColumns = useMemo(() => getColumns(), []);
@@ -455,13 +544,13 @@ const BeasiswaVerifikasiProvinsiPage = () => {
             <p className="text-xl font-semibold">Verifikasi Administratif</p>
 
             <div className="flex items-center gap-3">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setShowSkDialog(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
                 <FolderOpen className="w-4 h-4" />
                 SK Kabupaten/Kota
-              </button>
+              </button> */}
 
               <button
                 type="button"
@@ -534,188 +623,145 @@ const BeasiswaVerifikasiProvinsiPage = () => {
       )}
 
       {/* ── Modal SK Kabkota ─────────────────────────────────────────────── */}
-      <Dialog open={showSkDialog} onOpenChange={handleCloseSkDialog}>
-        <DialogContent className="sm:max-w-lg font-inter">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-primary" />
-              Surat Keputusan Kabupaten/Kota
-            </DialogTitle>
-            <DialogDescription>
-              Pilih kabupaten/kota untuk melihat dokumen SK yang telah diupload.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2 max-h-[500px] overflow-y-auto">
-            {!selectedKabkotaSk ? (
-              kabkotaList.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Tidak ada data kabupaten/kota
-                </p>
-              ) : (
-                kabkotaList.map((kab: any) => (
-                  <button
-                    key={kab.kode_kab}
-                    type="button"
-                    onClick={() =>
-                      setSelectedKabkotaSk({
-                        kode: kab.kode_kab,
-                        nama: kab.nama_wilayah,
-                      })
-                    }
-                    className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors text-left">
-                    <span className="text-sm font-medium text-gray-700">
-                      {kab.nama_wilayah}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-                ))
-              )
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setSelectedKabkotaSk(null)}
-                  className="flex items-center gap-1 text-xs text-primary hover:underline mb-2">
-                  ← Kembali ke daftar kabupaten/kota
-                </button>
-
-                <p className="text-sm font-semibold text-gray-700 mb-3">
-                  {selectedKabkotaSk.nama}
-                </p>
-
-                {isLoadingSk ? (
-                  <p className="text-sm text-gray-500 text-center py-8">
-                    Memuat...
-                  </p>
-                ) : skList.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">
-                      Belum ada SK yang diupload
-                    </p>
-                  </div>
-                ) : (
-                  skList.map((sk) => (
-                    <div
-                      key={sk.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
-                      <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
-                          {sk.filename}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {sk.uploaded_by} •{" "}
-                          {new Date(sk.created_at).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                      <a
-                        href={`${baseFileUrl}/uploads/persyaratan/${sk.filename}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex-shrink-0"
-                        title="Lihat file">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                      </a>
-                    </div>
-                  ))
-                )}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog Upload SK Provinsi ────────────────────────────────────── */}
       <Dialog open={showUploadDialog} onOpenChange={handleCloseUploadDialog}>
         <DialogContent className="sm:max-w-md font-inter">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5 text-primary" />
-              Upload Surat Keputusan
+              Upload Dokumen & Kirim ke Ditjenbun
             </DialogTitle>
             <DialogDescription>
-              Upload surat keputusan lulus administrasi untuk{" "}
-              <strong>{totalSiapKirim} pendaftar</strong> yang akan dikirim ke
-              Ditjenbun.
+              Upload SK dan BA untuk <strong>{totalSiapKirim} pendaftar</strong>{" "}
+              yang akan dikirim ke Ditjenbun.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {!selectedFile ? (
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={(e) =>
-                    handleFileChange(e.target.files?.[0] ?? null)
-                  }
-                />
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Upload className="w-6 h-6 text-primary" />
+            {/* Upload SK */}
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-gray-700">
+                Surat Keputusan (SK)
+              </p>
+              {!selectedSKFile ? (
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-primary transition-colors cursor-pointer"
+                  onClick={() => fileSKInputRef.current?.click()}>
+                  <input
+                    ref={fileSKInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) =>
+                      validateAndSetFile(
+                        e.target.files?.[0] ?? null,
+                        setSelectedSKFile,
+                      )
+                    }
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Upload className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Klik untuk pilih file SK
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        PDF (Max. 5MB)
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Klik untuk pilih file
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                  <div className="flex-shrink-0 w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {selectedSKFile.name}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">PDF (Max. 5MB)</p>
+                    <p className="text-xs text-gray-500">
+                      {(selectedSKFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSKFile(null);
+                      if (fileSKInputRef.current)
+                        fileSKInputRef.current.value = "";
+                    }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Upload BA */}
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-gray-700">
+                Berita Acara (BA)
+              </p>
+              {!selectedBAFile ? (
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-primary transition-colors cursor-pointer"
+                  onClick={() => fileBAInputRef.current?.click()}>
+                  <input
+                    ref={fileBAInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) =>
+                      validateAndSetFile(
+                        e.target.files?.[0] ?? null,
+                        setSelectedBAFile,
+                      )
+                    }
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Upload className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Klik untuk pilih file BA
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        PDF (Max. 5MB)
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-xl">
-                <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-primary" />
+              ) : (
+                <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                  <div className="flex-shrink-0 w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {selectedBAFile.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {(selectedBAFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBAFile(null);
+                      if (fileBAInputRef.current)
+                        fileBAInputRef.current.value = "";
+                    }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+              )}
+            </div>
 
+            {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
@@ -727,13 +773,18 @@ const BeasiswaVerifikasiProvinsiPage = () => {
               <button
                 type="button"
                 onClick={() => submitMutation.mutate()}
-                disabled={!selectedFile || submitMutation.isPending}
-                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-2 transition-all
-                  ${
-                    selectedFile && !submitMutation.isPending
-                      ? "bg-primary hover:bg-primary/90"
-                      : "bg-gray-300 cursor-not-allowed"
-                  }`}>
+                disabled={
+                  !selectedSKFile || !selectedBAFile || submitMutation.isPending
+                }
+                className={`
+            flex-1 py-2.5 px-4 rounded-lg text-sm font-medium text-white
+            flex items-center justify-center gap-2 transition-all
+            ${
+              selectedSKFile && selectedBAFile && !submitMutation.isPending
+                ? "bg-primary hover:bg-primary/90"
+                : "bg-gray-300 cursor-not-allowed"
+            }
+          `}>
                 {submitMutation.isPending ? (
                   <>
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

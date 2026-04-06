@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Map, MapPin, Settings2, Clock, Send } from "lucide-react"; // <-- Tambahkan icon Send
+import { Map, MapPin, Settings2, Clock, Send } from "lucide-react"; 
 
 const PembagianWilayahPage = () => {
   const queryClient = useQueryClient();
@@ -131,11 +131,11 @@ const PembagianWilayahPage = () => {
       )}
 
       <Card className="shadow-sm border-gray-200 overflow-hidden">
-        {/* ... (Sisa konten Card sama seperti sebelumnya) ... */}
         <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-          <CardTitle className="text-base text-gray-800">Perbandingan Data KTP dan Alamat Berkebun</CardTitle>
+          {/* UBAH DISINI: Judul Card disesuaikan */}
+          <CardTitle className="text-base text-gray-800">Perbandingan Data KTP dan Alamat Bekerja</CardTitle>
           <CardDescription>
-            Menampilkan rekapitulasi jumlah pendaftar berdasarkan wilayah domisili dan perkebunan.
+            Menampilkan rekapitulasi jumlah pendaftar berdasarkan wilayah domisili dan tempat bekerja.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
@@ -153,7 +153,8 @@ const PembagianWilayahPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">Terapkan SESUAI KTP ke Semua</SelectItem>
-                    <SelectItem value="1">Terapkan BERKEBUN ke Semua</SelectItem>
+                    {/* UBAH DISINI: Label dropdown disesuaikan */}
+                    <SelectItem value="1">Terapkan BEKERJA ke Semua</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button 
@@ -194,7 +195,9 @@ const PembagianWilayahPage = () => {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Konfirmasi Aksi Massal</h3>
             <p className="text-gray-600 mb-6 text-sm">
-              Apakah Anda yakin ingin merubah kewilayahan <span className="font-bold text-red-600">SELURUH</span> pendaftar di semua wilayah menjadi <span className="font-bold">{globalAction === "1" ? "SESUAI ALAMAT BERKEBUN" : "SESUAI KTP"}</span>?
+              Apakah Anda yakin ingin merubah kewilayahan <span className="font-bold text-red-600">SELURUH</span> pendaftar di semua wilayah menjadi 
+              {/* UBAH DISINI: Teks konfirmasi disesuaikan */}
+              <span className="font-bold">{globalAction === "1" ? " SESUAI ALAMAT BEKERJA" : " SESUAI KTP"}</span>?
             </p>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowConfirmModal(false)} disabled={isSubmitting}>Batal</Button>

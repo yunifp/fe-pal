@@ -24,6 +24,11 @@ export const getColumnsDetail = (
     header: "Kode Pendaftaran",
   },
   {
+    accessorKey: "nama_dinas_kabkota", // <--- KOLOM BARU DITAMBAHKAN
+    header: "Kabupaten/Kota",
+    cell: ({ row }) => <span className="text-gray-700">{row.original.nama_dinas_kabkota || "-"}</span>,
+  },
+  {
     accessorKey: "jalur",
     header: "Jalur",
   },

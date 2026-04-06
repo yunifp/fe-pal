@@ -29,6 +29,12 @@ import type {
 import type { Response } from "@/types/response";
 
 export const masterService = {
+  getDashboardMasterStats: async (): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/dashboard/stats`,
+    );
+    return response.data;
+  },
   getPerguruanTinggiByPagination: async (
     page: number = 1,
     search: string = "",
@@ -398,7 +404,25 @@ export const masterService = {
   },
   getRefJenjang: async (): Promise<Response<IJenjang[]>> => {
     const response = await axiosInstanceJson.get(
-      `${MASTER_SERVICE_BASE_URL}/npsn/ref-jenjang`,
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/jenjang-sekolah`,
+    );
+    return response.data;
+  },
+  getJalur: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<
+    Response<{
+      result: { id: number; jalur: string; is_active: "Y" | "N" }[];
+      total: number;
+      current_page: number;
+      total_pages: number;
+    }>
+  > => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/jalur/paginate`,
+      { params: { page: 1, limit: 100, ...params } },
     );
     return response.data;
   },

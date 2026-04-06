@@ -30,13 +30,30 @@ export const getPenelaahanColumns = (pageIndex: number, pageSize: number): Colum
   },
   { 
     accessorKey: "nilai_temp", 
-    header: "Nilai Akhir (Wawancara)",
+    header: "Nilai Akhir",
     cell: ({ row }) => {
       const nilai = row.original.nilai_temp;
       return nilai ? (
         <span className="font-bold text-green-600">{nilai}</span>
       ) : (
         <span className="text-gray-400 text-sm">0</span>
+      );
+    }
+  },
+  { 
+    // TAMBAHKAN KOLOM INI
+    accessorKey: "status_wawancara", 
+    header: "Status Wawancara",
+    cell: ({ row }) => {
+      const status = row.original.status_wawancara;
+      return (
+        <span className={`font-semibold ${
+          status === 'Rekomendasi' ? 'text-green-600' : 
+          status === 'Tidak Rekomendasi' ? 'text-red-600' : 
+          'text-gray-500'
+        }`}>
+          {status || "-"}
+        </span>
       );
     }
   },

@@ -14,12 +14,12 @@ import UploadBeritaAcara from "../components/UploadBeritaAcara";
 const BeasiswaVerifikasiDinasPage = () => {
   const [page, setPage] = useState(1);
   const [deleteTrxBeasiswa, setDeleteTrxBeasiswa] = useState<number | null>(
-    null
+    null,
   );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
-  // Setup untuk fetch data::start
+
   const {
     data: response,
     isLoading,
@@ -30,11 +30,10 @@ const BeasiswaVerifikasiDinasPage = () => {
     retry: false,
     refetchOnWindowFocus: false,
     queryFn: () => {
-      // Sekarang akan selalu dapat nilai terbaru
       return beasiswaService.getTransaksiBeasiswaByPaginationVerifikasiDinas(
         1,
         page,
-        debouncedSearch
+        debouncedSearch,
       );
     },
     staleTime: STALE_TIME,
@@ -90,7 +89,7 @@ const BeasiswaVerifikasiDinasPage = () => {
         setDeleteTrxBeasiswa(id);
         setShowConfirmModal(true);
       }),
-    []
+    [],
   );
 
   return (

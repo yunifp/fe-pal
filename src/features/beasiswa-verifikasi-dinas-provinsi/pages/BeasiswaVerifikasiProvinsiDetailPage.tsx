@@ -157,14 +157,42 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
   //   },
   // });
 
+  // const mutation = useMutation({
+  //   mutationFn: async (data: VerifikasiFormData) => {
+  //     await beasiswaService.saveCatatanVerifikasi(id, {
+  //       catatan_verifikasi_dinas_provinsi: data.catatan ?? undefined,
+  //       verifikator: "dinas_provinsi",
+  //     });
+
+  //     // selectedStatus 7 = Rekomendasi (Y), 3 = Tidak Rekomendasi (N)
+  //     const tag = selectedStatus === 9 ? "Y" : "N";
+  //     return beasiswaService.updateTagDinasProvinsi(id, tag);
+  //   },
+  //   onSuccess: (res) => {
+  //     if (res.success) {
+  //       toast.success(res.message);
+  //       queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
+  //       navigate("/beasiswa_verifikasi_dinas_provinsi");
+  //     } else {
+  //       toast.error(res.message);
+  //     }
+  //   },
+  //   onError: (error: any) => {
+  //     if (error?.response?.data?.message) {
+  //       toast.error(error.response.data.message);
+  //     } else {
+  //       toast.error("Terjadi kesalahan saat menyimpan data");
+  //     }
+  //   },
+  // });
+
   const mutation = useMutation({
     mutationFn: async (data: VerifikasiFormData) => {
       await beasiswaService.saveCatatanVerifikasi(id, {
-        catatan_verifikasi_dinas_provinsi: data.catatan ?? undefined,
+        catatan_verifikasi_dinas_kabkota: data.catatan ?? undefined,
         verifikator: "dinas_provinsi",
       });
 
-      // selectedStatus 7 = Rekomendasi (Y), 3 = Tidak Rekomendasi (N)
       const tag = selectedStatus === 9 ? "Y" : "N";
       return beasiswaService.updateTagDinasProvinsi(id, tag);
     },
@@ -193,7 +221,6 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
 
   const onSubmit = async (data: VerifikasiFormData) => {
     try {
-      // ✅ Jika status Lulus (15) dan ada file yang dipilih, upload dulu
       if (data.selectedStatus === 15 && data._selectedFile) {
         toast.info("Mengupload file...");
 

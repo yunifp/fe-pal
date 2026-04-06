@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,19 @@ import { DataTable } from "../../../components/DataTable";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { Button } from "@/components/ui/button";
+
+// --- Import tambahan untuk Dropdown Role ---
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import axiosInstanceJson from "@/lib/axiosInstanceJson";
+import { AUTH_SERVICE_BASE_URL } from "@/constants/api";
+import type { IRole } from "@/features/role/types/role";
+// ------------------------------------------
 
 import { userService } from "@/features/user/services/userService";
 import { getColumns } from "../components/columns";
@@ -30,8 +44,25 @@ const UserPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
+  
+  // --- State tambahan untuk filter role ---
+  const [selectedRole, setSelectedRole] = useState<string>("all");
 
   const canCreate = useHasAccess("C");
+
+  // Fetch daftar role untuk dropdown
+  const { data: rolesResponse } = useQuery({
+    queryKey: ["roles-list"],
+    queryFn: async () => {
+      // Sesuaikan URL ini jika endpoint get list role milikmu berbeda
+      const res = await axiosInstanceJson.get(`${AUTH_SERVICE_BASE_URL}/roles`);
+      return res.data;
+    },
+    staleTime: STALE_TIME,
+  });
+  
+  // Menyesuaikan struktur response dari backend
+  const roles: IRole[] = rolesResponse?.data?.result || rolesResponse?.result || [];
 
   // Fetch data pengguna
   const {
@@ -40,8 +71,14 @@ const UserPage = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["users", page, debouncedSearch],
-    queryFn: () => userService.getByPagination(page, debouncedSearch),
+    // Masukkan selectedRole ke dalam queryKey agar fetch ulang saat role berubah
+    queryKey: ["users", page, debouncedSearch, selectedRole], 
+    queryFn: () => 
+      userService.getByPagination(
+        page, 
+        debouncedSearch, 
+        selectedRole === "all" ? "" : selectedRole // Kirim "" jika "all"
+      ),
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -123,13 +160,36 @@ const UserPage = () => {
           searchValue={search}
           onSearchChange={(value) => setSearch(value)}
           rightHeaderContent={
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              
+              {/* === DROPDOWN FILTER ROLE === */}
+              <Select 
+                value={selectedRole} 
+                onValueChange={(val) => {
+                  setSelectedRole(val);
+                  setPage(1); // Reset ke halaman 1 tiap ganti filter
+                }}
+              >
+                <SelectTrigger className="w-[180px] h-9">
+                  <SelectValue placeholder="Semua Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Role</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id.toString()}>
+                      {role.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* ========================== */}
+
               <Button
                 onClick={handleExportExcel}
                 variant={"outline"}
                 size={"sm"}
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-1" />
                 Ekspor Excel
               </Button>
               {canCreate && (
@@ -140,7 +200,7 @@ const UserPage = () => {
                   variant={"outline"}
                   size={"sm"}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-1" />
                   Tambah Data
                 </Button>
               )}

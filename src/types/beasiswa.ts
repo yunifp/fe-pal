@@ -9,6 +9,8 @@ export interface DetailPendaftarRow {
   is_3t: boolean;
   is_sktm: boolean;
   nama_kluster: string | null;
+  nama_dinas_kabkota: string | null;
+  id_flow: number;
 }
 
 export interface RekapProvinsiRow {
@@ -120,12 +122,18 @@ export interface ITrxDokumenDinas {
   verifikator_dinas_catatan: string | null;
   verifikator_dinas_timestamp: string | null;
 }
+export interface ISummaryPendaftar {
+  total_foto: number;
+  total_dok_umum: number;
+  total_dok_khusus: number;
+}
 
 export interface PaginatedTrxBeasiswaResponse {
   result: ITrxBeasiswa[];
   total: number;
   current_page: number;
   total_pages: number;
+  summary: ISummaryPendaftar;
 }
 
 export interface ITrxBeasiswa {
@@ -321,8 +329,9 @@ export interface ITrxBeasiswa {
   // Relasi
   // =====================
   pilihan_program_studi?: IPilihanProgramStudi[] | null;
-
   catatan_data_section: CatatanDataSection | null;
+  hasil_dinas_kabkot?: string | null;
+  hasil_dinas_provinsi?: string | null;
 }
 
 export interface IProvinsiCount {
@@ -825,10 +834,8 @@ export const verifikasiSchema = z
     _uploadFile: z.any().optional(),
     _selectedFile: z.any().optional(),
 
-    data_tempat_tinggal_is_valid: z
-      .string()
-      .optional(),
-      // .min(1, "Kesesuaian Data Tempat Tinggal wajib dipilih"),
+    data_tempat_tinggal_is_valid: z.string().optional(),
+    // .min(1, "Kesesuaian Data Tempat Tinggal wajib dipilih"),
     data_tempat_tinggal_catatan: z.string().optional(),
 
     data_orang_tua_is_valid: z
@@ -965,5 +972,18 @@ export const verifikasiDinasSchema = z
       path: ["catatan"],
     },
   );
+
+export interface INilaiRapor {
+  id?: number;
+  id_ref_beasiswa: number;
+  id_trx_beasiswa: number;
+  nilai_semester_1?: string | null;
+  nilai_semester_2?: string | null;
+  nilai_semester_3?: string | null;
+  nilai_semester_4?: string | null;
+  nilai_semester_5?: string | null;
+  uploaded_by?: string | null;
+  created_at?: string | null;
+}
 
 export type VerifikasiDinasFormData = z.infer<typeof verifikasiDinasSchema>;

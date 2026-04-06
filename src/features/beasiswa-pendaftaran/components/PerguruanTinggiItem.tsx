@@ -4,23 +4,39 @@ import { masterService } from "@/services/masterService";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, type FC } from "react";
 import { useWatch, type Control, type UseFormSetValue } from "react-hook-form";
-import { GraduationCap, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import {
+  GraduationCap,
+  Loader2,
+  AlertCircle,
+  RotateCcw,
+  BookOpen,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+// import { Badge } from "@/components/ui/badge";
+
+type SlotType = "d1d2" | "non_d1d2" | "all";
 
 type Props = {
   kondisiButaWarna: string;
   index: number;
   control: Control<any>;
   remove: (index: number) => void;
-  perguruanTinggiOptions: { value: string; label: string }[];
+  perguruanTinggiOptions: {
+    value: string;
+    label: string;
+    has_d1_d2?: boolean;
+  }[];
   setValue: UseFormSetValue<any>;
-  /**
-   * True saat parent sedang melakukan populate data existing (load edit mode).
-   * Selama ini, jangan reset program_studi meski options belum tersedia.
-   */
   isPopulating?: boolean;
   isEmpty?: boolean;
+  slotType?: SlotType; // <-- BARU
+  disabledPtIds?: Set<string>; // PT yang tidak boleh dipilih di slot ini
+  lockedPtValue?: string; // PT yang di-lock untuk slot non_d1d2
 };
+
+// Jenjang D1/D2 dan non-D1/D2
+const D1D2_JENJANG = ["D1", "D2"];
+const NON_D1D2_JENJANG = ["D3", "D4", "S1"];
 
 export const PerguruanTinggiItem: FC<Props> = ({
   kondisiButaWarna,
@@ -30,11 +46,10 @@ export const PerguruanTinggiItem: FC<Props> = ({
   setValue,
   isPopulating = false,
   isEmpty = false,
+  slotType = "all",
+  disabledPtIds = new Set(),
+  lockedPtValue,
 }) => {
-  // ============================
-  // WATCH
-  // ============================
-
   const selectedPT = useWatch({
     control,
     name: `pilihan_program_studi.${index}.perguruan_tinggi`,
@@ -52,33 +67,28 @@ export const PerguruanTinggiItem: FC<Props> = ({
 
   const selectedJurusanSekolah = selectedJurusanSekolahRaw?.split("#")[0];
   const idPt = selectedPT?.split("#")[0];
+  // const namaPt = selectedPT?.split("#")[1] ?? "";
 
-  // ============================
-  // REFS — track state tanpa trigger re-render
-  // ============================
-
-  /**
-   * Apakah filteredProdiOptions sudah pernah berhasil di-load
-   * untuk idPt yang sedang aktif.
-   * Direset setiap kali idPt berubah.
-   */
+  // ── Refs ─────────────────────────────────────────────────────
   const isProdiLoadedRef = useRef(false);
+  // Ganti dua useEffect ref yang lama dengan ini
   const prevIdPtRef = useRef<string | undefined>(undefined);
 
-  // Reset flag saat PT berubah
-  useEffect(() => {
-    if (prevIdPtRef.current !== idPt) {
-      isProdiLoadedRef.current = false;
-      prevIdPtRef.current = idPt;
+  // Di body komponen langsung (bukan dalam useEffect)
+  if (prevIdPtRef.current !== idPt) {
+    prevIdPtRef.current = idPt;
+    // Reset prodi saat user ganti PT
+    if (prevIdPtRef.current !== undefined) {
+      setValue(`pilihan_program_studi.${index}.program_studi`, "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
-  }, [idPt]);
+  }
 
-  // ============================
-  // FETCH PRODI
-  // ============================
-
+  // ── Fetch Prodi ───────────────────────────────────────────────
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
-    queryKey: ["program-studi", idPt, kondisiButaWarna],
+    queryKey: ["program-studi", idPt, kondisiButaWarna, selectedJurusanSekolah],
     queryFn: () =>
       masterService.getProgramStudiByJurusanSekolahDanPT(
         selectedJurusanSekolah,
@@ -89,61 +99,77 @@ export const PerguruanTinggiItem: FC<Props> = ({
     refetchOnWindowFocus: false,
   });
 
-  // ============================
-  // PRODI OPTIONS
-  // ============================
-
+  // ── Filter Prodi berdasarkan slotType + buta warna ───────────
   const filteredProdiOptions = useMemo(() => {
     if (!responseProdi?.data) return [];
 
     let list = responseProdi.data;
 
+    // Filter buta warna
     if (kondisiButaWarna === "Y") {
       list = list.filter((ps) => ps.boleh_buta_warna === "Y");
     }
 
+    // Filter jenjang berdasarkan slot
+    if (slotType === "d1d2") {
+      list = list.filter((ps) => D1D2_JENJANG.includes(ps.jenjang));
+    } else if (slotType === "non_d1d2") {
+      list = list.filter((ps) => NON_D1D2_JENJANG.includes(ps.jenjang));
+    }
+    // slotType === "all" → tidak filter jenjang
+
     return list.map((ps) => ({
       value: `${ps.id_prodi}#${ps.nama_prodi}`,
-      label: ps.nama_prodi,
+      label: `${ps.nama_prodi} (${ps.jenjang})`,
       kuota: ps.kuota,
     }));
-  }, [responseProdi, kondisiButaWarna]);
+  }, [responseProdi, kondisiButaWarna, slotType]);
 
-  // Mark prodi sebagai "sudah loaded" setelah fetch selesai dan ada data
+  // Build filtered PT options untuk slot ini
+  const filteredPtOptions = useMemo(() => {
+    return perguruanTinggiOptions
+      .filter((pt) => {
+        // Filter berdasarkan slotType
+        if (slotType === "d1d2") return pt.has_d1_d2 === true;
+        if (slotType === "non_d1d2") return pt.has_d1_d2 === true; // pasangan D1/D2 juga PT yang sama
+        return true;
+      })
+      .map((pt) => ({
+        ...pt,
+        // Disable PT yang sudah dipakai slot lain
+        isDisabled: disabledPtIds.has(pt.value.split("#")[0]),
+      }));
+  }, [perguruanTinggiOptions, slotType, disabledPtIds]);
+
   useEffect(() => {
     if (!isFetchingProdi && filteredProdiOptions.length > 0) {
       isProdiLoadedRef.current = true;
     }
   }, [isFetchingProdi, filteredProdiOptions]);
 
-  // ============================
-  // SELECTED PRODI DETAIL
-  // ============================
-
   const selectedProdi = useMemo(() => {
     if (!filteredProdiOptions.length || !selectedProdiValue) return null;
     return filteredProdiOptions.find((p) => p.value === selectedProdiValue);
   }, [filteredProdiOptions, selectedProdiValue]);
 
-  // ============================
-  // RESET PRODI — hanya jika PT berubah & prodi tidak valid
-  // Guard berlapis agar tidak reset saat:
-  //   1. Masih fetching
-  //   2. Prodi belum pernah di-load untuk PT ini (initial populate)
-  //   3. Parent sedang populating data existing
-  //   4. Nilai prodi sudah kosong (tidak perlu reset ulang)
-  // ============================
+  useEffect(() => {
+    if (!lockedPtValue) return;
+    if (selectedPT === lockedPtValue) return; // sudah benar, skip
+    setValue(`pilihan_program_studi.${index}.perguruan_tinggi`, lockedPtValue, {
+      shouldDirty: true,
+    });
+  }, [lockedPtValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Reset prodi jika tidak valid ──────────────────────────────
   useEffect(() => {
     if (isFetchingProdi) return;
-    if (!isProdiLoadedRef.current) return; // belum selesai load pertama kali
-    if (isPopulating) return; // parent sedang populate, jangan sentuh
-    if (!selectedProdiValue) return; // sudah kosong, tidak perlu reset
+    if (!isProdiLoadedRef.current) return;
+    if (isPopulating) return;
+    if (!selectedProdiValue) return;
 
     const stillValid = filteredProdiOptions.some(
       (opt) => opt.value === selectedProdiValue,
     );
-
     if (!stillValid) {
       setValue(`pilihan_program_studi.${index}.program_studi`, "", {
         shouldDirty: true,
@@ -159,76 +185,117 @@ export const PerguruanTinggiItem: FC<Props> = ({
     setValue,
   ]);
 
-  // ============================
-  // HANDLER RESET
-  // ============================
-
+  // ── Reset handler ─────────────────────────────────────────────
   const handleReset = () => {
-    setValue(`pilihan_program_studi.${index}.perguruan_tinggi`, "", {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
       shouldDirty: true,
       shouldValidate: true,
     });
   };
 
-  // Row dianggap terisi jika minimal PT sudah dipilih
-  const isFilled = !!selectedPT;
+  // ── Label slot ────────────────────────────────────────────────
+  const slotLabel =
+    slotType === "d1d2"
+      ? "Pilihan D1/D2"
+      : slotType === "non_d1d2"
+        ? "Pilihan D3/D4/S1"
+        : `Pilihan ${index + 1}`;
 
-  // ============================
-  // UI
-  // ============================
+  const slotBadgeColor =
+    slotType === "d1d2"
+      ? "bg-purple-100 text-purple-700 border-purple-200"
+      : slotType === "non_d1d2"
+        ? "bg-blue-100 text-blue-700 border-blue-200"
+        : "bg-gray-100 text-gray-700 border-gray-200";
 
+  // ── Render ────────────────────────────────────────────────────
   return (
-    <Card className="relative overflow-hidden shadow-none">
-      <CardContent>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700">
+    <Card
+      className={`relative overflow-hidden shadow-none ${
+        slotType === "d1d2"
+          ? "border-purple-200"
+          : slotType === "non_d1d2"
+            ? "border-blue-200"
+            : ""
+      }`}>
+      <CardContent className="pt-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full ${
+              slotType === "d1d2"
+                ? "bg-purple-100 text-purple-700"
+                : slotType === "non_d1d2"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700"
+            }`}>
             <GraduationCap className="w-4 h-4" />
           </div>
-          <h3 className="font-semibold text-base">Pilihan {index + 1}</h3>
+
+          {/* Nama PT (read-only, sudah fixed dari populate) */}
+          {/* <h3 className="font-semibold text-base">{namaPt}</h3> */}
+
+          {/* Badge slot type */}
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${slotBadgeColor}`}>
+            <BookOpen className="w-3 h-3" />
+            {slotLabel}
+          </span>
         </div>
 
         {/* Badge wajib diisi */}
         {isEmpty && !isPopulating && (
-          <span
-            className="inline-flex items-center gap-1.5 text-xs font-medium
-            px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 mb-3">
             <AlertCircle className="w-3 h-3" />
             Wajib diisi
           </span>
         )}
 
-        {/* Tombol reset — hanya muncul jika PT sudah dipilih dan tidak sedang populating */}
-        {isFilled && !isPopulating && (
+        {/* Tombol reset program studi */}
+        {selectedProdiValue && !isPopulating && (
           <button
             type="button"
             onClick={handleReset}
-            title="Reset pilihan ini"
-            className="inline-flex items-center gap-1.5 text-xs font-medium
-                px-2.5 py-1 rounded-full border
-                text-muted-foreground border-muted hover:text-destructive
-                hover:border-destructive hover:bg-destructive/5
-                transition-colors duration-150">
+            title="Reset program studi"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border text-muted-foreground border-muted hover:text-destructive hover:border-destructive hover:bg-destructive/5 transition-colors duration-150 mb-3">
             <RotateCcw className="w-3 h-3" />
-            Reset
+            Reset Program Studi
           </button>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Kolom Perguruan Tinggi */}
+        <div className="grid grid-cols-1 gap-4">
+          {/* PT sudah fixed, tampilkan sebagai read-only info */}
+          {/* <div className="p-3 rounded-md bg-muted/40 border text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{namaPt}</span>
+            {slotType !== "all" && (
+              <span className="ml-2 text-xs">
+                · Jenjang: {slotType === "d1d2" ? "D1 / D2" : "D3 / D4 / S1"}
+              </span>
+            )}
+          </div> */}
           <CustSearchableSelect
             name={`pilihan_program_studi.${index}.perguruan_tinggi`}
             control={control}
             label="Perguruan Tinggi"
-            options={perguruanTinggiOptions}
+            options={filteredPtOptions}
             placeholder="Pilih perguruan tinggi"
             isRequired
+            // Slot non_d1d2 PT-nya otomatis mengikuti pasangan D1/D2 → read-only
+            disabled={slotType === "non_d1d2" && !!lockedPtValue} // ← bukan isDisabled
           />
-
-          {/* Kolom Program Studi dengan loading state */}
+          {/* <CustSearchableSelect
+            name={`pilihan_program_studi.${index}.perguruan_tinggi`}
+            control={control}
+            label="Perguruan Tinggi"
+            options={perguruanTinggiOptions.filter((pt) => {
+              if (slotType === "d1d2") return pt.has_d1_d2 === true;
+              if (slotType === "non_d1d2") return true;
+              return true;
+            })}
+            placeholder="Pilih perguruan tinggi"
+            isRequired
+          /> */}
+          {/* Program Studi */}
           <div className="space-y-2">
             {(isFetchingProdi || isPopulating) && idPt ? (
               <>
@@ -251,9 +318,9 @@ export const PerguruanTinggiItem: FC<Props> = ({
                 label="Program Studi"
                 options={filteredProdiOptions}
                 placeholder={
-                  idPt
-                    ? "Pilih program studi"
-                    : "Pilih Perguruan Tinggi terlebih dahulu"
+                  filteredProdiOptions.length === 0 && idPt
+                    ? `Tidak ada prodi ${slotType === "d1d2" ? "D1/D2" : slotType === "non_d1d2" ? "D3/D4/S1" : ""} tersedia`
+                    : "Pilih program studi"
                 }
                 isRequired
               />

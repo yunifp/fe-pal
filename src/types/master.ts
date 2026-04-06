@@ -13,6 +13,7 @@ export interface IPerguruanTinggi {
   kode_pt: string | null;
   singkatan: string | null;
   jenis: string;
+  has_d1_d2: string | null;
 
   alamat: string | null;
   kota: string | null;

@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 interface Option {
   value: string | number;
   label: string;
+  isDisabled?: boolean; // ← tambah
 }
 
 interface CustSelectProps {
@@ -34,6 +35,7 @@ interface CustSelectProps {
   isRequired?: boolean; // optional, default false
   isLoading?: boolean;
   onInputChange?: (value: string) => void;
+  disabled?: boolean;
 }
 
 // Inner Combobox component (diekstrak untuk handle state open)
@@ -46,10 +48,19 @@ const Combobox = React.forwardRef<
     onValueChange: (value: string) => void;
     isLoading?: boolean;
     onInputChange?: (value: string) => void;
+    disabled?: boolean;
   }
 >(
   (
-    { className, options, placeholder, value, onValueChange, ...props },
+    {
+      className,
+      options,
+      placeholder,
+      value,
+      onValueChange,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     const [open, setOpen] = React.useState(false);
@@ -65,6 +76,7 @@ const Combobox = React.forwardRef<
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className={cn("w-full justify-between", className)}
             {...props}>
             {selectedOption ? selectedOption.label : placeholder}
@@ -86,10 +98,15 @@ const Combobox = React.forwardRef<
                   <CommandItem
                     key={option.value}
                     value={option.label}
+                    disabled={option.isDisabled}
                     onSelect={() => {
+                      if (option.isDisabled) return;
                       onValueChange(option.value.toString());
                       setOpen(false);
-                    }}>
+                    }}
+                    className={cn(
+                      option.isDisabled && "opacity-40 cursor-not-allowed", // ← styling
+                    )}>
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
@@ -123,6 +140,7 @@ export const CustSearchableSelect = ({
   isRequired = false, // default value false
   isLoading = false,
   onInputChange,
+  disabled = false, // ← tambah
 }: CustSelectProps) => {
   return (
     <div className={`grid items-center gap-1 ${className}`}>
@@ -140,6 +158,7 @@ export const CustSearchableSelect = ({
             className={cn(
               "focus-visible:ring focus-visible:ring-primary",
               error && "border-red-500",
+              disabled && "opacity-60 cursor-not-allowed", // ← tambah
               className,
             )}
             options={options}
@@ -148,6 +167,7 @@ export const CustSearchableSelect = ({
             onValueChange={field.onChange}
             isLoading={isLoading}
             onInputChange={onInputChange}
+            disabled={disabled} // ← tambah
           />
         )}
       />

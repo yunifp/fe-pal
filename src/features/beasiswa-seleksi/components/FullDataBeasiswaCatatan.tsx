@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +32,7 @@ import {
   ChevronRight,
   X,
   ZoomIn,
+  ExternalLink,
 } from "lucide-react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
@@ -253,6 +256,16 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     staleTime: STALE_TIME,
   });
 
+  const { data: nilaiRaporData } = useQuery({
+    queryKey: ["nilai-rapor", idTrxBeasiswa],
+    queryFn: () => beasiswaService.getNilaiRapor(idTrxBeasiswa),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const nilaiRapor = nilaiRaporData?.data ?? null;
+
   // Simpan timeout untuk debounce (per dokumen)
   if (isLoading) {
     return (
@@ -270,24 +283,69 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
   const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data!!;
 
+  // const InfoItem = ({
+  //   icon: Icon,
+  //   label,
+  //   value,
+  // }: {
+  //   icon: any;
+  //   label: string;
+  //   value?: string | null;
+  // }) => (
+  //   <div className="flex items-start gap-3 py-2">
+  //     <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+  //     <div className="flex-1 min-w-0">
+  //       <p className="text-sm font-medium text-muted-foreground">{label}</p>
+  //       <p className="text-sm mt-1 break-words">{value || "-"}</p>
+  //     </div>
+  //   </div>
+  // );
+  // Cari file dari persyaratan_umum berdasarkan keyword nama dokumen
+  const findDokumenFile = (keyword: string): string | null => {
+    if (!persyaratan_umum?.length) return null;
+    const doc = persyaratan_umum.find((d) =>
+      d.nama_dokumen_persyaratan?.toLowerCase().includes(keyword.toLowerCase()),
+    );
+    return doc?.file ?? null;
+  };
+
+  const ktpFile = findDokumenFile("ktp");
+  const nkkFile =
+    findDokumenFile("nkk") ??
+    findDokumenFile("kartu keluarga") ??
+    findDokumenFile(" kk");
+
   const InfoItem = ({
     icon: Icon,
     label,
     value,
+    fileUrl,
   }: {
     icon: any;
     label: string;
     value?: string | null;
+    fileUrl?: string | null;
   }) => (
     <div className="flex items-start gap-3 py-2">
       <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-sm mt-1 break-words">{value || "-"}</p>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <p className="text-sm break-words">{value || "-"}</p>
+          {fileUrl && (
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-primary border border-primary/40 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors flex-shrink-0">
+              <ExternalLink className="w-3 h-3" />
+              Lihat File
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
-
   return (
     <>
       {/* Data Pribadi */}
@@ -324,8 +382,20 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               label="Nama Lengkap"
               value={data_beasiswa.nama_lengkap}
             />
-            <InfoItem icon={IdCard} label="NIK" value={data_beasiswa.nik} />
-            <InfoItem icon={IdCard} label="NKK" value={data_beasiswa.nkk} />
+            {/* <InfoItem icon={IdCard} label="NIK" value={data_beasiswa.nik} />
+            <InfoItem icon={IdCard} label="NKK" value={data_beasiswa.nkk} /> */}
+            <InfoItem
+              icon={IdCard}
+              label="NIK"
+              value={data_beasiswa.nik}
+              fileUrl={ktpFile}
+            />
+            <InfoItem
+              icon={IdCard}
+              label="NKK"
+              value={data_beasiswa.nkk}
+              fileUrl={nkkFile}
+            />
             <InfoItem
               icon={User}
               label="Jenis Kelamin"
@@ -950,6 +1020,31 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             />
           </div>
 
+          {/* Nilai Rapor */}
+          {nilaiRapor && (
+            <div className="mt-4 border rounded-lg p-4 bg-muted/30">
+              <p className="text-sm font-semibold text-gray-700 mb-3">
+                Rata-Rata Nilai Rapor
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6">
+                {[
+                  { label: "Semester 1", value: nilaiRapor.nilai_semester_1 },
+                  { label: "Semester 2", value: nilaiRapor.nilai_semester_2 },
+                  { label: "Semester 3", value: nilaiRapor.nilai_semester_3 },
+                  { label: "Semester 4", value: nilaiRapor.nilai_semester_4 },
+                  { label: "Semester 5", value: nilaiRapor.nilai_semester_5 },
+                ].map(({ label, value }) => (
+                  <InfoItem
+                    key={label}
+                    icon={BookOpen}
+                    label={label}
+                    value={value != null ? String(value) : null}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <KesesuaianSection
             title="Kesesuaian Data Pendidikan"
             nameValid="data_pendidikan_is_valid"
@@ -965,6 +1060,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 data_beasiswa.catatan_data_section?.data_pendidikan_catatan,
             }}
           />
+          
         </>
       </CollapsibleSection>
 
@@ -986,7 +1082,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 />
               ))}
             </div>
-            <KesesuaianSection
+            {/* <KesesuaianSection
               title="Kesesuaian Data Program Studi"
               nameValid="data_program_studi_is_valid"
               nameCatatan="data_program_studi_catatan"
@@ -1001,8 +1097,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 catatan:
                   data_beasiswa.catatan_data_section
                     ?.data_program_studi_catatan,
-              }}
-            />
+              }} */}
+            {/* /> */}
           </CollapsibleSection>
         )}
 

@@ -12,7 +12,9 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");
 
-  const isViewOnly = [6, 7, 9, 10, 11, 12, 13].includes(beasiswa.id_flow ?? 0);
+  const isViewOnly = [3, 6, 7, 9, 10, 11, 12, 13].includes(
+    beasiswa.id_flow ?? 0,
+  );
 
   if (!canUpdate && !isViewOnly) return null;
 

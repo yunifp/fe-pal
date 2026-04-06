@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { CustInput } from "@/components/CustInput";
 // import { Checkbox } from "@/components/ui/checkbox";
 // import { Label } from "@/components/ui/label";
@@ -329,6 +331,7 @@ const Alamat = ({
               errorMessage={errors.tinggal_kode_pos?.message}
               {...register("tinggal_kode_pos")}
               onKeyDown={onlyNumbers}
+              maxLength={5}
             />
           </div>
 
@@ -459,6 +462,7 @@ const Alamat = ({
               errorMessage={errors.kerja_kode_pos?.message}
               {...register("kerja_kode_pos")}
               onKeyDown={onlyNumbers}
+              maxLength={5}
             />
           </div>
 
@@ -472,6 +476,7 @@ const Alamat = ({
               errorMessage={errors.kerja_rt?.message}
               {...register("kerja_rt")}
               onKeyDown={onlyNumbers}
+              maxLength={4}
             />
 
             <CustInput
@@ -483,6 +488,7 @@ const Alamat = ({
               errorMessage={errors.kerja_rw?.message}
               {...register("kerja_rw")}
               onKeyDown={onlyNumbers}
+              maxLength={4}
             />
           </div>
 

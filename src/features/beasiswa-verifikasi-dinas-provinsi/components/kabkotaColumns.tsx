@@ -32,7 +32,7 @@ export interface IBaKabkota {
 export const getKabkotaColumns = (
   onSelect: (kode: string, nama: string) => void,
   skMap: Record<string, ISkKabkota[]>,
-  baseFileUrl: string,
+  // baseFileUrl: string,
   countMap: Record<string, number>,
   baMap: Record<string, IBaKabkota[]> = {},
 ): ColumnDef<IKabkotaRow>[] => [
@@ -89,7 +89,7 @@ export const getKabkotaColumns = (
             <Tooltip>
               <TooltipTrigger asChild>
                 <a
-                  href={`${baseFileUrl}/uploads/persyaratan/${latest.filename}`}
+                  href={`svc-beasiswa/uploads/surat_keputusan/${latest.filename}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
@@ -129,7 +129,7 @@ export const getKabkotaColumns = (
             <Tooltip>
               <TooltipTrigger asChild>
                 <a
-                  href={`${baseFileUrl}/uploads/persyaratan/${latest.filename}`}
+                  href={`svc-beasiswa/uploads/berita_acara/${latest.filename}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"

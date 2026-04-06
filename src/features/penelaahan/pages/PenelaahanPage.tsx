@@ -29,6 +29,7 @@ const PenelaahanPage = () => {
 
   const pageSize = 10;
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingSemua, setIsDownloadingSemua] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isResetting, setIsResetting] = useState(false); // State loading untuk reset
@@ -68,6 +69,25 @@ const PenelaahanPage = () => {
       toast.error("Gagal mengunduh template Excel.");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadSemua = async () => {
+    setIsDownloadingSemua(true);
+    try {
+      const blob = await penelaahanService.downloadExcelSemua();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Semua_Data_Penelaahan.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Semua data berhasil diunduh!");
+    } catch (error) {
+      toast.error("Gagal mengunduh semua data Excel.");
+    } finally {
+      setIsDownloadingSemua(false);
     }
   };
 
@@ -130,7 +150,7 @@ const PenelaahanPage = () => {
     }
   };
 
-  const isActionDisabled = isDownloading || isUploading || isSending || isResetting;
+const isActionDisabled = isDownloading || isDownloadingSemua || isUploading || isSending || isResetting;
 
   return (
     <div className="space-y-6 pb-8">
@@ -147,6 +167,13 @@ const PenelaahanPage = () => {
           </p>
         </div>
 
+       
+      </div>
+
+
+      <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
+       
+
         {/* CONTAINER TOMBOL SEJAJAR */}
         <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-3">
           
@@ -158,7 +185,17 @@ const PenelaahanPage = () => {
             className="h-10 px-4 flex items-center gap-2 whitespace-nowrap"
           >
             <FileDown className="h-4 w-4" />
-            Download Template
+            Download Template Perangkingan
+          </Button>
+
+          <Button
+            onClick={handleDownloadSemua}
+            disabled={isActionDisabled}
+            variant="outline"
+            className="h-10 px-4 flex items-center gap-2 whitespace-nowrap bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-200"
+          >
+            <FileDown className="h-4 w-4" />
+            Download Semua Data
           </Button>
 
           {/* Hidden Input Upload */}
@@ -205,7 +242,6 @@ const PenelaahanPage = () => {
           </Button>
         </div>
       </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4 bg-gray-100/50 p-1 border">
           <TabsTrigger value="pendaftar" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
@@ -236,7 +272,7 @@ const PenelaahanPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="hasil">
+       <TabsContent value="hasil">
           <Card className="shadow-sm border-blue-200 border-t-4 border-t-blue-500">
             <CardHeader className="bg-blue-50/30 border-b pb-4">
               <CardTitle className="text-base text-gray-800">Hasil Penempatan Universitas & Prodi</CardTitle>
@@ -245,16 +281,38 @@ const PenelaahanPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <DataTable
-                isLoading={loadHasil || isUploading || isResetting}
-                columns={colsHasil}
-                data={respHasil?.data?.result || []}
-                pageCount={respHasil?.data?.total_pages || 1}
-                pageIndex={pageIndexHasil}
-                onPageChange={setPageIndexHasil}
-                searchValue={searchHasil}
-                onSearchChange={(val) => { setSearchHasil(val); setPageIndexHasil(0); }}
-              />
+              {/* KONDISI EMPTY STATE: Jika loading selesai, hasil kosong, dan tidak sedang melakukan pencarian */}
+              {!loadHasil && (!respHasil?.data?.result || respHasil.data.result.length === 0) && searchHasil === "" ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                  <div className="p-4 bg-blue-50 rounded-full mb-4">
+                    <UploadCloud className="h-10 w-10 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">Belum Ada Hasil Perankingan</h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-6 leading-relaxed">
+                    Data hasil penempatan PT dan Prodi masih kosong. Silakan unduh template pendaftar, isi kolom penempatan, lalu unggah kembali ke sistem.
+                  </p>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isActionDisabled}
+                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2"
+                  >
+                    <UploadCloud className="h-4 w-4" />
+                    Upload File Hasil
+                  </Button>
+                </div>
+              ) : (
+                // TABEL DATATABLE JIKA DATA ADA ATAU SEDANG SEARCH / LOADING
+                <DataTable
+                  isLoading={loadHasil || isUploading || isResetting}
+                  columns={colsHasil}
+                  data={respHasil?.data?.result || []}
+                  pageCount={respHasil?.data?.total_pages || 1}
+                  pageIndex={pageIndexHasil}
+                  onPageChange={setPageIndexHasil}
+                  searchValue={searchHasil}
+                  onSearchChange={(val) => { setSearchHasil(val); setPageIndexHasil(0); }}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

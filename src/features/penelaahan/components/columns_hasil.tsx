@@ -20,6 +20,23 @@ export const getHasilPerankinganColumns = (pageIndex: number, pageSize: number):
   },
   { accessorKey: "nilai_temp", header: "Nilai Akhir" },
   { 
+    // TAMBAHKAN KOLOM INI
+    accessorKey: "status_wawancara", 
+    header: "Status Wawancara",
+    cell: ({ row }) => {
+      const status = row.original.status_wawancara;
+      return (
+        <span className={`font-semibold ${
+          status === 'Rekomendasi' ? 'text-green-600' : 
+          status === 'Tidak Rekomendasi' ? 'text-red-600' : 
+          'text-gray-500'
+        }`}>
+          {status || "-"}
+        </span>
+      );
+    }
+  },
+  { 
     accessorKey: "pt_final", header: "PT Final",
     cell: ({ row }) => <span className="text-blue-700 font-semibold">{row.original.pt_final}</span>
   },

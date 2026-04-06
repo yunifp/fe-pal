@@ -17,7 +17,6 @@ import { AlertCircle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { CustSelect } from "@/components/ui/CustSelect";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-// import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PilihanJurusanProps {
@@ -38,10 +37,7 @@ const PilihanJurusan = ({
     { value: "N", label: "Tidak" },
   ];
 
-  // ── State & Refs ────────────────────────────────────────────
   const [isPopulating, setIsPopulating] = useState(false);
-
-  // Track kondisi populate terakhir agar tidak double-run
   const lastPopulateKeyRef = useRef<string>("");
 
   const { fields, remove, replace } = useFieldArray({
@@ -59,12 +55,13 @@ const PilihanJurusan = ({
     control,
     name: "jurusan_sekolah",
   });
+
   const selectedIdJurusanSekolah = useMemo(() => {
     const id = selectedIdJurusanSekolahRaw?.split("#")[0];
     return id && id !== "" ? id : undefined;
   }, [selectedIdJurusanSekolahRaw]);
 
-  // ── Fetch: Perguruan Tinggi ──────────────────────────────────
+  // ── Fetch: Perguruan Tinggi (sekarang include has_d1_d2) ─────
   const {
     data: responsePerguruanTinggi,
     isLoading: isLoadingPT,
@@ -81,16 +78,131 @@ const PilihanJurusan = ({
     staleTime: STALE_TIME,
   });
 
+  // ── Build perguruanTinggiOptions tetap sama (untuk dropdown) ─
   const perguruanTinggiOptions = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return [];
     return responsePerguruanTinggi.data.map((pt) => ({
       value: String(pt.id_pt + "#" + pt.nama_pt),
       label: pt.nama_pt,
+      has_d1_d2: Boolean(pt.has_d1_d2), // cast eksplisit, handles "1", 1, true, false
     }));
   }, [responsePerguruanTinggi]);
 
+  // Tambah di PilihanJurusan.tsx setelah allPilihan watch
+
+  // Kumpulkan semua PT yang sudah dipilih beserta paired-nya
+  // const usedPtValues = useMemo(() => {
+  //   const used = new Set<string>();
+  //   (allPilihan ?? []).forEach((p, idx) => {
+  //     if (!p?.perguruan_tinggi) return;
+  //     const ptValue = p.perguruan_tinggi;
+  //     const ptId = ptValue.split("#")[0];
+
+  //     // Cek apakah PT ini punya D1/D2
+  //     // const ptOption = perguruanTinggiOptions.find(
+  //     //   (opt) => opt.value === ptValue,
+  //     // );
+
+  //     // Tandai PT ini sebagai used di semua slot kecuali slot sendiri
+  //     // Kita pass index agar slot sendiri tidak ter-exclude
+  //     used.add(`${ptId}__${idx}`); // format: ptId__ownIndex (dikecualikan nanti)
+  //   });
+  //   return used;
+  // }, [allPilihan, perguruanTinggiOptions]);
+
+  // Set berisi ptId yang sudah fully picked (D1/D2 + non-D1/D2 keduanya terisi)
+  // const fullyPickedPtIds = useMemo(() => {
+  //   const picked = new Set<string>();
+
+  //   // Group pilihan by ptId
+  //   const grouped = new Map<string, typeof allPilihan>();
+  //   (allPilihan ?? []).forEach((p) => {
+  //     if (!p?.perguruan_tinggi) return;
+  //     const ptId = p.perguruan_tinggi.split("#")[0];
+  //     if (!grouped.has(ptId)) grouped.set(ptId, []);
+  //     grouped.get(ptId)!.push(p);
+  //   });
+
+  //   grouped.forEach((rows, ptId) => {
+  //     const ptOption = perguruanTinggiOptions.find(
+  //       (opt) => opt.value.split("#")[0] === ptId,
+  //     );
+  //     if (ptOption?.has_d1_d2) {
+  //       // PT dengan D1/D2 — fully picked hanya jika KEDUA slot sudah ada PT-nya
+  //       if (rows.length >= 2 && rows.every((r) => r?.perguruan_tinggi)) {
+  //         picked.add(ptId);
+  //       }
+  //     } else {
+  //       // PT tanpa D1/D2 — fully picked jika slot-nya sudah ada PT-nya
+  //       if (rows.some((r) => r?.perguruan_tinggi)) {
+  //         picked.add(ptId);
+  //       }
+  //     }
+  //   });
+
+  //   return picked;
+  // }, [allPilihan, perguruanTinggiOptions]);
+  const fullyPickedPtIds = useMemo(() => {
+    const picked = new Set<string>();
+
+    const grouped = new Map<
+      string,
+      { perguruan_tinggi: string; program_studi: string }[]
+    >();
+    (allPilihan ?? []).forEach((p) => {
+      if (!p?.perguruan_tinggi) return;
+      const ptId = p.perguruan_tinggi.split("#")[0];
+      if (!grouped.has(ptId)) grouped.set(ptId, []);
+      grouped.get(ptId)!.push(p);
+    });
+
+    grouped.forEach((rows, ptId) => {
+      if (!rows) return; // ← fix: guard rows undefined
+
+      const ptOption = perguruanTinggiOptions.find(
+        (opt) => opt.value.split("#")[0] === ptId,
+      );
+
+      if (ptOption?.has_d1_d2) {
+        if (rows.length >= 2 && rows.every((r) => !!r?.perguruan_tinggi)) {
+          picked.add(ptId);
+        }
+      } else {
+        if (rows.some((r) => !!r?.perguruan_tinggi)) {
+          picked.add(ptId);
+        }
+      }
+    });
+
+    return picked;
+  }, [allPilihan, perguruanTinggiOptions]);
+
   const hasPerguruanTinggi = perguruanTinggiOptions.length > 0;
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
+
+  type SlotRow = {
+    perguruan_tinggi: string;
+    program_studi: string;
+    slot_type: "d1d2" | "non_d1d2" | "all";
+  };
+
+  const rowTemplates = useMemo(() => {
+    return perguruanTinggiOptions.flatMap((pt): SlotRow[] => {
+      if (pt.has_d1_d2) {
+        return [
+          { perguruan_tinggi: pt.value, program_studi: "", slot_type: "d1d2" },
+          {
+            perguruan_tinggi: pt.value,
+            program_studi: "",
+            slot_type: "non_d1d2",
+          },
+        ];
+      }
+      return [
+        { perguruan_tinggi: pt.value, program_studi: "", slot_type: "all" },
+      ];
+    });
+  }, [perguruanTinggiOptions]);
 
   // ── Fetch: Existing Pilihan ──────────────────────────────────
   const { data: responseExistingPilihan, isLoading: isLoadingExisting } =
@@ -104,9 +216,7 @@ const PilihanJurusan = ({
       staleTime: STALE_TIME,
     });
 
-  // ── Populate Logic ───────────────────────────────────────────
-  // Key unik yang merepresentasikan kondisi populate saat ini.
-  // Populate HANYA jalan jika key berubah dari sebelumnya.
+  // ── Populate Key ─────────────────────────────────────────────
   const populateKey = useMemo(() => {
     if (!selectedIdJurusanSekolah) return "";
     if (!selectedKondisiButaWarna) return "";
@@ -114,53 +224,80 @@ const PilihanJurusan = ({
     if (isFetchingPT) return "";
     if (!hasPerguruanTinggi) return "";
     if (idTrxBeasiswa && isLoadingExisting) return "";
-    return `${selectedIdJurusanSekolah}__${selectedKondisiButaWarna}__${perguruanTinggiOptions.length}__${idTrxBeasiswa ?? "new"}`;
+    return `${selectedIdJurusanSekolah}__${selectedKondisiButaWarna}__${rowTemplates.length}__${idTrxBeasiswa ?? "new"}`;
   }, [
     selectedIdJurusanSekolah,
     selectedKondisiButaWarna,
     isLoadingPTAny,
     isFetchingPT,
     hasPerguruanTinggi,
-    perguruanTinggiOptions.length,
+    rowTemplates.length,
     idTrxBeasiswa,
     isLoadingExisting,
   ]);
 
+  // ── Populate Effect ──────────────────────────────────────────
   useEffect(() => {
-    // Tidak ada yang perlu dilakukan jika key kosong atau sama
     if (!populateKey) return;
     if (lastPopulateKeyRef.current === populateKey) return;
     lastPopulateKeyRef.current = populateKey;
 
-    const validPtValues = new Set(perguruanTinggiOptions.map((pt) => pt.value));
-
-    // Ambil data existing dari API (edit mode)
+    // Build existing map: key = "id_pt#nama_pt__slot_type", value = program_studi
+    // Untuk edit mode: match berdasarkan perguruan_tinggi + slot_type
     let existingMap = new Map<string, string>();
     const rawExisting = responseExistingPilihan?.data ?? [];
+
     if (
       idTrxBeasiswa &&
       responseExistingPilihan?.success &&
       rawExisting.length
     ) {
-      const seen = new Set<string>();
-      rawExisting
-        .filter((item: any) => {
-          const key = item.perguruan_tinggi;
-          if (!key || seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        })
-        .filter((item: any) => validPtValues.has(item.perguruan_tinggi))
-        .forEach((item: any) => {
-          existingMap.set(item.perguruan_tinggi, item.program_studi ?? "");
-        });
+      // Group existing by perguruan_tinggi, urutkan berdasarkan jenjang
+      const groupedByPt = new Map<string, string[]>();
+      rawExisting.forEach((item: any) => {
+        const ptKey = item.perguruan_tinggi;
+        if (!ptKey) return;
+        if (!groupedByPt.has(ptKey)) groupedByPt.set(ptKey, []);
+        groupedByPt.get(ptKey)!.push(item.program_studi ?? "");
+      });
+
+      // Map ke slot_type berdasarkan urutan (d1d2 duluan, lalu non_d1d2)
+      // Asumsi data existing sudah tersimpan dengan urutan yang benar
+      rowTemplates.forEach((row) => {
+        const ptKey = row.perguruan_tinggi;
+        const prodiList = groupedByPt.get(ptKey) ?? [];
+        const mapKey = `${ptKey}__${row.slot_type}`;
+
+        if (row.slot_type === "d1d2") {
+          existingMap.set(mapKey, prodiList[0] ?? "");
+        } else if (row.slot_type === "non_d1d2") {
+          existingMap.set(mapKey, prodiList[1] ?? "");
+        } else {
+          existingMap.set(mapKey, prodiList[0] ?? "");
+        }
+      });
     }
 
-    // Bangun rows: satu per PT, isi dengan existing jika ada
-    const orderedRows = perguruanTinggiOptions.map((pt) => ({
-      perguruan_tinggi: existingMap.has(pt.value) ? pt.value : "",
-      program_studi: existingMap.get(pt.value) ?? "",
-    }));
+    // Build rows dari template, isi dengan existing jika ada
+    // const orderedRows = rowTemplates.map((row) => {
+    //   const mapKey = `${row.perguruan_tinggi}__${row.slot_type}`;
+    //   return {
+    //     perguruan_tinggi: row.perguruan_tinggi,
+    //     program_studi: existingMap.get(mapKey) ?? "",
+    //     slot_type: row.slot_type,
+    //   };
+    // });
+
+    const orderedRows = rowTemplates.map((row) => {
+      const mapKey = `${row.perguruan_tinggi}__${row.slot_type}`;
+      const existingProdi = existingMap.get(mapKey) ?? "";
+      return {
+        // Kalau edit mode & ada existing data → isi PT, kalau tidak → biarkan kosong
+        perguruan_tinggi: existingProdi ? row.perguruan_tinggi : "",
+        program_studi: existingProdi,
+        slot_type: row.slot_type,
+      };
+    });
 
     setIsPopulating(true);
     replace(orderedRows);
@@ -185,14 +322,11 @@ const PilihanJurusan = ({
     (!!idTrxBeasiswa && isLoadingExisting && !!selectedKondisiButaWarna) ||
     (isPopulating && fields.length === 0);
 
-  const emptyCount = (allPilihan ?? []).filter(
-    (p) => !p?.perguruan_tinggi || !p?.program_studi,
-  ).length;
-
+  const emptyCount = (allPilihan ?? []).filter((p) => !p?.program_studi).length;
   const hasEmptyRows =
     !isPopulating && !showSkeleton && fields.length > 0 && emptyCount > 0;
 
-  // ── Skeleton Component ───────────────────────────────────────
+  // ── Skeleton ─────────────────────────────────────────────────
   const PilihanSkeleton = () => (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
@@ -237,15 +371,15 @@ const PilihanJurusan = ({
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
                   Pilihan perguruan tinggi akan muncul setelah Anda memilih
-                  jurusan sekolah di step sebelumnya
+                  jurusan sekolah
                 </li>
                 <li>
-                  Lakukan tes buta warna atau pilih kondisi buta warna Anda
-                  untuk melihat program studi yang sesuai
+                  Lakukan tes buta warna untuk melihat program studi yang sesuai
                 </li>
                 <li>
-                  Jika Anda buta warna, hanya program studi yang mengizinkan
-                  buta warna yang akan ditampilkan
+                  Perguruan tinggi yang memiliki program D1/D2 akan muncul dua
+                  kali — satu slot untuk D1/D2 dan satu slot untuk jenjang
+                  lainnya
                 </li>
               </ul>
             </div>
@@ -253,55 +387,43 @@ const PilihanJurusan = ({
         </CardContent>
       </Card>
 
-      {/* Alert jika jurusan sekolah belum dipilih */}
       {!selectedIdJurusanSekolah && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Silakan pilih jurusan sekolah terlebih dahulu di step "Asal Sekolah"
-            untuk melihat daftar perguruan tinggi yang tersedia.
+            Silakan pilih jurusan sekolah terlebih dahulu di step "Asal
+            Sekolah".
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Loading state saat fetch PT */}
       {isLoadingPTAny && selectedIdJurusanSekolah && (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertDescription>
-            Memuat daftar perguruan tinggi untuk jurusan yang Anda pilih...
-          </AlertDescription>
+          <AlertDescription>Memuat daftar perguruan tinggi...</AlertDescription>
         </Alert>
       )}
 
-      {/* Alert jika tidak ada perguruan tinggi */}
       {selectedIdJurusanSekolah && !isLoadingPTAny && !hasPerguruanTinggi && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <div className="space-y-2">
-              <p className="font-medium">
-                Tidak ada perguruan tinggi yang tersedia untuk jurusan sekolah
-                yang Anda pilih.
-              </p>
-              <p className="text-sm">
-                Silakan hubungi administrator atau pilih jurusan sekolah yang
-                lain.
-              </p>
-            </div>
+            <p className="font-medium">
+              Tidak ada perguruan tinggi untuk jurusan ini.
+            </p>
+            <p className="text-sm">
+              Silakan hubungi administrator atau pilih jurusan lain.
+            </p>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Form hanya muncul jika ada PT */}
       {hasPerguruanTinggi && (
         <>
-          {/* Tes Buta Warna */}
           {!selectedKondisiButaWarna && (
             <TesButaWarna onResult={handleResult} />
           )}
 
-          {/* Hasil Tes Buta Warna */}
           {selectedKondisiButaWarna && (
             <div
               className={`flex items-start gap-3 p-4 rounded-lg border ${
@@ -318,30 +440,21 @@ const PilihanJurusan = ({
               </div>
               <div className="flex-1">
                 <h4
-                  className={`font-medium ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-900"
-                      : "text-red-900"
-                  }`}>
+                  className={`font-medium ${selectedKondisiButaWarna === "N" ? "text-green-900" : "text-red-900"}`}>
                   {selectedKondisiButaWarna === "N"
                     ? "Penglihatan Normal"
                     : "Terdeteksi Buta Warna"}
                 </h4>
                 <p
-                  className={`text-sm mt-1 ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}>
+                  className={`text-sm mt-1 ${selectedKondisiButaWarna === "N" ? "text-green-700" : "text-red-700"}`}>
                   {selectedKondisiButaWarna === "N"
                     ? "Hasil tes menunjukkan tidak ada indikasi buta warna."
-                    : "Hasil tes menunjukkan adanya indikasi buta warna. Disarankan untuk konsultasi lebih lanjut."}
+                    : "Hasil tes menunjukkan adanya indikasi buta warna."}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Dropdown Manual Kondisi Buta Warna */}
           {selectedKondisiButaWarna && (
             <div className="grid grid-cols-1 gap-4">
               <CustSelect
@@ -356,7 +469,6 @@ const PilihanJurusan = ({
             </div>
           )}
 
-          {/* Pilihan Program Studi */}
           {selectedKondisiButaWarna && (
             <>
               {showSkeleton ? (
@@ -365,8 +477,7 @@ const PilihanJurusan = ({
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    Tidak ada pilihan perguruan tinggi yang dapat ditampilkan.
-                    Pastikan data perguruan tinggi tersedia.
+                    Tidak ada pilihan yang dapat ditampilkan.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -376,25 +487,49 @@ const PilihanJurusan = ({
                       Pilihan Perguruan Tinggi & Program Studi
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {fields.length} perguruan tinggi tersedia
+                      {fields.length} slot tersedia
                     </p>
                   </div>
 
                   {fields.map((field, index) => {
-                    const ptSudahDipilih = (allPilihan ?? [])
-                      .filter((_, i) => i !== index)
-                      .map((item) => item?.perguruan_tinggi)
-                      .filter(Boolean);
-
-                    const filteredPerguruanTinggiOptions =
-                      perguruanTinggiOptions.filter(
-                        (opt) => !ptSudahDipilih.includes(opt.value),
-                      );
-
+                    // Di dalam fields.map(...)
                     const currentRow = allPilihan?.[index];
-                    const isEmpty =
-                      !currentRow?.perguruan_tinggi ||
-                      !currentRow?.program_studi;
+                    const slotType = (field as any).slot_type ?? "all";
+                    const currentPtId =
+                      currentRow?.perguruan_tinggi?.split("#")[0];
+
+                    // PT yang tidak boleh dipilih di slot ini:
+                    // semua PT yang sudah fully picked, kecuali PT milik slot ini sendiri
+                    const disabledPtIds = new Set(
+                      [...fullyPickedPtIds].filter(
+                        (ptId) => ptId !== currentPtId,
+                      ),
+                    );
+
+                    // Untuk slot non_d1d2: PT-nya di-lock mengikuti slot d1d2 pasangannya
+                    // Cari paired slot (slot d1d2 dengan index terdekat sebelum slot ini)
+                    let lockedPtValue: string | undefined = undefined;
+                    if (slotType === "non_d1d2") {
+                      // Cari slot d1d2 yang punya PT sama (pasangan)
+                      // const pairedSlot = (allPilihan ?? []).find(
+                      //   (p, i) =>
+                      //     i < index &&
+                      //     (field as any).slot_type !==
+                      //       (fields[i] as any)?.slot_type &&
+                      //     p?.perguruan_tinggi,
+                      // );
+                      // Cara lebih reliable: cari di fields berdasarkan posisi
+                      // Slot non_d1d2 selalu tepat setelah slot d1d2 untuk PT yang sama
+                      const pairedField = fields[index - 1];
+                      const pairedPilihan = allPilihan?.[index - 1];
+                      if (
+                        pairedField &&
+                        (pairedField as any).slot_type === "d1d2" &&
+                        pairedPilihan?.perguruan_tinggi
+                      ) {
+                        lockedPtValue = pairedPilihan.perguruan_tinggi;
+                      }
+                    }
 
                     return (
                       <PerguruanTinggiItem
@@ -403,15 +538,36 @@ const PilihanJurusan = ({
                         control={control}
                         remove={remove}
                         kondisiButaWarna={selectedKondisiButaWarna}
-                        perguruanTinggiOptions={filteredPerguruanTinggiOptions}
+                        perguruanTinggiOptions={perguruanTinggiOptions}
                         setValue={setValue}
                         isPopulating={isPopulating}
-                        isEmpty={isEmpty}
+                        isEmpty={!currentRow?.program_studi}
+                        slotType={slotType}
+                        disabledPtIds={disabledPtIds} // ← baru
+                        lockedPtValue={lockedPtValue} // ← baru: untuk slot non_d1d2
                       />
                     );
+                    // const currentRow = allPilihan?.[index];
+                    // const isEmpty = !currentRow?.program_studi;
+                    // // slot_type tersimpan di field array
+                    // const slotType = (field as any).slot_type ?? "all";
+
+                    // return (
+                    //   <PerguruanTinggiItem
+                    //     key={field.id}
+                    //     index={index}
+                    //     control={control}
+                    //     remove={remove}
+                    //     kondisiButaWarna={selectedKondisiButaWarna}
+                    //     perguruanTinggiOptions={perguruanTinggiOptions}
+                    //     setValue={setValue}
+                    //     isPopulating={isPopulating}
+                    //     isEmpty={isEmpty}
+                    //     slotType={slotType} // <-- BARU
+                    //   />
+                    // );
                   })}
 
-                  {/* Summary alert jika ada row yang belum diisi */}
                   {hasEmptyRows && (
                     <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
                       <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -419,11 +575,11 @@ const PilihanJurusan = ({
                         <span className="font-medium">
                           {emptyCount} pilihan
                         </span>{" "}
-                        belum dilengkapi. Semua pilihan perguruan tinggi dan
-                        program studi wajib diisi sebelum melanjutkan.
+                        belum dilengkapi. Semua program studi wajib diisi.
                       </p>
                     </div>
                   )}
+
                   {errors.pilihan_program_studi && (
                     <p className="text-sm text-red-500">
                       {errors.pilihan_program_studi.message}

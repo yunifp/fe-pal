@@ -29,5 +29,9 @@ export const penelaahanService = {
   resetHasilPerankingan: async () => {
     const response = await axiosInstanceBeasiswa.put(`/penelaahan/reset`);
     return response.data;
-  }
+  },
+  downloadExcelSemua: async () => {
+    const response = await axiosInstanceBeasiswa.get(`/penelaahan/download-excel-semua`, { responseType: "blob" });
+    return response.data;
+  },
 };

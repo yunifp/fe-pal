@@ -23,7 +23,7 @@ import { STALE_TIME } from "@/constants/reactQuery";
 
 const extractErrorMessages = (
   errors: FieldErrors<VerifikasiFormData>,
-  parentKey = ""
+  parentKey = "",
 ): string[] => {
   const messages: string[] = [];
 
@@ -41,16 +41,16 @@ const extractErrorMessages = (
         messages.push(
           ...extractErrorMessages(
             item as FieldErrors<VerifikasiFormData>,
-            `${fieldPath}[${index}]`
-          )
+            `${fieldPath}[${index}]`,
+          ),
         );
       });
     } else if (typeof value === "object") {
       messages.push(
         ...extractErrorMessages(
           value as FieldErrors<VerifikasiFormData>,
-          fieldPath
-        )
+          fieldPath,
+        ),
       );
     }
   });
@@ -92,6 +92,7 @@ const BeasiswaSeleksiDetailPage = () => {
       data_orang_tua_is_valid: "",
       data_tempat_bekerja_is_valid: "",
       data_pendidikan_is_valid: "",
+      data_program_studi_is_valid: "1",
       data_persyaratan_umum: [],
       data_persyaratan_khusus: [],
       data_persyaratan_dinas: [
@@ -139,7 +140,7 @@ const BeasiswaSeleksiDetailPage = () => {
         selectedStatus!,
         data.catatan || "",
         data,
-        "ditjenbun"
+        "ditjenbun",
       );
     },
     onSuccess: (res) => {
@@ -153,7 +154,9 @@ const BeasiswaSeleksiDetailPage = () => {
     },
     onError: (error: unknown) => {
       // Type safe error handling untuk Axios/Custom error
-      const errResponse = (error as { response?: { data?: { message?: string } } })?.response;
+      const errResponse = (
+        error as { response?: { data?: { message?: string } } }
+      )?.response;
       if (errResponse?.data?.message) {
         toast.error(errResponse.data.message);
       } else {
@@ -165,7 +168,7 @@ const BeasiswaSeleksiDetailPage = () => {
   const onSubmit = (data: VerifikasiFormData) => {
     // Menyalin data agar tidak memanipulasi object aslinya secara langsung
     const submitData = { ...data };
-    
+
     // Menghapus field selectedStatus tanpa perlu mendeklarasikan variabel yang tidak dipakai (unused-vars)
     delete submitData.selectedStatus;
 

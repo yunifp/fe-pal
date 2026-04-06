@@ -12,7 +12,8 @@ import axiosInstanceFormData from "@/lib/axiosInstanceFormData";
 export const userService = {
   getByPagination: async (
     page: number = 1,
-    search: string = ""
+    search: string = "",
+    role: string = "" // <--- Tambahan parameter role
   ): Promise<Response<PaginatedUserResponse>> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users`,
@@ -20,6 +21,7 @@ export const userService = {
         params: {
           page,
           search,
+          role, 
         },
       }
     );

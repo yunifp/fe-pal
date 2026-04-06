@@ -19,6 +19,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Download,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 import {
   Select,
@@ -53,6 +55,7 @@ const ManajemenVerifikator = () => {
 
   const [jumlahMap, setJumlahMap] = useState<JumlahMap>({});
   const [isAssigning, setIsAssigning] = useState(false);
+  // const [lockedCount, setLockedCount] = useState<number>(0);
 
   // ── Verifikator IDs ────────────────────────────────────────────────────────
   const { data: responseVerifikatorIds, isLoading: isLoadingV } = useQuery({
@@ -78,7 +81,7 @@ const ManajemenVerifikator = () => {
     nama_lengkap: string;
   }[] = responseBeban?.data ?? [];
 
-  // Tambah query ini setelah query beban
+  //  query beban
   const { data: responseNamaVerifikator } = useQuery({
     queryKey: ["nama-verifikator", verifikatorIds],
     queryFn: () => beasiswaService.getUsersByIds(verifikatorIds),
@@ -91,12 +94,6 @@ const ManajemenVerifikator = () => {
   const namaList: Array<{ id: number; nama_lengkap: string }> =
     responseNamaVerifikator?.data ?? [];
 
-  // const namaList = (responseNamaVerifikator?.data ?? []) as Array<{
-  //   id: number;
-  //   nama_lengkap: string;
-  // }>;
-
-  // Ubah verifikatorList useMemo jadi:
   const verifikatorList: Verifikator[] = useMemo(() => {
     return verifikatorIds.map((id) => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
@@ -150,71 +147,25 @@ const ManajemenVerifikator = () => {
     staleTime: STALE_TIME,
   });
 
-  // const [searchUnassigned, setSearchUnassigned] = useState("");
-  // const [pageUnassigned, setPageUnassigned] = useState(1);
-  // const debouncedSearchUnassigned = useDebounce(searchUnassigned, 500);
+  const { data: responseLockedCount } = useQuery({
+    queryKey: ["pendaftar-locked-count"],
+    queryFn: () =>
+      beasiswaService.getPendaftarForAssignment({
+        page: 1,
+        limit: 1,
+        filter: "locked" as any,
+      }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
 
-  // const { data: responseUnassignedTable, isLoading: isLoadingTable } = useQuery(
-  //   {
-  //     queryKey: [
-  //       "pendaftar-unassigned-table",
-  //       pageUnassigned,
-  //       debouncedSearchUnassigned,
-  //     ],
-  //     queryFn: () =>
-  //       beasiswaService.getPendaftarForAssignment({
-  //         page: pageUnassigned,
-  //         limit: 10,
-  //         filter: "all",
-  //         search: debouncedSearchUnassigned,
-  //       }),
-  //     retry: false,
-  //     refetchOnWindowFocus: false,
-  //     staleTime: STALE_TIME,
-  //   },
-  // );
+  const totalLocked: number = responseLockedCount?.data?.total ?? 0;
 
-  // useEffect(() => {
-  //   setPageUnassigned(1);
-  // }, [debouncedSearchUnassigned]);
-
-  // const unassignedRows: ITrxBeasiswa[] =
-  //   responseUnassignedTable?.data?.result ?? [];
-  // const unassignedTotalPages: number =
-  //   responseUnassignedTable?.data?.total_pages ?? 0;
-
-  // const unassignedRows: ITrxBeasiswa[] =
-  //   responseUnassignedTable?.data?.result ?? [];
-  // const unassignedTotal: number = responseUnassignedTable?.data?.total ?? 0;
-  // const unassignedTotalPages: number =
-  //   responseUnassignedTable?.data?.total_pages ?? 1;
-
-  // const columnsUnassigned = useMemo(
-  //   () => getPendaftarColumns(() => {}), // kosongkan handler jika tidak perlu detail
-  //   [],
-  // );
-
-  // const allPendaftar: ITrxBeasiswa[] = responsePendaftar?.data?.result ?? [];
   const totalPendaftar: number = responsePendaftar?.data?.total ?? 0;
   const unassigneds: number = unassigned?.data?.total ?? 0;
-  // const totalBelumAssign = Math.max(0, totalPendaftar - totalBeban);
   const totalBelumAssign = Math.max(0, unassigneds);
 
-  // ── Breakdown per Jalur ────────────────────────────────────────────────────
-  // const jalurBreakdown = useMemo(() => {
-  //   const map: Record<string, number> = {};
-  //   allPendaftar.forEach((p) => {
-  //     const key = p.jalur ?? "Tidak Diketahui";
-  //     map[key] = (map[key] ?? 0) + 1;
-  //   });
-  //   return Object.entries(map)
-  //     .map(([jalur, jumlah]) => ({ jalur, jumlah }))
-  //     .sort((a, b) => b.jumlah - a.jumlah);
-  // }, [allPendaftar]);
-  // const totalJalur = jalurBreakdown.reduce((a, j) => a + j.jumlah, 0);
-
-  // ── Validasi input ─────────────────────────────────────────────────────────
-  // Total jumlah yang diinput tidak boleh melebihi pendaftar yang belum assign
   const totalDiInput = useMemo(() => {
     return Object.values(jumlahMap).reduce((acc, val) => {
       const n = parseInt(val);
@@ -224,18 +175,15 @@ const ManajemenVerifikator = () => {
 
   const isOverQuota = totalDiInput > totalBelumAssign;
   const hasAnyInput = totalDiInput > 0;
-  const canAssign = hasAnyInput && !isOverQuota && !isAssigning;
+  const canAssign =
+    hasAnyInput && !isOverQuota && !isAssigning && totalLocked > 0;
 
-  // ── Handler input ──────────────────────────────────────────────────────────
   const handleJumlahChange = (verifikatorId: number, value: string) => {
     // Hanya terima angka positif
     if (value !== "" && (isNaN(Number(value)) || Number(value) < 0)) return;
     setJumlahMap((prev) => ({ ...prev, [verifikatorId]: value }));
   };
 
-  // ── Assign ─────────────────────────────────────────────────────────────────
-  // Kirim array { id_verifikator, jumlah } ke backend
-  // Backend yang random-assign sejumlah itu dari pool unassigned
   const handleAssign = async () => {
     if (!canAssign) return;
 
@@ -287,16 +235,28 @@ const ManajemenVerifikator = () => {
 
   const handleReset = () => setJumlahMap({});
 
-  const isLoadingInfo = isLoadingV || isLoadingBeban;
+  const handleLockGlobal = async (lock: boolean) => {
+    setIsLocking(true);
+    try {
+      await beasiswaService.toggleLockSelektorGlobal(lock);
+      toast.success(
+        lock
+          ? "Pendaftar berhasil dikunci — siap untuk di-assign"
+          : "Kunci berhasil dibuka",
+      );
+      queryClient.invalidateQueries({ queryKey: ["pendaftar-locked-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["pendaftar-assignment-stats"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["pendaftar-list-table"] });
+    } catch {
+      toast.error("Gagal mengubah status lock");
+    } finally {
+      setIsLocking(false);
+    }
+  };
 
-  // const JALUR_COLORS = [
-  //   "bg-blue-500",
-  //   "bg-emerald-500",
-  //   "bg-violet-500",
-  //   "bg-amber-400",
-  //   "bg-rose-500",
-  //   "bg-cyan-500",
-  // ];
+  const isLoadingInfo = isLoadingV || isLoadingBeban;
 
   const [pageList, setPageList] = useState(1);
   const [searchList, setSearchList] = useState("");
@@ -337,7 +297,6 @@ const ManajemenVerifikator = () => {
   useEffect(() => {
     setPageList(1);
   }, [debouncedSearchList, filterSelektor, filterAssign]);
-  // queryClient.invalidateQueries({ queryKey: ["pendaftar-list-table"] });
 
   const columnsListTable = useMemo(() => getPendaftarColumns(), []);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -360,11 +319,65 @@ const ManajemenVerifikator = () => {
     }
   };
 
+  const [isLocking, setIsLocking] = useState(false);
   return (
     <div className="pb-10">
       <CustBreadcrumb items={[{ name: "Manajemen Selektor" }]} />
 
       {/* Header */}
+      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            Manajemen Selektor
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Pembagian dan monitoring beban selektor
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLockGlobal(true)}
+            disabled={isLocking}
+            className="border-amber-300 text-amber-700 hover:bg-amber-50">
+            {isLocking ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Lock className="h-4 w-4 mr-2" />
+            )}
+            Kunci Semua
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLockGlobal(false)}
+            disabled={isLocking}
+            className="border-slate-300 text-slate-600 hover:bg-slate-50">
+            {isLocking ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <LockOpen className="h-4 w-4 mr-2" />
+            )}
+            Buka Kunci
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              queryClient.invalidateQueries({
+                queryKey: ["beban-verifikator"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["pendaftar-assignment-stats"],
+              });
+            }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div> */}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">
@@ -374,18 +387,70 @@ const ManajemenVerifikator = () => {
             Pembagian dan monitoring beban selektor
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["beban-verifikator"] });
-            queryClient.invalidateQueries({
-              queryKey: ["pendaftar-assignment-stats"],
-            });
-          }}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Status badge lock */}
+          {!isLoadingPendaftar && totalBelumAssign > 0 && (
+            <div
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${
+                totalLocked >= totalBelumAssign
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : totalLocked > 0
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+              }`}>
+              {totalLocked >= totalBelumAssign ? (
+                <Lock className="h-3 w-3" />
+              ) : (
+                <LockOpen className="h-3 w-3" />
+              )}
+              {totalLocked.toLocaleString("id-ID")} /{" "}
+              {totalBelumAssign.toLocaleString("id-ID")} terkunci
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLockGlobal(true)}
+            disabled={isLocking || totalBelumAssign === 0}
+            className="border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+            {isLocking ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Lock className="h-4 w-4 mr-2" />
+            )}
+            Kunci Semua
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLockGlobal(false)}
+            disabled={isLocking || totalLocked === 0}
+            className="border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+            {isLocking ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <LockOpen className="h-4 w-4 mr-2" />
+            )}
+            Buka Kunci
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              queryClient.invalidateQueries({
+                queryKey: ["beban-verifikator"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["pendaftar-assignment-stats"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["pendaftar-locked-count"],
+              });
+            }}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* ── Info bar: belum assign ───────────────────────────────────────────── */}
@@ -401,6 +466,63 @@ const ManajemenVerifikator = () => {
           </p>
         </div>
       )}
+      {/* {!isLoadingInfo && !isLoadingPendaftar && totalBelumAssign > 0 && (
+        <div className="mt-2 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+          <Lock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <p className="text-sm text-blue-800">
+            Klik <span className="font-semibold">Kunci Semua</span> terlebih
+            dahulu sebelum melakukan assignment — hanya pendaftar yang sudah
+            dikunci yang dapat di-assign ke selektor.
+          </p>
+        </div>
+      )} */}
+      {/* Banner: belum ada yang di-lock */}
+      {!isLoadingPendaftar && totalBelumAssign > 0 && totalLocked === 0 && (
+        <div className="mt-2 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <LockOpen className="h-4 w-4 text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-800">
+            Belum ada pendaftar yang dikunci. Klik{" "}
+            <span className="font-semibold">Kunci Semua</span> terlebih dahulu
+            sebelum melakukan assignment.
+          </p>
+        </div>
+      )}
+
+      {/* Banner: sebagian sudah di-lock */}
+      {!isLoadingPendaftar &&
+        totalBelumAssign > 0 &&
+        totalLocked > 0 &&
+        totalLocked < totalBelumAssign && (
+          <div className="mt-2 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <Lock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">
+                {totalLocked.toLocaleString("id-ID")}
+              </span>{" "}
+              dari{" "}
+              <span className="font-semibold">
+                {totalBelumAssign.toLocaleString("id-ID")}
+              </span>{" "}
+              pendaftar sudah dikunci dan siap di-assign.
+            </p>
+          </div>
+        )}
+
+      {/* Banner: semua sudah di-lock */}
+      {!isLoadingPendaftar &&
+        totalBelumAssign > 0 &&
+        totalLocked >= totalBelumAssign && (
+          <div className="mt-2 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <Lock className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm text-emerald-800">
+              Semua{" "}
+              <span className="font-semibold">
+                {totalLocked.toLocaleString("id-ID")}
+              </span>{" "}
+              pendaftar sudah dikunci dan siap di-assign ke selektor.
+            </p>
+          </div>
+        )}
       {!isLoadingInfo &&
         !isLoadingPendaftar &&
         totalBelumAssign === 0 &&
@@ -587,24 +709,34 @@ const ManajemenVerifikator = () => {
                             : "border-border"
                         }`}>
                         {/* Nama verifikator */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                              hasInput
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-primary/10 text-primary"
-                            }`}>
-                            {v.nama.charAt(0).toUpperCase()}
+                        {/* Ganti bagian div flex items-center gap-2 mb-3 di dalam card verifikator */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                hasInput
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-primary/10 text-primary"
+                              }`}>
+                              {v.nama.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {v.nama}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Saat ini:{" "}
+                                {v.total_beban.toLocaleString("id-ID")}{" "}
+                                pendaftar
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {v.nama}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Saat ini: {v.total_beban.toLocaleString("id-ID")}{" "}
-                              pendaftar
-                            </p>
-                          </div>
+                          {/* Status lock badge di pojok card */}
+                          {totalLocked === 0 ? (
+                            <LockOpen className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+                          ) : (
+                            <Lock className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                          )}
                         </div>
 
                         {/* Input jumlah */}
@@ -679,17 +811,27 @@ const ManajemenVerifikator = () => {
                       Reset
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    disabled={!canAssign}
-                    onClick={handleAssign}>
-                    {isAssigning ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <ArrowRight className="h-4 w-4 mr-2" />
+                  {/* Ganti Button Assign Sekarang */}
+                  <div className="relative group">
+                    <Button
+                      size="sm"
+                      disabled={!canAssign}
+                      onClick={handleAssign}>
+                      {isAssigning ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                      )}
+                      Assign Sekarang
+                    </Button>
+                    {/* Tooltip saat belum lock */}
+                    {hasAnyInput && !isOverQuota && totalLocked === 0 && (
+                      <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
+                        <Lock className="h-3 w-3" />
+                        Kunci pendaftar terlebih dahulu
+                      </p>
                     )}
-                    Assign Sekarang
-                  </Button>
+                  </div>
                 </div>
               </div>
             </>

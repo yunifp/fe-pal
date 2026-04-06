@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
 import { CustSearchableSelect } from "@/components/CustSearchableSelect";
 import { CustSelect } from "@/components/ui/CustSelect";
@@ -10,9 +11,10 @@ import {
   useWatch,
   type Control,
   type FieldErrors,
-  type UseFormRegister,
+  type UseFormRegister
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
+import NilaiRapor, { type NilaiRaporForm } from "./NilaiRapor";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -25,6 +27,9 @@ interface AsalSekolahProps {
   errors: FieldErrors<BeasiswaFormData>;
   provinsiOptions: Array<{ value: string; label: string }>;
   sectionCatatan: SectionCatatan;
+  idTrxBeasiswa: number;
+  idRefBeasiswa: number;
+  onNilaiRaporChange?: (values: NilaiRaporForm) => void;
 }
 
 const AsalSekolah = ({
@@ -33,6 +38,9 @@ const AsalSekolah = ({
   errors,
   provinsiOptions,
   sectionCatatan,
+  idTrxBeasiswa,
+  idRefBeasiswa,
+  onNilaiRaporChange,
 }: AsalSekolahProps) => {
   const selectedProvinsi = useWatch({
     control,
@@ -80,6 +88,9 @@ const AsalSekolah = ({
     control,
     name: "jenjang_sekolah",
   });
+
+  // 👇 PERBAIKAN: Mengecek apakah jenjang yang dipilih adalah SMK
+  const isSmkSelected = selectedJenjangSekolah?.toLowerCase().includes("smk");
 
   // Fetch jurusan sekolah
   const { data: responseJurusanSekolah } = useQuery({
@@ -219,15 +230,20 @@ const AsalSekolah = ({
             isRequired={true}
             error={errors.jurusan_sekolah}
           />
-          <CustInput
-            label="Nama Jurusan Sekolah"
-            id="nama_jurusan_sekolah"
-            placeholder="Masukkan nama jurusan sekolah"
-            error={!!errors.nama_jurusan_sekolah}
-            isRequired={true}
-            errorMessage={errors.nama_jurusan_sekolah?.message}
-            {...register("nama_jurusan_sekolah")}
-          />
+          
+          {/* 👇 PERBAIKAN: Hanya dirender jika jenjang sekolah adalah SMK */}
+          {isSmkSelected && (
+            <CustInput
+              label="Nama Jurusan Sekolah"
+              id="nama_jurusan_sekolah"
+              placeholder="Masukkan nama jurusan sekolah"
+              error={!!errors.nama_jurusan_sekolah}
+              isRequired={false}
+              errorMessage={errors.nama_jurusan_sekolah?.message}
+              {...register("nama_jurusan_sekolah")}
+            />
+          )}
+
           <CustSelect
             name="tahun_lulus"
             control={control}
@@ -238,6 +254,11 @@ const AsalSekolah = ({
             error={errors.tahun_lulus}
           />
         </div>
+        <NilaiRapor
+          idTrxBeasiswa={idTrxBeasiswa}
+          idRefBeasiswa={idRefBeasiswa}
+          onChange={onNilaiRaporChange}
+        />
       </div>
     </div>
   );

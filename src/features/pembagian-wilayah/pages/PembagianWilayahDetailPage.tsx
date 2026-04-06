@@ -71,7 +71,7 @@ const PembagianWilayahDetailPage = () => {
     setIsSubmitting(true);
     try {
       const payload = {
-        id_trx_beasiswa: selectedIds, // Sekarang langsung mengirim Array ID
+        id_trx_beasiswa: selectedIds,
         flag_kewilayahan: parseInt(bulkAction)
       };
       
@@ -152,7 +152,8 @@ const PembagianWilayahDetailPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">SESUAI KTP</SelectItem>
-                    <SelectItem value="1">BERKEBUN</SelectItem>
+                    {/* UBAH DISINI: Dari BERKEBUN menjadi BEKERJA */}
+                    <SelectItem value="1">BEKERJA</SelectItem>
                   </SelectContent>
                 </Select>
                 

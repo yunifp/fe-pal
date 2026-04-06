@@ -84,25 +84,21 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
   const handleFileChange = (file: File | null) => {
     if (!file) return;
 
-    // Validasi tipe file
     if (file.type !== "application/pdf") {
       toast.error("File harus berformat PDF");
       return;
     }
 
-    // Validasi ukuran file (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error("Ukuran file maksimal 5MB");
       return;
     }
 
-    // ✅ Simpan file di state, BELUM upload ke server
     setSelectedFile(file);
     toast.success("File siap diupload");
   };
 
-  // Fungsi untuk upload file ke server (dipanggil saat submit)
   const uploadFileToServer = async (file: File): Promise<string | null> => {
     if (!idTrxBeasiswa) {
       toast.error("ID Transaksi tidak ditemukan");

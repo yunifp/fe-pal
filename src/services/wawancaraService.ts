@@ -15,17 +15,15 @@ export const wawancaraService = {
     return response.data;
   },
 
-  uploadExcel: async (formData: FormData) => {
-    const response = await axiosInstanceBeasiswa.post(`/wawancara/upload-excel`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  },
-
   kirimDataWawancara: async () => {
     const response = await axiosInstanceBeasiswa.put(`/wawancara/kirim`);
     return response.data;
   },
+
+  updateStatusWawancara: async (idTrxBeasiswa: number, status_wawancara: string) => {
+    const response = await axiosInstanceBeasiswa.put(`/wawancara/${idTrxBeasiswa}`, {
+        status_wawancara,
+    });
+    return response.data;
+  }
 };

@@ -110,6 +110,52 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 className="h-64 w-auto rounded-lg"
               />
             </div>
+
+            {(data_beasiswa.foto_depan ||
+              data_beasiswa.foto_samping_kiri ||
+              data_beasiswa.foto_samping_kanan ||
+              data_beasiswa.foto_belakang) && (
+              <div className="col-span-2 mb-6">
+                <p className="text-sm font-semibold text-gray-700 mb-3">
+                  Foto Full Body (4 Sisi)
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "Depan", src: data_beasiswa.foto_depan },
+                    {
+                      label: "Samping Kiri",
+                      src: data_beasiswa.foto_samping_kiri,
+                    },
+                    {
+                      label: "Samping Kanan",
+                      src: data_beasiswa.foto_samping_kanan,
+                    },
+                    { label: "Belakang", src: data_beasiswa.foto_belakang },
+                  ].map(({ label, src }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col items-center gap-2">
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {label}
+                      </p>
+                      {src ? (
+                        <img
+                          src={src}
+                          alt={`Foto ${label}`}
+                          className="h-48 w-full rounded-lg object-cover border border-gray-200"
+                        />
+                      ) : (
+                        <div className="h-48 w-full rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
+                          <p className="text-xs text-muted-foreground">
+                            Tidak ada foto
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <InfoItem
               icon={IdCard}
               label="No Registrasi"

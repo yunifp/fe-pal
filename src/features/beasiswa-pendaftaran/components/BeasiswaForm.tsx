@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, useRef, type FC } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +45,7 @@ import VerticalStepper from "./stepper/VerticalStepper";
 import DataOrtu from "./stepper/DataOrtu";
 import PreviewDataBeasiswa from "./PreviewDataBeasiswa";
 import { useAuthStore } from "@/stores/authStore";
+import type { NilaiRaporForm } from "./stepper/NilaiRapor";
 
 interface BeasiswaFormProps {
   existBeasiswa: ITrxBeasiswa;
@@ -62,6 +63,14 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [previewData, setPreviewData] = useState<BeasiswaFormData | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const nilaiRaporRef = useRef<NilaiRaporForm>({
+    nilai_semester_1: "",
+    nilai_semester_2: "",
+    nilai_semester_3: "",
+    nilai_semester_4: "",
+    nilai_semester_5: "",
+  });
 
   // ✅ PERBAIKAN 1: stepFields lengkap — termasuk semua field wajib per step
   // Step 1 (Alamat) sekarang include kerja_* fields
@@ -794,12 +803,27 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       }
     }
 
+    if (currentStep === 3) {
+      try {
+        await beasiswaService.saveNilaiRapor(existBeasiswa.id_trx_beasiswa, {
+          id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
+          ...nilaiRaporRef.current,
+        });
+      } catch {
+        // silent — tidak blokir navigasi
+      }
+    }
+
     // ============================================================
     // TIDAK ADA perubahan lain di BeasiswaForm.tsx
     // ============================================================
 
-    const currentData = watch();
-    saveDraftSilent(currentData);
+    // const currentData = watch();
+    // saveDraftSilent(currentData);
+    // setCurrentStep(currentStep + 1);
+
+    const currentData = getValues(); // ← lebih reliable dari watch()
+    await saveDraftSilent(currentData); // ← await agar tidak race condition
     setCurrentStep(currentStep + 1);
   };
 
@@ -1314,6 +1338,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                     control={control}
                     errors={errors}
                     provinsiOptions={provinsiOptions}
+                    idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} // ← tambah
+                    idRefBeasiswa={existBeasiswa.id_ref_beasiswa} // ← tambah
+                    onNilaiRaporChange={(values) => {
+                      nilaiRaporRef.current = values;
+                    }}
                   />
                 )}
 
@@ -1344,6 +1373,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                       error={errors.jalur}
                     />
                     <UploadPersyaratanKhusus
+                      key={jalurId ?? "no-jalur"}
                       idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                       persyaratanKhusus={persyaratanKhusus}
                     />

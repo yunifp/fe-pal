@@ -24,6 +24,11 @@ const UploadPersyaratanKhusus = ({
   // 🧠 Ambil data file yang sudah pernah diunggah
   useEffect(() => {
     const fetchUploadedFiles = async () => {
+      // Reset dulu sebelum fetch ulang
+      setUploadedFiles({});
+      setCatatanMap({});
+
+      if (persyaratanKhusus.length === 0) return;
       try {
         const res = await beasiswaService.getUploadedPersyaratan(
           "khusus",
@@ -31,10 +36,13 @@ const UploadPersyaratanKhusus = ({
         );
         const uploaded = res.data ?? [];
 
+        const relevantIds = new Set(persyaratanKhusus.map((p) => p.id));
+
         const fileMap: Record<number, string> = {};
         const catatanMapTemp: Record<number, string> = {};
 
         uploaded.forEach((item: any) => {
+          if (!relevantIds.has(item.id_ref_dokumen)) return; // ← filter dokumen jalur lain
           fileMap[item.id_ref_dokumen] = item.file;
           // ✅ Simpan catatan jika ada
           if (item.verifikator_catatan) {
@@ -50,7 +58,7 @@ const UploadPersyaratanKhusus = ({
     };
 
     fetchUploadedFiles();
-  }, [idTrxBeasiswa]);
+  }, [idTrxBeasiswa, persyaratanKhusus]);
 
   // ketika user memilih file
   const handleFileChange = async (

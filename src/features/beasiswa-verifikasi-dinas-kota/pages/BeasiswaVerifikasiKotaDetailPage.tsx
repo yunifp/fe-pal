@@ -93,7 +93,6 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
     enabled: !!id,
   });
 
-  // Set kode dinas ke form saat data load
   useEffect(() => {
     if (fullDataBeasiswa?.data_beasiswa) {
       const beasiswa = fullDataBeasiswa.data_beasiswa;

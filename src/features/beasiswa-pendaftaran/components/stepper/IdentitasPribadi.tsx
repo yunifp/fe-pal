@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
 import DropAndCropRectangle from "@/components/DropAndCropRectangle";
 import { CustSelect } from "@/components/ui/CustSelect";
@@ -36,6 +37,13 @@ interface RefOption {
   value: string;
   label: string;
 }
+
+const onlyNumbers = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
+    if (!/[0-9]/.test(e.key) && !allowed.includes(e.key)) {
+      e.preventDefault();
+    }
+  };
 
 const jenisKelaminOptions = [
   { value: "L", label: "Laki-laki" },
@@ -196,6 +204,7 @@ const IdentitasPribadi = ({
             isRequired={true}
             error={!!errors.no_hp}
             errorMessage={errors.no_hp?.message}
+            onKeyDown={onlyNumbers}
             {...register("no_hp")}
           />
           <CustInput

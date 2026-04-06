@@ -108,6 +108,18 @@ import PenetapanDetailPage from "./features/penetapan/pages/PenetapanDetailPage"
 import PenetapanMainPage from "./features/penetapan/pages/PenetapanMainPage";
 import CekDataPage from "./features/cek_data/pages";
 import CekStatusPage from "./features/landing-alt/pages/CekStatusPublicPage";
+import DashboardAdminPage from "./features/dashboard-admin/pages/DashboardAdminPage";
+import ReferensiWilayahPage from "./features/referensi-wilayah/pages/ReferensiWilayahPage";
+import WilayahKhususPage from "./features/wilayah-khusus/pages/WilayahKhususPage";
+import AgamaPage from "./features/agama/pages/AgamaPage";
+import PekerjaanPage from "./features/pekerjaan/pages/PekerjaanPage";
+import PenghasilanPage from "./features/penghasilan/pages/PenghasilanPage";
+import LaporanPendaftarPage from "./features/laporan-pendaftar/pages/LaporanPendaftarPage";
+import JalurPage from "./features/jalur/pages/JalurPage";
+import DokumenUmumPage from "./features/dokumen-umum/pages/DokumenUmumPage";
+import DokumenKhususPage from "./features/dokumen-khusus/pages/DokumenKhususPage";
+import SukuPage from "./features/suku/pages/SukuPage";
+import DokumenPendaftaran from "./features/dokumen-pendaftar/pages/DokumenPendaftarPage";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +158,7 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard-admin" element={<DashboardAdminPage />} />
               <Route path="/users" element={<UserPage />} />
               <Route path="/users/create" element={<UserCreatePage />} />
               <Route path="/users/:id" element={<UserEditPage />} />
@@ -185,6 +198,39 @@ function App() {
                 element={<PerguruanTinggiEditPage />}
               />
               <Route
+                path="/master/referensi-wilayah"
+                element={<ReferensiWilayahPage />}
+              />
+              <Route
+                path="/master/referensi-wilayah/:kodePro"
+                element={<ReferensiWilayahPage />}
+              />
+              <Route
+                path="/master/referensi-wilayah/:kodePro/:kodeKab"
+                element={<ReferensiWilayahPage />}
+              />
+              <Route
+                path="/master/wilayah-khusus"
+                element={<WilayahKhususPage />}
+              />
+              <Route path="/master/agama" element={<AgamaPage />} />
+              <Route path="/master/pekerjaan" element={<PekerjaanPage />} />
+              <Route path="/master/penghasilan" element={<PenghasilanPage />} />
+              <Route
+                path="/laporan-pendaftar"
+                element={<LaporanPendaftarPage />}
+              />
+              <Route path="/master/jalur" element={<JalurPage />} />
+              <Route
+                path="/master/dokumen-umum"
+                element={<DokumenUmumPage />}
+              />
+              <Route
+                path="/master/dokumen-khusus"
+                element={<DokumenKhususPage />}
+              />
+              <Route path="/master/suku" element={<SukuPage />} />
+              <Route
                 path="/master/perguruan-tinggi/create"
                 element={<PerguruanTinggiCreatePage />}
               />
@@ -198,7 +244,10 @@ function App() {
               />
               <Route path="/cek-data" element={<CekDataPage />} />
               <Route path="/penetapan" element={<PenetapanMainPage />} />
-              <Route path="/penetapan/detail/:id" element={<PenetapanDetailPage />} />
+              <Route
+                path="/penetapan/detail/:id"
+                element={<PenetapanDetailPage />}
+              />
               <Route
                 path="/master/program-studi/create"
                 element={<ProgramStudiCreatePage />}
@@ -460,6 +509,10 @@ function App() {
               <Route path="master-npsn" element={<MasterNpsn />} />
               <Route path="master-npsn/create" element={<MasterNpsnCreate />} />
               <Route path="master-npsn/:id" element={<MasterNpsnEdit />} />
+              <Route
+                path="dokumen-pendaftar/"
+                element={<DokumenPendaftaran />}
+              />
             </Route>
           </Route>
 

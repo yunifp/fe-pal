@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { DataTable } from "@/components/DataTable";
@@ -57,7 +57,7 @@ const RekapProvinsiPage: React.FC = () => {
           reguler: res.data.total_reguler || 0,
         });
         
-        // Render list dropdown hanya sekali saat pertama kali di load (agar tidak tertimpa/hilang saat difilter)
+        // Render list dropdown hanya sekali saat pertama kali di load
         if (listKabkota.length === 0 && res.data.list_kabkota) {
           setListKabkota(res.data.list_kabkota);
         }
@@ -82,29 +82,24 @@ const RekapProvinsiPage: React.FC = () => {
     }
   };
 
+  // UBAH FUNGSI INI
   const handleExportDetail = async () => {
     try {
-      const res = await beasiswaService.exportDetailV2();
-      const exportData = res.data as Record<string, string | number | null>[];
+      const blobData = await beasiswaService.exportDetailV2();
 
-      if (!exportData || exportData.length === 0) {
-        return toast.warning("Tidak ada data untuk dieksport.");
+      if (!blobData) {
+        return toast.warning("Gagal mendapatkan file eksport.");
       }
 
-      const headers = Object.keys(exportData[0]).join(",");
-      const csvRows = exportData.map((row) =>
-        Object.values(row)
-          .map((value) => `"${value || ""}"`)
-          .join(",")
-      );
-      const csvString = [headers, ...csvRows].join("\n");
-
-      const blob = new Blob([csvString], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Data_Detail_Verifikasi_Nasional.csv";
-      a.click();
+      // Buat URL dari Blob dan trigger download Excel
+      const url = window.URL.createObjectURL(new Blob([blobData]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Data_Detail_Verifikasi_Nasional.xlsx"); // Ekstensi .xlsx
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
       
       toast.success("Berhasil mengeksport data.");
     } catch (error: any) {
@@ -116,14 +111,12 @@ const RekapProvinsiPage: React.FC = () => {
   return (
     <>
       <div className="p-6 space-y-6">
-        {/* Header dengan Dropdown Filter */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-800">
-            Verifikasi Nasional V2
+            Verifikasi Nasional
           </h1>
           
           <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-            {/* Filter Kabupaten */}
             <Select value={selectedKabkota} onValueChange={setSelectedKabkota}>
               <SelectTrigger className="w-full sm:w-[250px] bg-white border-gray-300">
                 <SelectValue placeholder="Pilih Kabupaten/Kota" />

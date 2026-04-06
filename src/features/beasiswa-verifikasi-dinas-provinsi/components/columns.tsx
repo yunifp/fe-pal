@@ -72,6 +72,35 @@ export const getColumns = (): ColumnDef<ITrxBeasiswa>[] => [
     cell: ({ row }) => <BadgeFlowBeasiswa id={row.original.id_flow} />,
   },
   {
+    id: "hasil_dinas_provinsi",
+    header: "Hasil Verifikasi",
+    cell: ({ row }) => {
+      const value = row.original.hasil_dinas_provinsi;
+
+      let label = "-";
+      let className =
+        "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border";
+
+      if (value === "1") {
+        label = "Rekomendasi";
+        className += " bg-green-50 text-green-700 border-green-200";
+      } else if (value === "2") {
+        label = "Tidak Rekomendasi";
+        className += " bg-red-50 text-red-700 border-red-200";
+      } else if (value === "0") {
+        label = "Belum Diverifikasi";
+        className += " bg-yellow-50 text-yellow-700 border-yellow-200";
+      }
+
+      return (
+        <span className={className}>
+          <span className="w-1 h-1 rounded-full bg-current"></span>
+          {label}
+        </span>
+      );
+    },
+  },
+  {
     id: "aksi",
     cell: ({ row }) => {
       const beasiswa = row.original;
