@@ -66,6 +66,7 @@ export const masterService = {
     );
     return response.data;
   },
+ // ORKESTRASI: update master tanpa data operator
   updatePerguruanTinggiById: async (
     id: number,
     data: PerguruanTinggiEditFormData,
@@ -92,15 +93,9 @@ export const masterService = {
     formData.append("npwp", data.npwp);
     formData.append("status_aktif", String(data.statusAktif));
 
-    // Tambahan Data Operator & Verifikator
-    formData.append("nama_operator", data.namaOperator);
-    formData.append("no_telepon_operator", data.noTeleponOperator);
-    formData.append("email_operator", data.emailOperator);
-    formData.append("nama_verifikator", data.namaVerifikator);
-    formData.append("no_telepon_verifikator", data.noTeleponVerifikator);
-    formData.append("email_verifikator", data.emailVerifikator);
-
-    data.logoLembaga && formData.append("logo", data.logoLembaga);
+    if (data.logoLembaga) {
+      formData.append("logo", data.logoLembaga);
+    }
 
     const response = await axiosInstanceFormData.put(
       `${MASTER_SERVICE_BASE_URL}/perguruan-tinggi/${id}`,
@@ -290,9 +285,10 @@ export const masterService = {
     return response.data;
   },
 
+  // ORKESTRASI: create master tanpa data operator, return id_pt
   createPerguruanTinggi: async (
     data: PerguruanTinggiEditFormData,
-  ): Promise<Response<null>> => {
+  ): Promise<Response<any>> => {
     const formData = new FormData();
 
     formData.append("nama_pt", data.namaPerguruanTinggi);
@@ -315,14 +311,6 @@ export const masterService = {
     formData.append("npwp", data.npwp);
     formData.append("status_aktif", String(data.statusAktif));
 
-    // Tambahan Data Operator & Verifikator
-    formData.append("nama_operator", data.namaOperator);
-    formData.append("no_telepon_operator", data.noTeleponOperator);
-    formData.append("email_operator", data.emailOperator);
-    formData.append("nama_verifikator", data.namaVerifikator);
-    formData.append("no_telepon_verifikator", data.noTeleponVerifikator);
-    formData.append("email_verifikator", data.emailVerifikator);
-
     if (data.logoLembaga) {
       formData.append("logo", data.logoLembaga);
     }
@@ -333,6 +321,7 @@ export const masterService = {
     );
     return response.data;
   },
+
   getAllJurusanSekolah: async (): Promise<Response<IJurusanSekolah[]>> => {
     // PERBAIKAN: Sesuaikan dengan rute backend yang Anda buat
     const response = await axiosInstanceJson.get(

@@ -15,6 +15,18 @@ export const wawancaraService = {
     return response.data;
   },
 
+  uploadExcel: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const response = await axiosInstanceBeasiswa.post(`/wawancara/upload-excel`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
   kirimDataWawancara: async () => {
     const response = await axiosInstanceBeasiswa.put(`/wawancara/kirim`);
     return response.data;

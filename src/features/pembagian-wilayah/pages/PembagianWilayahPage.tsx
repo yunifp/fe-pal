@@ -17,12 +17,10 @@ const PembagianWilayahPage = () => {
   const [pageIndex, setPageIndex] = useState(0); 
   const pageSize = 10; 
 
-  // State untuk Aksi Massal Global
   const [globalAction, setGlobalAction] = useState<string>("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State untuk Kirim Data (Flow 13 -> 6)
   const [showSendModal, setShowSendModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
@@ -30,13 +28,11 @@ const PembagianWilayahPage = () => {
     setPageIndex(0);
   }, [search]);
 
-  // Fetch Data Tabel
   const { data: response, isLoading, isError } = useQuery({
     queryKey: ["rekap-administrasi", pageIndex, search],
     queryFn: () => beasiswaService.getRekapLulusAdministrasi("all", pageIndex + 1, pageSize, search),
   });
 
-  // Fetch Last Log
   const { data: logResponse } = useQuery({
     queryKey: ["last-log-kewilayahan"],
     queryFn: () => beasiswaService.getLastLogKewilayahan(),
@@ -49,6 +45,9 @@ const PembagianWilayahPage = () => {
   const pageCount = paginationData.totalPages || 1;
   const totalRows = paginationData.totalRows || 0;
   const lastLog = logResponse?.data;
+
+  const totalBelumSet = response?.data?.total_belum_set ?? 0; 
+  const isReadyToSend = totalRows > 0 && totalBelumSet === 0;
 
   const columns = useMemo(() => getRekapColumns(), []);
 
@@ -92,145 +91,177 @@ const PembagianWilayahPage = () => {
   };
 
   return (
-    <div className="space-y-6 pb-8">
-      <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Pembagian Wilayah" }]} />
-      
-      {/* Header Info */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-            <Map className="h-6 w-6 text-primary" />
-            Rekapitulasi Pendaftar (Lulus Administrasi)
-          </h2>
-          <p className="text-sm text-gray-500 mt-1 md:ml-8">
-            Ubah kewilayahan pendaftar secara global atau klik nama Kabupaten/Kota untuk detail.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Pembagian Wilayah" }]} />
         
-        {/* Tombol Kirim Data */}
-        <Button 
-          onClick={() => setShowSendModal(true)} 
-          className="flex items-center gap-2 shadow-sm font-semibold bg-green-600 hover:bg-green-700"
-        >
-          <Send className="h-4 w-4" />
-          Kirim Data (Selesai Kewilayahan)
-        </Button>
-      </div>
-
-      {/* Last Edited Banner */}
-      {lastLog && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm">
-          <Clock className="h-5 w-5 text-blue-500 shrink-0" />
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-            <span className="font-semibold">Terakhir Diperbarui:</span>
-            <span>{new Date(lastLog.timestamp).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "medium" })} WIB</span>
-            <span className="hidden sm:inline-block text-blue-300">•</span>
-            <span className="italic">"{lastLog.ket}"</span>
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+          <div className="flex items-start gap-5">
+            <div className="p-3.5 bg-emerald-50 rounded-2xl hidden sm:block mt-1 border border-emerald-100">
+              <Map className="h-8 w-8 text-emerald-600" />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Rekapitulasi Pendaftar
+              </h2>
+              <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+                Ubah kewilayahan pendaftar secara global atau klik nama Kabupaten/Kota pada tabel untuk pengaturan detail.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
-
-      <Card className="shadow-sm border-gray-200 overflow-hidden">
-        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-          {/* UBAH DISINI: Judul Card disesuaikan */}
-          <CardTitle className="text-base text-gray-800">Perbandingan Data KTP dan Alamat Bekerja</CardTitle>
-          <CardDescription>
-            Menampilkan rekapitulasi jumlah pendaftar berdasarkan wilayah domisili dan tempat bekerja.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
           
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 border border-gray-200 rounded-xl shadow-sm">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2 text-white bg-primary px-3 py-2 rounded-md font-medium text-sm shadow-sm">
-                <Settings2 className="h-4 w-4" />
-                <span>AKSI MASSAL GLOBAL:</span>
+          {isReadyToSend && (
+            <Button 
+              onClick={() => setShowSendModal(true)} 
+              className="flex items-center gap-2 shadow-md font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 px-6 transition-all animate-in fade-in zoom-in duration-300 w-full sm:w-auto"
+            >
+              <Send className="h-4 w-4" />
+              Kirim Data Final
+            </Button>
+          )}
+        </div>
+
+        {lastLog && (
+          <div className="bg-teal-50 border border-teal-100 text-teal-800 px-5 py-4 rounded-2xl flex items-center gap-4 shadow-sm">
+            <Clock className="h-6 w-6 text-teal-500 shrink-0" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 text-sm">
+              <span className="font-bold text-teal-900">Terakhir Diperbarui:</span>
+              <span className="font-medium">{new Date(lastLog.timestamp).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "medium" })} WIB</span>
+              <span className="hidden sm:inline-block text-teal-300">•</span>
+              <span className="italic text-teal-700">"{lastLog.ket}"</span>
+            </div>
+          </div>
+        )}
+
+        <Card className="border border-slate-200 shadow-sm rounded-3xl bg-white overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+          
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-8">
+            <CardTitle className="text-xl text-slate-800 font-bold">Perbandingan Wilayah Domisili dan Tempat Bekerja</CardTitle>
+            <CardDescription className="text-slate-500 mt-1.5">
+              Menampilkan rekapitulasi jumlah pendaftar berdasarkan wilayah domisili dan tempat bekerja.
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8 space-y-6">
+              
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 bg-slate-50/80 p-5 border border-slate-200 rounded-2xl shadow-sm transition-all">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+                  <div className="flex items-center gap-2.5 text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm shrink-0">
+                    <Settings2 className="h-4 w-4" />
+                    Aksi Massal Global
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <Select value={globalAction} onValueChange={setGlobalAction} disabled={isSubmitting}>
+                      <SelectTrigger className="w-full sm:w-[320px] bg-white h-11 rounded-xl transition-colors focus:ring-emerald-500/20 focus:border-emerald-500 border-slate-300 font-medium text-slate-700">
+                        <SelectValue placeholder="Pilih Kewilayahan Seluruh Data..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-lg">
+                        <SelectItem value="0" className="font-medium">Terapkan SESUAI KTP ke Semua</SelectItem>
+                        <SelectItem value="1" className="font-medium">Terapkan BEKERJA ke Semua</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={() => setShowConfirmModal(true)} 
+                      disabled={!globalAction || isSubmitting}
+                      className="h-11 px-8 font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all w-full sm:w-auto"
+                    >
+                      TERAPKAN
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-white text-slate-600 px-5 py-2.5 rounded-xl border border-slate-200 font-bold text-sm w-full lg:w-auto justify-center whitespace-nowrap shadow-sm">
+                  <MapPin className="h-4 w-4 text-slate-400" />
+                  Total: {totalRows} Wilayah
+                </div>
               </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <Select value={globalAction} onValueChange={setGlobalAction} disabled={isSubmitting}>
-                  <SelectTrigger className="w-full sm:w-[280px] bg-gray-50 h-10 transition-colors focus:bg-white border-gray-300">
-                    <SelectValue placeholder="Pilih Kewilayahan Seluruh Data..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Terapkan SESUAI KTP ke Semua</SelectItem>
-                    {/* UBAH DISINI: Label dropdown disesuaikan */}
-                    <SelectItem value="1">Terapkan BEKERJA ke Semua</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="w-full">
+                <DataTable
+                  isLoading={isLoading}
+                  columns={columns}
+                  data={rawData} 
+                  pageCount={pageCount} 
+                  pageIndex={pageIndex} 
+                  onPageChange={(newPageIndex) => setPageIndex(newPageIndex)} 
+                  searchValue={search}
+                  onSearchChange={(val) => setSearch(val)}
+                />
+              </div>
+
+            </div>
+          </CardContent>
+        </Card>
+
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3.5 bg-amber-100 rounded-2xl text-amber-600">
+                  <Settings2 className="h-7 w-7" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">Aksi Massal</h3>
+              </div>
+              <p className="text-slate-600 mb-8 text-base leading-relaxed">
+                Apakah Anda yakin ingin merubah kewilayahan <span className="font-extrabold text-amber-600">SELURUH</span> pendaftar di semua wilayah menjadi 
+                <span className="font-bold text-slate-900">{globalAction === "1" ? " SESUAI ALAMAT BEKERJA" : " SESUAI KTP"}</span>?
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
                 <Button 
-                  onClick={() => setShowConfirmModal(true)} 
-                  disabled={!globalAction || isSubmitting}
-                  className="h-10 px-6 font-semibold"
+                  variant="outline" 
+                  onClick={() => setShowConfirmModal(false)} 
+                  disabled={isSubmitting}
+                  className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50"
                 >
-                  TERAPKAN
+                  Batal
+                </Button>
+                <Button 
+                  onClick={handleGlobalSubmit} 
+                  disabled={isSubmitting}
+                  className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-11 px-6 shadow-md"
+                >
+                  {isSubmitting ? "Memproses..." : "Ya, Lanjutkan"}
                 </Button>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-full border border-gray-200 font-semibold text-sm w-full sm:w-auto justify-center whitespace-nowrap">
-              <MapPin className="h-4 w-4" />
-              Total: {totalRows} Wilayah
-            </div>
           </div>
+        )}
 
-          <div className="rounded-md border border-gray-100 bg-white shadow-sm">
-            <DataTable
-              isLoading={isLoading}
-              columns={columns}
-              data={rawData} 
-              pageCount={pageCount} 
-              pageIndex={pageIndex} 
-              onPageChange={(newPageIndex) => setPageIndex(newPageIndex)} 
-              searchValue={search}
-              onSearchChange={(val) => setSearch(val)}
-            />
-          </div>
-
-        </CardContent>
-      </Card>
-
-      {/* MODAL KONFIRMASI AKSI MASSAL */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Konfirmasi Aksi Massal</h3>
-            <p className="text-gray-600 mb-6 text-sm">
-              Apakah Anda yakin ingin merubah kewilayahan <span className="font-bold text-red-600">SELURUH</span> pendaftar di semua wilayah menjadi 
-              {/* UBAH DISINI: Teks konfirmasi disesuaikan */}
-              <span className="font-bold">{globalAction === "1" ? " SESUAI ALAMAT BEKERJA" : " SESUAI KTP"}</span>?
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmModal(false)} disabled={isSubmitting}>Batal</Button>
-              <Button onClick={handleGlobalSubmit} disabled={isSubmitting}>
-                {isSubmitting ? "Memproses..." : "Ya, Lanjutkan"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL KONFIRMASI KIRIM DATA (FLOW 13 -> 6) */}
-      {showSendModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-green-100 rounded-full text-green-600">
-                <Send className="h-6 w-6" />
+        {showSendModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3.5 bg-emerald-100 rounded-2xl text-emerald-600">
+                  <Send className="h-7 w-7" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">Kirim Data?</h3>
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Kirim Data Pendaftar?</h3>
-            </div>
-            <p className="text-gray-600 mb-6 text-sm">
-              Apakah Anda yakin proses pembagian wilayah sudah selesai? Semua pendaftar yang saat ini berada di tahap ini akan diteruskan ke tahap seleksi selanjutnya.
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowSendModal(false)} disabled={isSending}>Batal</Button>
-              <Button onClick={handleSendSubmit} className="bg-green-600 hover:bg-green-700" disabled={isSending}>
-                {isSending ? "Mengirim..." : "Ya, Kirim Data"}
-              </Button>
+              <p className="text-slate-600 mb-8 text-base leading-relaxed">
+                Apakah Anda yakin proses pembagian wilayah sudah selesai? Semua pendaftar yang saat ini berada di tahap ini akan diteruskan ke tahap seleksi selanjutnya.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSendModal(false)} 
+                  disabled={isSending}
+                  className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50"
+                >
+                  Batal
+                </Button>
+                <Button 
+                  onClick={handleSendSubmit} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 px-6 shadow-md" 
+                  disabled={isSending}
+                >
+                  {isSending ? "Mengirim..." : "Ya, Kirim Data"}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

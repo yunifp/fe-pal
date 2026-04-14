@@ -18,5 +18,15 @@ export const penetapanService = {
   cekDokumenPenetapan: async () => {
     const response = await axiosInstanceBeasiswa.get(`/penetapan/cek-dokumen`);
     return response.data;
-  }
+  },
+  downloadDataPenetapan: async (id_ref?: string) => {
+    const params: Record<string, string> = {};
+    if (id_ref) params.id_ref = id_ref;
+
+    const response = await axiosInstanceBeasiswa.get('/penetapan/download', { // Sesuaikan URL dengan route backend Anda
+      params,
+      responseType: 'blob', // Penting untuk download file
+    });
+    return response.data;
+  },
 };

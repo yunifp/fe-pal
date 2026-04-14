@@ -1,9 +1,10 @@
 import axiosInstanceBeasiswa from "@/lib/axiosInstanceBeasiswa";
 
 export const cekDataService = {
-  cekDataByNik: async (nik: string) => {
+  // Ubah parameter menjadi keyword (bisa NIK atau Kode Pendaftaran)
+  cekDataByKeyword: async (keyword: string) => {
     const response = await axiosInstanceBeasiswa.get(`/cek-data`, {
-      params: { nik },
+      params: { keyword },
     });
     return response.data;
   },

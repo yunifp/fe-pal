@@ -611,6 +611,7 @@ export const beasiswaService = {
       | "filter-assigned"
       | "filter-unassigned";
     id_verifikator?: number;
+    status_filter?: string;
   }): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/assignment/pendaftar`,
@@ -621,6 +622,7 @@ export const beasiswaService = {
           search: params.search ?? "",
           filter: params.filter ?? "all",
           id_verifikator: params.id_verifikator, // ✅ tambah ini
+          status_filter: params.status_filter,
         },
       },
     );

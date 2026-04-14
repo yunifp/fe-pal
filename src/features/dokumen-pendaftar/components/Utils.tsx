@@ -1,4 +1,12 @@
 import type { DocCategory } from "./Types";
+import { useAuthStore } from "@/stores/authStore";
+import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants — sama persis dengan yang dipakai axiosInstanceJson di beasiswaService
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const BEASISWA_FETCH_BASE_URL = BEASISWA_SERVICE_BASE_URL;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatters
@@ -24,12 +32,14 @@ export const buildZipFilename = (
 };
 
 export const getCategoryLabel = (c: DocCategory): string =>
-  ({
-    all: "Semua Dokumen",
-    foto: "Foto",
-    dokumen_umum: "Dokumen Umum",
-    dokumen_khusus: "Dokumen Khusus",
-  })[c];
+  (
+    ({
+      all: "Semua Dokumen",
+      foto: "Foto",
+      dokumen_umum: "Dokumen Umum",
+      dokumen_khusus: "Dokumen Khusus",
+    }) as Record<DocCategory, string>
+  )[c];
 
 export const getStatusColor = (status?: string): string => {
   if (!status) return "bg-slate-100 text-slate-500 border-slate-200";
@@ -40,48 +50,117 @@ export const getStatusColor = (status?: string): string => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// File I/O helpers
+// Stream download — pipe fetch langsung ke disk via StreamSaver
+// Tidak ada Axios, tidak ada RAM buffer, tidak ada timeout
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const writeBlobToDisk = async (
-  blob: Blob,
-  filename: string,
-  onProgress?: (bytes: number) => void,
-): Promise<void> => {
+export interface StreamDownloadOptions {
+  url: string;
+  method?: "GET" | "POST";
+  body?: unknown;
+  filename: string;
+  headers?: Record<string, string>;
+  onProgress?: (bytes: number, total?: number) => void;
+  signal?: AbortSignal;
+}
+
+export const streamDownloadToDisk = async ({
+  url,
+  method = "POST",
+  body,
+  filename,
+  headers = {},
+  onProgress,
+  signal,
+}: StreamDownloadOptions): Promise<void> => {
+  // Ambil token dari auth store — sama persis dengan Axios interceptor
+  const token = useAuthStore.getState().accessToken ?? "";
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(
+      `Server error ${response.status}: ${text || response.statusText}`,
+    );
+  }
+
+  if (!response.body) {
+    throw new Error("Response body kosong — server tidak mengirim stream");
+  }
+
+  const contentLength = response.headers.get("Content-Length");
+  const total = contentLength ? parseInt(contentLength, 10) : undefined;
+
+  // Coba StreamSaver dulu (true streaming, tidak ada RAM buffer)
   try {
     const ss: any = await import("streamsaver");
-    const fileStream = ss.createWriteStream(filename, { size: blob.size });
+    const fileStream = ss.createWriteStream(filename, { size: total });
     const writer = fileStream.getWriter();
-    const reader = blob.stream().getReader();
+    const reader = response.body.getReader();
+    let written = 0;
+
+    const onBeforeUnload = () => writer.abort();
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        await writer.write(value);
+        written += value.byteLength;
+        onProgress?.(written, total);
+      }
+      await writer.close();
+    } finally {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    }
+  } catch {
+    // Fallback: kumpulkan chunk → Blob → anchor download
+    console.warn("[download] StreamSaver tidak tersedia, fallback ke blob URL");
+
+    const reader = response.body.getReader();
+    const allChunks: ArrayBuffer[] = [];
     let written = 0;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      await writer.write(value);
+      allChunks.push(
+        value.buffer.slice(
+          value.byteOffset,
+          value.byteOffset + value.byteLength,
+        ),
+      );
       written += value.byteLength;
-      onProgress?.(written);
+      onProgress?.(written, total);
     }
-    await writer.close();
-  } catch {
-    // Fallback: anchor download
-    const url = URL.createObjectURL(blob);
+
+    const blob = new Blob(allChunks, { type: "application/zip" });
+    const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = objectUrl;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
-    onProgress?.(blob.size);
+    URL.revokeObjectURL(objectUrl);
   }
 };
 
-/**
- * Download satu file publik (foto / dok individu) yang URL-nya sudah di-expose
- * oleh backend via getFileUrl(). Tidak butuh auth → native fetch OK.
- * Fallback ke window.open jika gagal.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Download file publik (foto/dok individu) — tidak butuh auth
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const downloadPublicUrl = async (
   fileUrl: string,
   filename: string,
@@ -90,8 +169,32 @@ export const downloadPublicUrl = async (
     const resp = await fetch(fileUrl);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const blob = await resp.blob();
-    await writeBlobToDisk(blob, filename);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   } catch {
     window.open(fileUrl, "_blank");
   }
+};
+
+// Alias lama — backward compat
+export const writeBlobToDisk = async (
+  blob: Blob,
+  filename: string,
+  onProgress?: (bytes: number) => void,
+): Promise<void> => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  onProgress?.(blob.size);
 };

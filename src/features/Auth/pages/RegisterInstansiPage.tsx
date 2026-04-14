@@ -43,19 +43,15 @@ const registerSchema = z
       .max(15, "No HP maksimal 15 digit")
       .regex(/^(\+62|62|0)8[1-9][0-9]{6,12}$/, "Format nomor HP tidak valid"),
 
-    perguruan_tinggi: z.string().optional(),
-    jenjang: z.string().optional(),
     provinsi: z.string().optional(),
     kabkota: z.string().optional(),
 
-    // Tambahan untuk non-beasiswa
     username: z.string().min(3, "Username minimal 3 karakter"),
     password: z.string().min(6, "Password minimal 6 karakter"),
     confirmPassword: z.string().min(6, "Konfirmasi password wajib diisi"),
 
     captchaAnswer: z.string().min(1, "Jawaban keamanan wajib diisi"),
 
-    // Tambahan file Surat Penunjukan
     surat_penunjukan: z
       .instanceof(File, { message: "Surat penunjukan wajib diupload" })
       .refine(
@@ -81,7 +77,7 @@ const registerSchema = z
         ctx.addIssue({
           path: ["provinsi"],
           code: "custom",
-          message: "Provinsi wajib diisi untuk akun Instansi Dinas Provinsi",
+          message: "Provinsi wajib diisi untuk akun Instansi Dinas Kabupaten/Kota",
         });
       }
       if (!data.kabkota) {
@@ -150,8 +146,6 @@ const RegisterInstansiPage = () => {
         nama_lengkap: data.nama,
         email: data.email,
         no_hp: data.noHp,
-        id_perguruan_tinggi: data.perguruan_tinggi,
-        id_jenjang: data.jenjang,
         kode_prov: data.provinsi,
         prov: data.provinsi,
         kode_kab: data.kabkota,
@@ -185,52 +179,11 @@ const RegisterInstansiPage = () => {
   const selectedJenisAkun = watch("jenis_akun");
 
   const jenisAkunOptions = [
-    { value: "ditjenbun", label: "Instansi Ditjenbun" },
     { value: "provinsi", label: "Instansi Dinas Provinsi" },
     { value: "kabkota", label: "Instansi Dinas Kab/Kota" },
-    {
-      value: "lembaga_pendidikan",
-      label: "Lembaga Pendidikan",
-    },
-    { value: "lembaga_seleksi", label: "Lembaga Seleksi" },
   ];
 
-  // Mengambil lembaga pendidikan
-  const { data: perguruanTinggiData } = useQuery({
-    queryKey: ["perguruan-tinggi"],
-    queryFn: () => masterService.getPerguruanTinggi(),
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: STALE_TIME,
-  });
-
-  const perguruanTinggiOptions = useMemo(() => {
-    return (
-      perguruanTinggiData?.data?.map((data) => ({
-        value: String(data.id_pt + "#" + data.nama_pt),
-        label: data.nama_pt,
-      })) || []
-    );
-  }, [perguruanTinggiData]);
-
-  // Mengambil jenjang
-  const { data: jenjangData } = useQuery({
-    queryKey: ["jenjang-kuliah"],
-    queryFn: () => masterService.getJenjangKuliah(),
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: STALE_TIME,
-  });
-
-  const jenjangOptions = useMemo(() => {
-    return (
-      jenjangData?.data?.map((data) => ({
-        value: String(data.id + "#" + data.nama),
-        label: data.nama,
-      })) || []
-    );
-  }, [jenjangData]);
-
+  // Mengambil data Provinsi
   const { data: responseProvinsi } = useQuery({
     queryKey: ["opsi-provinsi"],
     queryFn: () => masterService.getProvinsi(),
@@ -250,6 +203,7 @@ const RegisterInstansiPage = () => {
 
   const selectedProvinsi = watch("provinsi");
 
+  // Mengambil data Kab/Kota jika Provinsi sudah dipilih
   const { data: responseKabkot } = useQuery({
     queryKey: ["opsi-kabkot", selectedProvinsi],
     queryFn: () =>
@@ -298,8 +252,7 @@ const RegisterInstansiPage = () => {
                     Buat Akun Instansi
                   </span>
                   <span className="text-sm text-gray-500 text-center">
-                    Buat Akun Khusus Instansi BPDP, Ditjenbun, Dinas Provinsi,
-                    Dinas Kab/Kota, dan Lembaga Pendidikan
+                    Buat Akun Khusus Instansi Dinas Provinsi dan Dinas Kab/Kota
                   </span>
                 </div>
 
@@ -315,7 +268,7 @@ const RegisterInstansiPage = () => {
                       error={errors.jenis_akun}
                     />
 
-                    {/* Username (Non-Beasiswa) */}
+                    {/* Username */}
                     <CustInput
                       label="Username"
                       type="text"
@@ -404,30 +357,6 @@ const RegisterInstansiPage = () => {
                         placeholder="Pilih kabupaten/kota"
                         error={errors.kabkota}
                       />
-                    )}
-
-                    {/* Perguruan Tinggi & Jenjang */}
-                    {(selectedJenisAkun === "lembaga_pendidikan" ||
-                      selectedJenisAkun === "lembaga_pendidikan" ||
-                      selectedJenisAkun === "lembaga_seleksi") && (
-                      <>
-                        <CustSearchableSelect
-                          name="perguruan_tinggi"
-                          control={control}
-                          label="Perguruan Tinggi"
-                          options={perguruanTinggiOptions}
-                          placeholder="Pilih perguruan tinggi"
-                          error={errors.perguruan_tinggi}
-                        />
-                        <CustSearchableSelect
-                          name="jenjang"
-                          control={control}
-                          label="Jenjang"
-                          options={jenjangOptions}
-                          placeholder="Pilih jenjang"
-                          error={errors.jenjang}
-                        />
-                      </>
                     )}
 
                     <div className="space-y-2">

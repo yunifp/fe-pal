@@ -12,11 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CalendarCheck } from "lucide-react";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
+import FlowBeasiswaStepper from "@/components/beasiswa/FlowBeasiswaStepper";
 
 const extractErrorMessages = (errors: any, parentKey = ""): string[] => {
   let messages: string[] = [];
@@ -102,6 +103,7 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
   }, [fullDataBeasiswa, setValue]);
 
   const selectedStatus = watch("selectedStatus");
+  const isReadOnly = fullDataBeasiswa?.data_beasiswa?.id_flow !== 6;
 
   const mutation = useMutation({
     mutationFn: async (data: VerifikasiFormData) => {
@@ -188,7 +190,6 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
         <p className="text-xl font-semibold mt-4">
           Seleksi Administratif Kabupaten / Kota
         </p>
-
         <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             {/*
@@ -202,7 +203,30 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
               control={control}
               errors={errors}
               verifikatorMode="dinas"
+              isReadOnly={isReadOnly}
             />
+            {fullDataBeasiswa?.data_beasiswa?.id_flow !== undefined && (
+              <div className="rounded-xl border border-border bg-background p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold leading-none">
+                      Status Pendaftaran
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Progres alur verifikasi beasiswa
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-border/40 pt-4">
+                  <FlowBeasiswaStepper
+                    currentIdFlow={fullDataBeasiswa.data_beasiswa.id_flow!}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1">
@@ -215,6 +239,7 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
               setValue={setValue}
               watch={watch}
               getValues={getValues}
+              isReadOnly={isReadOnly}
             />
           </div>
         </div>

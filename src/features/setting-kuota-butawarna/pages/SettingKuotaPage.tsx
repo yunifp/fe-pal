@@ -11,9 +11,11 @@ import { STALE_TIME } from "@/constants/reactQuery";
 import { programStudiService } from "@/services/programStudiService";
 import type { IProgramStudi } from "@/types/programStudi";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SlidersHorizontal } from "lucide-react";
 
 const SettingKuotaPage = () => {
-  useRedirectIfHasNotAccess("U"); 
+  useRedirectIfHasNotAccess("U");
 
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -52,26 +54,46 @@ const SettingKuotaPage = () => {
   const columns = useMemo(() => getColumns(handleUpdateData), []);
 
   return (
-    <>
-      <CustBreadcrumb items={[{ name: "Master Data" }, { name: "Setting Kuota & Buta Warna" }]} />
-      
-      <div className="flex justify-between items-center mt-4">
-        <p className="text-xl font-semibold uppercase">Kuota Buta Warna Prodi</p>
-      </div>
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb items={[{ name: "Master Data" }, { name: "Setting Kuota & Buta Warna" }]} />
 
-      <div className="mt-3">
-        <DataTable
-          isLoading={isLoading}
-          columns={columns}
-          data={data}
-          pageCount={totalPages}
-          pageIndex={page - 1}
-          onPageChange={(newPage) => setPage(newPage + 1)}
-          searchValue={search}
-          onSearchChange={(value) => setSearch(value)}
-        />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+          <div className="flex items-center gap-4">
+            <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 hidden sm:block">
+              <SlidersHorizontal className="h-7 w-7 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Pengaturan Kuota & Buta Warna
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">Lakukan penyesuaian kuota penerimaan dan kebijakan buta warna secara langsung pada tabel.</p>
+            </div>
+          </div>
+        </div>
+
+        <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-6 sm:px-8">
+            <CardTitle className="text-xl font-bold text-slate-800">Daftar Program Studi</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8">
+              <DataTable
+                isLoading={isLoading}
+                columns={columns}
+                data={data}
+                pageCount={totalPages}
+                pageIndex={page - 1}
+                onPageChange={(newPage) => setPage(newPage + 1)}
+                searchValue={search}
+                onSearchChange={(value) => setSearch(value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 

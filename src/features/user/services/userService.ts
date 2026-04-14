@@ -94,4 +94,29 @@ export const userService = {
     );
     return response.data;
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getOperatorPT: async (id_pt: number): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.get(
+      `${AUTH_SERVICE_BASE_URL}/users/op-pt/${id_pt}`
+    );
+    return response.data;
+  },
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createOperatorPT: async (payload: any): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.post(
+      `${AUTH_SERVICE_BASE_URL}/users/pt-accounts`,
+      payload
+    );
+    return response.data;
+  },
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  updateOperatorPT: async (id_pt: number, payload: any): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.put(
+      `${AUTH_SERVICE_BASE_URL}/users/pt-accounts/${id_pt}`,
+      payload
+    );
+    return response.data;
+  },
 };

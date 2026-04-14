@@ -58,7 +58,7 @@ const extractErrorMessages = (
   return messages;
 };
 
-const VIEW_ONLY_FLOWS = [6, 7, 9, 10, 11, 12, 13];
+const VIEW_ONLY_FLOWS = [3, 4, 6, 7, 9, 10, 11, 12, 13];
 
 const BeasiswaSeleksiDetailPage = () => {
   useRedirectIfHasNotAccess("U");

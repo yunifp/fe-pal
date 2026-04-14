@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { CustInput } from "@/components/CustInput";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import { npsnSchema, type NpsnFormData } from "@/types/master";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
-import { ArrowLeft, Save, School } from "lucide-react";
+import { ArrowLeft, Save, School, GraduationCap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -57,133 +58,91 @@ const NpsnCreatePage = () => {
       navigate("/master-npsn");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan data",
-      );
+      toast.error(error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data");
     },
   });
 
   const onSubmit = (data: NpsnFormData) => mutation.mutate(data);
 
   return (
-    <>
-      <CustBreadcrumb
-        items={[{ name: "NPSN", url: "/master/npsn" }, { name: "Tambah NPSN" }]}
-      />
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb
+          items={[{ name: "NPSN", url: "/master/npsn" }, { name: "Tambah Baru" }]}
+        />
 
-      <div className="flex items-center gap-3 mt-4 mb-6">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <School className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+          <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 hidden sm:block">
+            <School className="h-8 w-8 text-emerald-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Tambah Data NPSN</h1>
+            <p className="text-sm text-slate-500 mt-1">Tambahkan informasi institusi sekolah baru ke sistem.</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xl font-semibold leading-tight">Tambah NPSN</p>
-          <p className="text-sm text-muted-foreground">
-            Tambahkan data sekolah baru ke sistem
-          </p>
-        </div>
-      </div>
 
-      <div className="flex justify-center">
-        <Card className="w-full max-w-xl border shadow-sm">
-          <CardHeader className="pb-3 border-b">
-            <CardTitle className="text-base font-medium">
-              Informasi Sekolah
-            </CardTitle>
-            <CardDescription>
-              Lengkapi semua kolom yang diperlukan
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-5">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              {/* Dropdown Jenjang */}
-              <div className="space-y-1.5">
-                <Label>
-                  Jenjang <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  control={control}
-                  name="id_jenjang"
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={(val) => field.onChange(parseInt(val))}
-                      value={field.value ? String(field.value) : ""}
-                      disabled={isLoadingJenjang}>
-                      <SelectTrigger
-                        className={
-                          errors.id_jenjang ? "border-destructive" : ""
-                        }>
-                        <SelectValue
-                          placeholder={
-                            isLoadingJenjang
-                              ? "Memuat data..."
-                              : "Pilih jenjang sekolah"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {jenjangList.map((jenjang: any) => (
-                          <SelectItem
-                            key={jenjang.id}
-                            value={String(jenjang.id)}>
-                            {jenjang.jenjang}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.id_jenjang && (
-                  <p className="text-xs text-destructive">
-                    {errors.id_jenjang.message}
-                  </p>
-                )}
-              </div>
+        <div className="flex justify-center">
+          <Card className="w-full max-w-xl shadow-sm rounded-3xl border-slate-200 bg-white overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-8">
+              <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-emerald-600" />
+                Informasi Sekolah
+              </CardTitle>
+              <CardDescription className="text-slate-500 mt-1">Lengkapi kolom di bawah ini secara akurat.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold text-slate-700 ml-1">Jenjang Pendidikan</Label>
+                  <Controller
+                    control={control}
+                    name="id_jenjang"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={(val) => field.onChange(parseInt(val))}
+                        value={field.value ? String(field.value) : ""}
+                        disabled={isLoadingJenjang}>
+                        <SelectTrigger
+                          className={`h-12 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.id_jenjang ? "border-rose-500 focus:ring-rose-500/20" : ""}`}>
+                          <SelectValue placeholder={isLoadingJenjang ? "Memuat data..." : "Pilih jenjang sekolah"} />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-200 shadow-lg">
+                          {jenjangList.map((jenjang: any) => (
+                            <SelectItem key={jenjang.id} value={String(jenjang.id)} className="font-medium">
+                              {jenjang.jenjang}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.id_jenjang && <p className="text-xs text-rose-500 font-medium ml-1">{errors.id_jenjang.message}</p>}
+                </div>
 
-              <CustInput
-                label="Nama Sekolah"
-                placeholder="Masukkan nama sekolah"
-                {...register("sekolah")}
-                error={!!errors.sekolah}
-                errorMessage={errors.sekolah?.message}
-              />
+                <CustInput label="Nama Lengkap Sekolah" placeholder="Masukkan nama resmi sekolah" {...register("sekolah")} error={!!errors.sekolah} errorMessage={errors.sekolah?.message} />
 
-              <CustInput
-                label="NPSN"
-                placeholder="Masukkan nomor NPSN (8 digit)"
-                {...register("npsn")}
-                error={!!errors.npsn}
-                errorMessage={errors.npsn?.message}
-              />
+                <CustInput label="Nomor NPSN" placeholder="8 Digit angka NPSN" {...register("npsn")} error={!!errors.npsn} errorMessage={errors.npsn?.message} />
 
-              <CustInput
-                label="Jenis Sekolah"
-                placeholder="Contoh: SMA, SMK, MA"
-                {...register("jenis_sekolah")}
-                error={!!errors.jenis_sekolah}
-                errorMessage={errors.jenis_sekolah?.message}
-              />
+                <CustInput label="Tipe/Jenis Sekolah" placeholder="Contoh: SMA, SMK, atau MA" {...register("jenis_sekolah")} error={!!errors.jenis_sekolah} errorMessage={errors.jenis_sekolah?.message} />
 
-              <div className="pt-2 flex items-center justify-between border-t">
-                <Link to="/master/npsn">
-                  <Button type="button" variant="ghost" size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-1.5" /> Kembali
+                <div className="pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+                  <Link to="/master-npsn" className="w-full sm:w-auto">
+                    <Button type="button" variant="outline" className="w-full rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold transition-all">
+                      <ArrowLeft className="h-4 w-4 mr-2 text-slate-400" /> Batal
+                    </Button>
+                  </Link>
+                  <Button type="submit" disabled={isSubmitting || mutation.isPending} className="w-full sm:w-auto rounded-xl h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-bold transition-all">
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSubmitting || mutation.isPending ? "Menyimpan..." : "Simpan Data"}
                   </Button>
-                </Link>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || mutation.isPending}>
-                  <Save className="h-4 w-4 mr-1.5" />
-                  {isSubmitting || mutation.isPending
-                    ? "Menyimpan..."
-                    : "Simpan Data"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

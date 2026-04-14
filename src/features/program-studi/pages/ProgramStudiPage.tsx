@@ -13,8 +13,9 @@ import type { IProgramStudi } from "@/types/programStudi";
 import useHasAccess from "@/hooks/useHasAccess";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, GraduationCap } from "lucide-react";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ProgramStudiPage = () => {
   useRedirectIfHasNotAccess("R");
@@ -77,10 +78,11 @@ const ProgramStudiPage = () => {
     if (selectedId !== null) deleteMutation.mutate(selectedId);
   };
 
-const columns = useMemo(
+  const columns = useMemo(
     () => getColumns(isGlobalView, handleDeleteClick), 
     [isGlobalView, handleDeleteClick]
   );
+  
   const breadcrumbItems = isGlobalView
     ? [{ name: "Master Data" }, { name: "Semua Program Studi" }]
     : [
@@ -89,46 +91,66 @@ const columns = useMemo(
       ];
 
   return (
-    <>
-      <CustBreadcrumb items={breadcrumbItems} />
-      <div className="flex justify-between items-center mt-4">
-        <p className="text-xl font-semibold">
-          {isGlobalView ? "Semua Program Studi" : "Program Studi"}
-        </p>
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb items={breadcrumbItems} />
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+          <div className="flex items-center gap-4">
+            <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 hidden sm:block">
+              <GraduationCap className="h-7 w-7 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                {isGlobalView ? "Semua Program Studi" : "Program Studi"}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">Kelola daftar program studi dan kuota penerimaan.</p>
+            </div>
+          </div>
 
-        {canCreate && (
-          <Button 
-            onClick={() => 
-              navigate(isGlobalView ? "/master/program-studi/create" : `/master/perguruan-tinggi/${idPt}/program-studi/create`)
-            }
-          >
-            <Plus className="mr-2 h-4 w-4" /> Tambah Program Studi
-          </Button>
-        )}
-      </div>
+          {canCreate && (
+            <Button 
+              onClick={() => 
+                navigate(isGlobalView ? "/master/program-studi/create" : `/master/perguruan-tinggi/${idPt}/program-studi/create`)
+              }
+              className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md transition-all"
+            >
+              <Plus className="mr-2 h-5 w-5" /> Tambah Program Studi
+            </Button>
+          )}
+        </div>
 
-      <div className="mt-3">
-        <DataTable
-          isLoading={isLoading}
-          columns={columns}
-          data={data}
-          pageCount={totalPages}
-          pageIndex={page - 1}
-          onPageChange={(newPage) => setPage(newPage + 1)}
-          searchValue={search}
-          onSearchChange={(value) => setSearch(value)}
+        <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-6 sm:px-8">
+            <CardTitle className="text-xl font-bold text-slate-800">Daftar Program Studi</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8">
+              <DataTable
+                isLoading={isLoading}
+                columns={columns}
+                data={data}
+                pageCount={totalPages}
+                pageIndex={page - 1}
+                onPageChange={(newPage) => setPage(newPage + 1)}
+                searchValue={search}
+                onSearchChange={(value) => setSearch(value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <DeleteConfirmModal
+          open={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setSelectedId(null);
+          }}
+          onConfirm={confirmDelete}
         />
       </div>
-
-      <DeleteConfirmModal
-        open={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false);
-          setSelectedId(null);
-        }}
-        onConfirm={confirmDelete}
-      />
-    </>
+    </div>
   );
 };
 

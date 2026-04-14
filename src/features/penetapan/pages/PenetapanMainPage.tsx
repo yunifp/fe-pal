@@ -12,7 +12,6 @@ import { GraduationCap, Eye } from "lucide-react";
 const PenetapanMainPage = () => {
   const navigate = useNavigate();
   
-  // Tambahkan state untuk kebutuhan DataTable
   const [search, setSearch] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -25,16 +24,36 @@ const PenetapanMainPage = () => {
   const totalPages = response?.data?.total_pages || 1;
 
   const columns = [
-    { accessorKey: "no", header: "No" },
-    { accessorKey: "nama_penetapan", header: "Nama Penetapan" },
-    { accessorKey: "tanggal_penetapan", header: "Tanggal Penetapan" },
-    { accessorKey: "instansi", header: "Instansi" },
-    { accessorKey: "jumlah_kuota", header: "Jumlah Kuota", cell: ({ row }: any) => <span className="font-bold">{row.original.jumlah_kuota}</span> },
+    { 
+      accessorKey: "no", 
+      header: "No",
+      cell: ({ row }: any) => <span className="text-slate-500">{row.index + 1}</span> 
+    },
+    { 
+      accessorKey: "nama_penetapan", 
+      header: "Nama Penetapan",
+      cell: ({ row }: any) => <span className="font-semibold text-slate-900">{row.original.nama_penetapan}</span>
+    },
+    { 
+      accessorKey: "tanggal_penetapan", 
+      header: "Tanggal Penetapan",
+      cell: ({ row }: any) => <span className="text-slate-600">{row.original.tanggal_penetapan}</span>
+    },
+    { 
+      accessorKey: "instansi", 
+      header: "Instansi",
+      cell: ({ row }: any) => <span className="text-slate-700">{row.original.instansi}</span>
+    },
+    { 
+      accessorKey: "jumlah_kuota", 
+      header: "Jumlah Kuota", 
+      cell: ({ row }: any) => <span className="font-bold text-slate-800">{row.original.jumlah_kuota}</span> 
+    },
     { 
       accessorKey: "keterangan", 
       header: "Keterangan",
       cell: ({ row }: any) => (
-        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
+        <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
           {row.original.keterangan}
         </span>
       )
@@ -46,49 +65,51 @@ const PenetapanMainPage = () => {
         <Button 
           size="sm" 
           variant="outline" 
-          className="border-violet-500 text-violet-600 hover:bg-violet-50"
+          className="border-teal-200 text-teal-700 hover:bg-teal-50 hover:text-teal-800 rounded-xl h-9 px-4 font-semibold shadow-none transition-colors"
           onClick={() => navigate(`/penetapan/detail/${row.original.id_ref_beasiswa}`)} 
         >
-          <Eye className="w-4 h-4 mr-2" /> Detail
+          <Eye className="w-3.5 h-3.5 mr-2" /> Detail
         </Button>
       ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-8">
-      <div className="max-w-screen-2xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
         <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Penetapan Akhir" }]} />
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="p-3 bg-violet-100/50 rounded-xl">
-            <GraduationCap className="h-7 w-7 text-violet-600" />
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-5 relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 shrink-0 relative z-10">
+            <GraduationCap className="h-8 w-8 text-emerald-600" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">Tahap Penetapan Akhir</h2>
-            <p className="text-sm text-slate-500 mt-1">Daftar penetapan batch beasiswa yang telah disahkan.</p>
+          <div className="relative z-10">
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Tahap Penetapan Akhir</h2>
+            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Daftar penetapan batch beasiswa yang telah disahkan secara resmi.</p>
           </div>
         </div>
 
-        <Card className="border-0 shadow-md rounded-2xl bg-white">
-          <CardHeader className="bg-slate-50 border-b pb-4 pt-6 px-6">
-            <CardTitle className="text-lg text-slate-800">Daftar Penetapan</CardTitle>
+        <Card className="border border-slate-200 shadow-sm rounded-3xl bg-white overflow-hidden">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-8">
+            <CardTitle className="text-xl text-slate-800 font-bold">Daftar Penetapan</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            {/* Berikan parameter lengkap ke DataTable */}
-            <DataTable 
-              isLoading={isLoading} 
-              columns={columns} 
-              data={rawData} 
-              pageCount={totalPages}
-              pageIndex={pageIndex}
-              onPageChange={setPageIndex}
-              searchValue={search}
-              onSearchChange={(val) => {
-                setSearch(val);
-                setPageIndex(0);
-              }}
-            />
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8">
+              <DataTable 
+                isLoading={isLoading} 
+                columns={columns} 
+                data={rawData} 
+                pageCount={totalPages}
+                pageIndex={pageIndex}
+                onPageChange={setPageIndex}
+                searchValue={search}
+                onSearchChange={(val) => {
+                  setSearch(val);
+                  setPageIndex(0);
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

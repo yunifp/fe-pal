@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -8,7 +8,6 @@ import {
   FileImage,
   FileText,
   FolderOpen,
-  Loader2,
   RefreshCw,
   Users,
   X,
@@ -33,9 +32,10 @@ import type {
   PendaftarWithDocs,
 } from "../components/Types";
 import {
+  BEASISWA_FETCH_BASE_URL,
   buildZipFilename,
   formatBytes,
-  writeBlobToDisk,
+  streamDownloadToDisk,
 } from "../components/Utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,9 +64,12 @@ const DownloadManajemenPage = () => {
   const [useChunked, setUseChunked] = useState(false);
   const [dlProgress, setDlProgress] = useState<DownloadProgress>(IDLE_PROGRESS);
 
+  // AbortController untuk cancel download aktif
+  const abortCtrlRef = useRef<AbortController | null>(null);
+
   const debouncedSearch = useDebounce(search, 500);
 
-  // Reset to page 1 whenever filters change
+  // Reset ke page 1 saat filter berubah
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, filterJalur, filterCategory]);
@@ -153,14 +156,22 @@ const DownloadManajemenPage = () => {
       ? Math.ceil(ids.length / BULK_CHUNK_SIZE)
       : 1;
 
+    // Buat AbortController baru untuk download ini
+    const abortCtrl = new AbortController();
+    abortCtrlRef.current = abortCtrl;
+
     setDlProgress({
       isActive: true,
       current: 0,
       total: totalChunks,
-      label: `${ids.length} pendaftar`,
+      label: `Menyiapkan ${ids.length} pendaftar...`,
       bytesReceived: 0,
       phase: "preparing",
     });
+
+    // Endpoint bulk zip — sesuai route Express di backend
+    // const ENDPOINT = `${BEASISWA_FETCH_BASE_URL}/beasiswa/bulk-zip`;
+    const ENDPOINT = `${BEASISWA_FETCH_BASE_URL}/beasiswa/download/bulk-zip`;
 
     try {
       if (useChunked) {
@@ -174,13 +185,8 @@ const DownloadManajemenPage = () => {
             phase: "downloading",
             current: chunkIdx,
             label: chunkLabel,
+            bytesReceived: 0,
           }));
-
-          const resp = await beasiswaService.downloadBulkZip({
-            id_trx_beasiswa_list: batch,
-            kategori: filterCategory,
-            ...(jalurId ? { id_jalur: jalurId } : {}),
-          });
 
           const filename = buildZipFilename(
             `bulk_dokumen_batch${chunkIdx}of${totalChunks}`,
@@ -188,12 +194,23 @@ const DownloadManajemenPage = () => {
             jalurId,
           );
 
-          await writeBlobToDisk(resp.data, filename, (b) => {
-            setDlProgress((p) => ({
-              ...p,
-              bytesReceived: b,
-              label: `${chunkLabel} — ${formatBytes(b)}`,
-            }));
+          await streamDownloadToDisk({
+            url: ENDPOINT,
+            body: {
+              id_trx_beasiswa_list: batch,
+              kategori: filterCategory,
+              ...(jalurId ? { id_jalur: jalurId } : {}),
+            },
+            filename,
+            signal: abortCtrl.signal,
+            onProgress: (bytes, total) => {
+              const totalStr = total ? ` / ${formatBytes(total)}` : "";
+              setDlProgress((p) => ({
+                ...p,
+                bytesReceived: bytes,
+                label: `${chunkLabel} — ${formatBytes(bytes)}${totalStr}`,
+              }));
+            },
           });
         }
       } else {
@@ -202,42 +219,61 @@ const DownloadManajemenPage = () => {
           phase: "downloading",
           current: 1,
           total: 1,
-          label: `${ids.length} pendaftar`,
+          label: `Mengunduh ${ids.length} pendaftar...`,
+          bytesReceived: 0,
         }));
-
-        const resp = await beasiswaService.downloadBulkZip({
-          id_trx_beasiswa_list: ids,
-          kategori: filterCategory,
-          ...(jalurId ? { id_jalur: jalurId } : {}),
-        });
 
         const filename = buildZipFilename(
           "bulk_dokumen",
           filterCategory,
           jalurId,
         );
-        await writeBlobToDisk(resp.data, filename, (b) => {
-          setDlProgress((p) => ({
-            ...p,
-            bytesReceived: b,
-            label: `${ids.length} pendaftar — ${formatBytes(b)}`,
-          }));
+
+        await streamDownloadToDisk({
+          url: ENDPOINT,
+          body: {
+            id_trx_beasiswa_list: ids,
+            kategori: filterCategory,
+            ...(jalurId ? { id_jalur: jalurId } : {}),
+          },
+          filename,
+          signal: abortCtrl.signal,
+          onProgress: (bytes, total) => {
+            const totalStr = total ? ` / ${formatBytes(total)}` : "";
+            setDlProgress((p) => ({
+              ...p,
+              bytesReceived: bytes,
+              label: `${ids.length} pendaftar — ${formatBytes(bytes)}${totalStr}`,
+            }));
+          },
         });
       }
 
       setDlProgress((p) => ({ ...p, phase: "done" }));
       toast.success(`ZIP ${ids.length} pendaftar berhasil diunduh`);
-      setTimeout(() => setDlProgress((p) => ({ ...p, isActive: false })), 2500);
+      setTimeout(() => setDlProgress((p) => ({ ...p, isActive: false })), 3000);
     } catch (err: any) {
+      const isAbort = err?.name === "AbortError";
       setDlProgress((p) => ({
         ...p,
         phase: "error",
-        label: err?.message ?? "error",
+        label: isAbort
+          ? "Download dibatalkan"
+          : (err?.message ?? "Terjadi error"),
       }));
-      toast.error(`Gagal: ${err?.message ?? "unknown"}`);
+      toast.error(
+        isAbort ? "Download dibatalkan" : `Gagal: ${err?.message ?? "unknown"}`,
+      );
       setTimeout(() => setDlProgress((p) => ({ ...p, isActive: false })), 4000);
+    } finally {
+      abortCtrlRef.current = null;
     }
   }, [selectedIds, filterCategory, filterJalur, useChunked]);
+
+  // Cancel download aktif
+  const handleCancelDownload = () => {
+    abortCtrlRef.current?.abort();
+  };
 
   // ── Excel export ───────────────────────────────────────────────────────────
 
@@ -253,7 +289,7 @@ const DownloadManajemenPage = () => {
     }
   };
 
-  // ── Misc ──────────────────────────────────────────────────────────────────
+  // ── Misc ───────────────────────────────────────────────────────────────────
 
   const hasFilter =
     filterJalur !== "all" || filterCategory !== "all" || search !== "";
@@ -269,7 +305,7 @@ const DownloadManajemenPage = () => {
 
   return (
     <div className="pb-12">
-      <DownloadProgressOverlay p={dlProgress} />
+      <DownloadProgressOverlay p={dlProgress} onCancel={handleCancelDownload} />
 
       <CustBreadcrumb items={[{ name: "Manajemen Download Dokumen" }]} />
 
@@ -278,8 +314,7 @@ const DownloadManajemenPage = () => {
         <div>
           <h1 className="text-xl font-bold">Manajemen Download Dokumen</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Unduh foto &amp; dokumen pendaftar — filter per jalur, streaming via
-            StreamSaver
+            Unduh foto &amp; dokumen pendaftar — filter per jalur
           </p>
         </div>
 
@@ -321,17 +356,25 @@ const DownloadManajemenPage = () => {
 
               <Button
                 size="sm"
-                onClick={handleBulkZip}
-                disabled={dlProgress.isActive}
-                className="h-8 text-xs">
+                onClick={
+                  dlProgress.isActive ? handleCancelDownload : handleBulkZip
+                }
+                className={`h-8 text-xs ${
+                  dlProgress.isActive
+                    ? "bg-red-500 hover:bg-red-600 text-white border-red-500"
+                    : ""
+                }`}>
                 {dlProgress.isActive ? (
-                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  <>
+                    <X className="h-3.5 w-3.5 mr-1" />
+                    Batalkan
+                  </>
                 ) : (
-                  <Archive className="h-3.5 w-3.5 mr-1" />
+                  <>
+                    <Archive className="h-3.5 w-3.5 mr-1" />
+                    {`Unduh ZIP (${selectedIds.size})`}
+                  </>
                 )}
-                {dlProgress.isActive
-                  ? "Streaming…"
-                  : `Unduh ZIP (${selectedIds.size})`}
               </Button>
             </>
           )}

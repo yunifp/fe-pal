@@ -20,17 +20,46 @@ export const getColumns = (
 ): ColumnDef<IProgramStudi>[] => {
   
   const baseColumns: ColumnDef<IProgramStudi>[] = [
-    { id: "no", header: "No", cell: ({ row }) => row.index + 1 },
-    { accessorKey: "jenjang", header: "Jenjang" },
-    { accessorKey: "nama_prodi", header: "Nama Prodi" },
-    { accessorKey: "kuota", header: "Kuota" },
+    { 
+      id: "no", 
+      header: "No", 
+      cell: ({ row }) => <span className="text-slate-500">{row.index + 1}</span>,
+      size: 60,
+    },
+    { 
+      accessorKey: "jenjang", 
+      header: "Jenjang",
+      cell: ({ row }) => <span className="font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg text-xs">{row.original.jenjang}</span>
+    },
+    { 
+      accessorKey: "nama_prodi", 
+      header: "Nama Program Studi",
+      cell: ({ row }) => <span className="font-bold text-slate-900">{row.original.nama_prodi}</span>
+    },
+    { 
+      accessorKey: "kuota", 
+      header: "Kuota",
+      cell: ({ row }) => <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-lg">{row.original.kuota}</span>
+    },
     { 
       accessorKey: "boleh_buta_warna", 
       header: "Boleh Buta Warna",
-      cell: ({ row }) => row.original.boleh_buta_warna === "Y" ? "Ya" : "Tidak" 
+      cell: ({ row }) => {
+        const isBoleh = row.original.boleh_buta_warna === "Y";
+        return (
+          <span className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border ${
+            isBoleh 
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+              : "bg-rose-50 border-rose-100 text-rose-700"
+          }`}>
+            {isBoleh ? "Ya" : "Tidak"}
+          </span>
+        );
+      }
     },
     {
       id: "aksi",
+      header: "Aksi",
       cell: ({ row }) => {
         const prodi = row.original;
         const navigate = useNavigate();
@@ -41,38 +70,39 @@ export const getColumns = (
         return (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 w-8 p-0">
+              <Button variant="outline" className="h-9 w-9 p-0 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-none">
                 <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="font-inter space-y-0.5">
-              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-             {canUpdate && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (isGlobalView) {
-                      navigate(`/master/program-studi/${prodi.id_prodi}/edit`);
-                    } else {
-                      navigate(`/master/perguruan-tinggi/${ptId}/program-studi/${prodi.id_prodi}`);
-                    }
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-1" /> Ubah
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuContent align="end" className="font-sans space-y-1 rounded-xl shadow-lg border-slate-100 p-2 min-w-[160px]">
+              <DropdownMenuLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">Aksi</DropdownMenuLabel>
+              {canUpdate && (
+                <>
+                  <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg hover:bg-emerald-50 hover:text-emerald-700 py-2.5 font-medium transition-colors"
+                    onClick={() => {
+                      if (isGlobalView) {
+                        navigate(`/master/program-studi/${prodi.id_prodi}/edit`);
+                      } else {
+                        navigate(`/master/perguruan-tinggi/${ptId}/program-studi/${prodi.id_prodi}`);
+                      }
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" /> Ubah Data
+                  </DropdownMenuItem>
+                </>
+              )}
               {canDelete && (
                 <DropdownMenuItem
-                  className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+                  className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer rounded-lg py-2.5 font-medium transition-colors"
                   onSelect={(e) => {
                     e.preventDefault();
                     onDeleteClick(prodi.id_prodi);
                   }}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" /> Hapus
+                  <Trash2 className="h-4 w-4 mr-2" /> Hapus
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -86,7 +116,7 @@ export const getColumns = (
     baseColumns.splice(1, 0, {
       id: "nama_pt",
       header: "Perguruan Tinggi",
-      cell: ({ row }) => row.original.RefPerguruanTinggi?.nama_pt ?? "-",
+      cell: ({ row }) => <span className="font-medium text-slate-700">{row.original.RefPerguruanTinggi?.nama_pt ?? "-"}</span>,
     });
   }
 

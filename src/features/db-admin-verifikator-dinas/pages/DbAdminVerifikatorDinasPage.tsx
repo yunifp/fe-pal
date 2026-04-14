@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,9 +18,6 @@ import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 import type { IAdminVerifikator } from "../types/db";
 import { dbService } from "../services/dbService";
 import { Plus } from "lucide-react";
-import { useForm } from "react-hook-form";
-import FilterLembagaPendidikan from "../../../components/pks/FilterLembagaPendidikan";
-import { masterService } from "@/services/masterService";
 
 const DbAdminVerifikatorDinasPage = () => {
   useRedirectIfHasNotAccess("R");
@@ -33,16 +31,6 @@ const DbAdminVerifikatorDinasPage = () => {
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
 
-  // Untuk Filter
-
-  const { control, watch } = useForm({
-    defaultValues: {
-      lpId: "",
-    },
-  });
-
-  const lpId = watch("lpId");
-
   const canCreate = useHasAccess("C");
 
   // Fetch data pengguna
@@ -52,8 +40,8 @@ const DbAdminVerifikatorDinasPage = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["db-user-admin-verifikator-lp", page, debouncedSearch, lpId],
-    queryFn: () => dbService.getByPaginationLp(page, debouncedSearch, lpId),
+    queryKey: ["db-user-admin-verifikator-dinas", page, debouncedSearch],
+    queryFn: () => dbService.getByPaginationDinas(page, debouncedSearch),
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -61,24 +49,6 @@ const DbAdminVerifikatorDinasPage = () => {
 
   const data: IAdminVerifikator[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.totalPages ?? 0;
-
-  // Filter lembaga pendidikan
-  const { data: lembagaPendidikanData } = useQuery({
-    queryKey: ["lembaga-pendidikan"],
-    queryFn: () => masterService.getPerguruanTinggi(),
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: STALE_TIME,
-  });
-
-  const lembagaPendidikanOptions = useMemo(() => {
-    return (
-      lembagaPendidikanData?.data?.map((data) => ({
-        value: String(data.id_pt) ?? "",
-        label: data.nama_pt,
-      })) || []
-    );
-  }, [lembagaPendidikanData]);
 
   useEffect(() => {
     if (isError) {
@@ -93,7 +63,7 @@ const DbAdminVerifikatorDinasPage = () => {
       toast[res.success ? "success" : "error"](res.message);
       if (res.success) {
         queryClient.invalidateQueries({
-          queryKey: ["db-user-admin-verifikator-lp"],
+          queryKey: ["db-user-admin-verifikator-dinas"],
         });
       }
     },
@@ -131,7 +101,7 @@ const DbAdminVerifikatorDinasPage = () => {
         items={[
           {
             name: "Database Instansi Dinas Provinsi & Kabupaten / Kota",
-            url: "/db-admin-verifikator-dinas",
+            url: "/database/user-admin-verifikator-dinas",
           },
         ]}
       />
@@ -150,12 +120,6 @@ const DbAdminVerifikatorDinasPage = () => {
           onPageChange={(newPage) => setPage(newPage + 1)}
           searchValue={search}
           onSearchChange={(value) => setSearch(value)}
-          leftHeaderContent={
-            <FilterLembagaPendidikan
-              control={control}
-              options={lembagaPendidikanOptions}
-            />
-          }
           rightHeaderContent={
             <div className="flex gap-2 items-center">
               {canCreate && (

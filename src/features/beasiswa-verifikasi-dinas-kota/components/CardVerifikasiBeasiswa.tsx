@@ -33,6 +33,7 @@ interface CardVerifikasiBeasiswaProps {
   watch: UseFormWatch<VerifikasiFormData>;
   getValues: UseFormGetValues<VerifikasiFormData>;
   idTrxBeasiswa: number;
+  isReadOnly?: boolean;
 }
 
 const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
@@ -41,6 +42,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
   errors,
   setValue,
   idTrxBeasiswa,
+  isReadOnly,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -209,42 +211,48 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
             </div>
           ) : (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-xs text-blue-700 leading-relaxed">
-                <strong>Catatan:</strong> Pastikan semua dokumen telah diperiksa
-                sebelum melakukan verifikasi.
-              </p>
+              {!isReadOnly ? (
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  <strong>Catatan:</strong> Pastikan semua dokumen telah
+                  diperiksa sebelum melakukan verifikasi.
+                </p>
+              ) : (
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  <strong>Notifikasi:</strong> Semua dokumen telah diperiksa.
+                </p>
+              )}
             </div>
           )}
         </div>
+        {!isReadOnly && (
+          <div className="bg-white rounded-2xl shadow-none border border-gray-200 overflow-hidden">
+            {/* Header */}
+            <div className="bg-primary px-6 py-4">
+              <h3 className="text-lg font-semibold text-white">
+                Panel Keputusan
+              </h3>
+              <p className="text-blue-100 text-sm mt-1">
+                Pilih status dan berikan catatan
+              </p>
+            </div>
 
-        <div className="bg-white rounded-2xl shadow-none border border-gray-200 overflow-hidden">
-          {/* Header */}
-          <div className="bg-primary px-6 py-4">
-            <h3 className="text-lg font-semibold text-white">
-              Panel Keputusan
-            </h3>
-            <p className="text-blue-100 text-sm mt-1">
-              Pilih status dan berikan catatan
-            </p>
-          </div>
+            {/* Content */}
+            <div className="p-6 space-y-5">
+              {/* Status Options */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700 block">
+                  Status Verifikasi
+                </label>
+                {statusOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = selectedStatus === option.value;
 
-          {/* Content */}
-          <div className="p-6 space-y-5">
-            {/* Status Options */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700 block">
-                Status Verifikasi
-              </label>
-              {statusOptions.map((option) => {
-                const Icon = option.icon;
-                const isSelected = selectedStatus === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleStatusChange(option.value)}
-                    className={`
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleStatusChange(option.value)}
+                      className={`
                       w-full flex items-center gap-3 p-4 rounded-xl border-2 
                       transition-all duration-200 text-left
                       ${
@@ -253,65 +261,67 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
                           : `${option.bgColor} ${option.borderColor} ${option.hoverColor}`
                       }
                     `}>
-                    <div
-                      className={`
+                      <div
+                        className={`
                       flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
                       ${isSelected ? "bg-white/20" : "bg-white"}
                     `}>
-                      <Icon
-                        className={`w-5 h-5 ${
+                        <Icon
+                          className={`w-5 h-5 ${
+                            isSelected ? "text-white" : option.textColor
+                          }`}
+                          strokeWidth={2.5}
+                        />
+                      </div>
+                      <span
+                        className={`font-semibold ${
                           isSelected ? "text-white" : option.textColor
-                        }`}
-                        strokeWidth={2.5}
-                      />
-                    </div>
-                    <span
-                      className={`font-semibold ${
-                        isSelected ? "text-white" : option.textColor
-                      }`}>
-                      {option.label}
+                        }`}>
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Catatan */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">
+                  Catatan Verifikasi
+                  {selectedStatus === 4 || selectedStatus === 3 ? (
+                    <span className="text-red-500 ml-1">*</span>
+                  ) : (
+                    <span className="text-gray-400 text-xs ml-1">
+                      (opsional)
                     </span>
-                  </button>
-                );
-              })}
-            </div>
+                  )}
+                </label>
+                <CustTextArea
+                  id="catatan"
+                  placeholder={
+                    selectedStatus === 4
+                      ? "Jelaskan dokumen apa yang perlu diperbaiki..."
+                      : selectedStatus === 3
+                        ? "Jelaskan alasan penolakan..."
+                        : "Tulis catatan verifikasi (opsional)..."
+                  }
+                  {...register("catatan")}
+                  error={!!errors.catatan}
+                  errorMessage={errors.catatan?.message}
+                  rows={5}
+                  className="w-full"
+                />
+              </div>
 
-            {/* Catatan */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 block">
-                Catatan Verifikasi
-                {selectedStatus === 4 || selectedStatus === 3 ? (
-                  <span className="text-red-500 ml-1">*</span>
-                ) : (
-                  <span className="text-gray-400 text-xs ml-1">(opsional)</span>
-                )}
-              </label>
-              <CustTextArea
-                id="catatan"
-                placeholder={
-                  selectedStatus === 4
-                    ? "Jelaskan dokumen apa yang perlu diperbaiki..."
-                    : selectedStatus === 3
-                      ? "Jelaskan alasan penolakan..."
-                      : "Tulis catatan verifikasi (opsional)..."
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={
+                  !selectedStatus ||
+                  (selectedStatus === 15 && !selectedFile) ||
+                  uploadingFile
                 }
-                {...register("catatan")}
-                error={!!errors.catatan}
-                errorMessage={errors.catatan?.message}
-                rows={5}
-                className="w-full"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={
-                !selectedStatus ||
-                (selectedStatus === 15 && !selectedFile) ||
-                uploadingFile
-              }
-              className={`
+                className={`
                 w-full py-3 px-4 rounded-xl font-semibold text-white
                 transition-all duration-200 flex items-center justify-center gap-2
                 ${
@@ -322,33 +332,34 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
                     : "bg-gray-300 cursor-not-allowed"
                 }
               `}
-              onClick={onSubmit}>
-              {uploadingFile ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Mengupload file...
-                </>
-              ) : (
-                "Kirim"
-              )}
-            </button>
+                onClick={onSubmit}>
+                {uploadingFile ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Mengupload file...
+                  </>
+                ) : (
+                  "Kirim"
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Dialog Konfirmasi Kembalikan */}

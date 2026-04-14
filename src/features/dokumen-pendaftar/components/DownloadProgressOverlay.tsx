@@ -3,10 +3,6 @@ import { ProgressBar } from "./ProgressBar";
 import { formatBytes } from "./Utils";
 import type { DownloadPhase, DownloadProgress } from "./Types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DownloadProgressOverlay
-// ─────────────────────────────────────────────────────────────────────────────
-
 const PHASE_TEXT: Record<DownloadPhase, (p: DownloadProgress) => string> = {
   preparing: () => "Menyiapkan data...",
   downloading: (p) =>
@@ -17,17 +13,19 @@ const PHASE_TEXT: Record<DownloadPhase, (p: DownloadProgress) => string> = {
 
 interface Props {
   p: DownloadProgress;
+  onCancel?: () => void;
 }
 
-export function DownloadProgressOverlay({ p }: Props) {
+export function DownloadProgressOverlay({ p, onCancel }: Props) {
   if (!p.isActive) return null;
 
   const pct = p.total > 1 ? Math.round((p.current / p.total) * 100) : 0;
+  const isActive = p.phase === "preparing" || p.phase === "downloading";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-6 pointer-events-none">
       <div className="w-full max-w-sm rounded-2xl border bg-card shadow-2xl p-5 pointer-events-auto">
-        {/* Icon + label */}
+        {/* Icon + label + cancel */}
         <div className="flex items-center gap-3 mb-3">
           <div
             className={`h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -55,14 +53,26 @@ export function DownloadProgressOverlay({ p }: Props) {
             )}
           </div>
 
-          {p.bytesReceived > 0 && (
-            <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
-              {formatBytes(p.bytesReceived)}
-            </span>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {p.bytesReceived > 0 && (
+              <span className="text-xs font-mono text-muted-foreground">
+                {formatBytes(p.bytesReceived)}
+              </span>
+            )}
+
+            {/* Tombol cancel — hanya muncul saat download aktif */}
+            {isActive && onCancel && (
+              <button
+                onClick={onCancel}
+                title="Batalkan download"
+                className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Progress bar (only for multi-batch) */}
+        {/* Progress bar (hanya untuk multi-batch) */}
         {p.total > 1 && (
           <>
             <ProgressBar value={pct} />

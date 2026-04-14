@@ -9,27 +9,58 @@ import { Badge } from "@/components/ui/badge";
 import { cekDataService } from "../../../services/cekDataService";
 import { 
   Search, User, MapPin, GraduationCap, 
-  Users, Award, Phone, Mail, Calendar, Info
+  Users, Award, Phone, Mail, Calendar, Info, CheckCircle2, Circle, XCircle
 } from "lucide-react";
 
-const CekDataPage = () => {
-  const [nikInput, setNikInput] = useState("");
-  const [searchNik, setSearchNik] = useState("");
+// Definisikan Urutan Flow Pendaftaran
+const MAIN_FLOW_STEPS = [
+  { id: 1, label: "Pendaftaran Akun" },
+  { id: 2, label: "Verifikasi" }, // Flow 2, 4 (Perbaikan), 5 (Hasil Perbaikan) akan masuk ke tahap ini
+  { id: 13, label: "Lulus Administrasi" },
+  { id: 6, label: "Verifikasi Kab/Kota" },
+  { id: 7, label: "Verifikasi Provinsi" },
+  { id: 9, label: "Verifikasi Nasional" },
+  { id: 10, label: "Tes Seleksi" },
+  { id: 11, label: "Penelaahan" },
+  { id: 12, label: "Rekomendasi Teknis" },
+  { id: 14, label: "Penetapan" },
+];
 
-  // Fetch Data hanya jika searchNik tidak kosong
+const CekDataPage = () => {
+  const [keywordInput, setKeywordInput] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  // Fetch Data menggunakan keyword
   const { data: response, isLoading, isError } = useQuery({
-    queryKey: ["cek-data-nik", searchNik],
-    queryFn: () => cekDataService.cekDataByNik(searchNik),
-    enabled: !!searchNik, // Query baru jalan kalau searchNik terisi
+    queryKey: ["cek-data-keyword", searchKeyword],
+    queryFn: () => cekDataService.cekDataByKeyword(searchKeyword),
+    enabled: !!searchKeyword,
   });
 
   const rawData = response?.data || [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (nikInput.trim()) {
-      setSearchNik(nikInput.trim());
+    if (keywordInput.trim()) {
+      setSearchKeyword(keywordInput.trim());
     }
+  };
+
+  // Helper untuk menentukan status setiap step pada tracker
+  const getStepStatus = (stepId: number, currentFlowId: number) => {
+    if (currentFlowId === 3) return "rejected"; // id_flow 3 = Ditolak
+
+    const currentIndex = MAIN_FLOW_STEPS.findIndex(s => {
+      // Mapping status perbaikan (4, 5) ke kolom Verifikasi (2)
+      if ([2, 4, 5].includes(currentFlowId) && s.id === 2) return true;
+      return s.id === currentFlowId;
+    });
+
+    const stepIndex = MAIN_FLOW_STEPS.findIndex(s => s.id === stepId);
+
+    if (stepIndex < currentIndex) return "completed";
+    if (stepIndex === currentIndex) return "current";
+    return "pending";
   };
 
   return (
@@ -48,22 +79,21 @@ const CekDataPage = () => {
               </div>
               <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Cari Data Pendaftar</h2>
               <p className="text-slate-500">
-                Masukkan Nomor Induk Kependudukan (NIK) untuk melihat seluruh riwayat dan detail data pendaftar.
+                Masukkan <span className="font-semibold">NIK</span> atau <span className="font-semibold">Kode Pendaftaran</span> untuk melihat seluruh riwayat dan detail progres pendaftar.
               </p>
 
               <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3 pt-4">
                 <Input
                   type="text"
-                  placeholder="Masukkan 16 digit NIK..."
+                  placeholder="Masukkan NIK / Kode Pendaftaran..."
                   className="h-14 text-lg rounded-xl shadow-sm border-slate-300 focus-visible:ring-emerald-500"
-                  value={nikInput}
-                  onChange={(e) => setNikInput(e.target.value)}
-                  maxLength={16}
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
                 />
                 <Button 
                   type="submit" 
-                  disabled={isLoading || !nikInput}
-                  className="h-14 px-8 text-base rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 w-full sm:w-auto text-white"
+                  disabled={isLoading || !keywordInput}
+                  className="h-14 px-8 text-base rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 w-full sm:w-auto text-white shrink-0"
                 >
                   {isLoading ? "Mencari..." : "Cari Data"}
                 </Button>
@@ -86,13 +116,13 @@ const CekDataPage = () => {
           </div>
         )}
 
-        {searchNik && !isLoading && !isError && rawData.length === 0 && (
+        {searchKeyword && !isLoading && !isError && rawData.length === 0 && (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
             <div className="p-4 bg-slate-100 rounded-full mb-4">
               <Info className="h-8 w-8 text-slate-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-800">Data Tidak Ditemukan</h3>
-            <p className="text-slate-500 mt-2">Tidak ada pendaftar yang terdaftar dengan NIK <span className="font-semibold text-slate-700">{searchNik}</span></p>
+            <p className="text-slate-500 mt-2">Tidak ada pendaftar yang terdaftar dengan pencarian <span className="font-semibold text-slate-700">{searchKeyword}</span></p>
           </div>
         )}
 
@@ -109,22 +139,92 @@ const CekDataPage = () => {
                 {/* Header Profil */}
                 <div className="bg-slate-800 text-white p-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 bg-slate-700 rounded-full flex items-center justify-center border-2 border-slate-600">
+                    <div className="h-16 w-16 bg-slate-700 rounded-full flex items-center justify-center border-2 border-slate-600 shrink-0">
                       <User className="h-8 w-8 text-emerald-400" />
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold">{data.nama_lengkap || "-"}</h3>
-                      <p className="text-slate-400 font-medium">NIK: {data.nik || "-"}</p>
+                      <p className="text-slate-400 font-medium mt-1">
+                        <span className="text-emerald-400">Kode:</span> {data.kode_pendaftaran || "-"} &nbsp;|&nbsp; 
+                        <span className="text-emerald-400">NIK:</span> {data.nik || "-"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col items-start sm:items-end gap-2">
-                    <Badge className="bg-emerald-500 hover:bg-emerald-600 text-sm px-3 py-1 border-0 text-white">
-                      Flow Saat Ini: {data.id_flow || "-"}
-                    </Badge>
+                    {/* Badge Ditolak masih dipertahankan jika id_flow === 3 */}
+                    {data.id_flow === 3 && (
+                      <Badge className="bg-red-500 hover:bg-red-600 text-sm px-3 py-1 border-0 text-white">
+                        Ditolak
+                      </Badge>
+                    )}
                     <span className="text-sm text-slate-400 flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-emerald-400" /> {data.nama_beasiswa || "Beasiswa"}
                     </span>
                   </div>
+                </div>
+
+                {/* --- SECTION TRACKING PROGRESS BAR --- */}
+                <div className="bg-slate-50/50 p-6 sm:px-8 border-b border-slate-100">
+                  <h4 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wider flex items-center gap-2">
+                    <Info className="w-4 h-4 text-emerald-600" /> Status Tracking Pendaftar
+                  </h4>
+                  
+                  {data.id_flow === 3 ? (
+                    <div className="p-4 bg-red-50 rounded-xl border border-red-100 flex items-center gap-3">
+                      <XCircle className="text-red-500 h-6 w-6 shrink-0"/>
+                      <div>
+                        <p className="text-red-700 font-bold">Aplikasi Ditolak</p>
+                        <p className="text-sm text-red-600">Pendaftaran beasiswa tidak dapat dilanjutkan ke tahap berikutnya.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center w-full overflow-x-auto pb-4 pt-2">
+                      {MAIN_FLOW_STEPS.map((step, idx) => {
+                        const status = getStepStatus(step.id, data.id_flow);
+                        return (
+                          <div key={step.id} className="flex flex-col items-center min-w-[130px] relative flex-1">
+                            {/* Garis Penghubung antar step */}
+                            {idx !== MAIN_FLOW_STEPS.length - 1 && (
+                              <div className={`absolute top-4 left-[50%] right-[-50%] h-[2px] z-0
+                                ${status === "completed" ? "bg-emerald-500" : "bg-slate-200"}
+                              `} />
+                            )}
+                            
+                            {/* Lingkaran / Node */}
+                            <div className={`
+                              w-8 h-8 rounded-full flex items-center justify-center bg-white border-2 z-10 transition-all mb-3
+                              ${status === "completed" ? "border-emerald-500 text-emerald-500" : 
+                                status === "current" ? "border-emerald-500 bg-emerald-50 text-emerald-600 ring-4 ring-emerald-500/20" : 
+                                "border-slate-300 text-slate-300"}
+                            `}>
+                              {status === "completed" ? (
+                                <CheckCircle2 className="w-5 h-5 fill-emerald-500 text-white" />
+                              ) : status === "current" ? (
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                              ) : (
+                                <Circle className="w-5 h-5" />
+                              )}
+                            </div>
+
+                            {/* Label */}
+                            <span className={`text-[11px] text-center font-medium leading-tight px-1
+                              ${status === "current" ? "text-emerald-700 font-bold" : 
+                                status === "completed" ? "text-slate-800" : "text-slate-400"}
+                            `}>
+                              {step.label}
+                              {/* Indikator Status Revisi/Perbaikan pada Flow Verifikasi */}
+                              {status === "current" && step.id === 2 && data.id_flow === 4 && (
+                                <span className="block text-amber-600 mt-1">(Menunggu Perbaikan)</span>
+                              )}
+                              {status === "current" && step.id === 2 && data.id_flow === 5 && (
+                                <span className="block text-blue-600 mt-1">(Hasil Perbaikan)</span>
+                              )}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <CardContent className="p-0">

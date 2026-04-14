@@ -90,6 +90,28 @@ export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
     },
   },
   {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const flow = row.original.flow;
+      if (!flow)
+        return <span className="text-muted-foreground text-xs">-</span>;
+
+      const isAfirmasi = flow.toLowerCase().includes("afirmasi");
+      return (
+        <Badge
+          variant="outline"
+          className={
+            isAfirmasi
+              ? "border-amber-300 bg-amber-50 text-amber-700"
+              : "border-blue-300 bg-blue-50 text-blue-700"
+          }>
+          {flow}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: "verifikator_nama",
     header: "Selektor",
     cell: ({ row }) => {

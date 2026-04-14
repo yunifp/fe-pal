@@ -338,7 +338,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
               "#" +
               existBeasiswa.jenjang_sekolah
             : "",
-        sekolah: existBeasiswa.sekolah ?? "",
+        // sekolah: existBeasiswa.sekolah ?? "",
+        sekolah:
+          existBeasiswa.sekolah && existBeasiswa.nisn_sekolah
+            ? `${existBeasiswa.sekolah}#NPSN:${existBeasiswa.nisn_sekolah}`
+            : (existBeasiswa.sekolah ?? ""),
         jurusan_sekolah: existBeasiswa.jurusan ?? "",
         tahun_lulus: existBeasiswa.tahun_lulus ?? "",
         nama_jurusan_sekolah: existBeasiswa.nama_jurusan_sekolah ?? "",
@@ -505,7 +509,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           pilihanToSave = [];
         }
       }
-
+      const [namaSekolah, npsn] = (data.sekolah ?? "").split("#NPSN:");
       const formData = new FormData();
       formData.append("is_draft", "true");
       formData.append(
@@ -629,7 +633,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       formData.append("sekolah_provinsi", data.sekolah_provinsi ?? "");
       formData.append("sekolah_kabkot", data.sekolah_kabkot ?? "");
       formData.append("jenjang_sekolah", data.jenjang_sekolah ?? "");
-      formData.append("sekolah", data.sekolah ?? "");
+      // formData.append("sekolah", data.sekolah ?? "");
+      formData.append("sekolah", namaSekolah?.trim() ?? "");
+      formData.append("nisn_sekolah", npsn?.trim() ?? "");
       formData.append("jurusan", data.jurusan_sekolah ?? "");
       formData.append("tahun_lulus", data.tahun_lulus ?? "");
       formData.append("nama_jurusan_sekolah", data.nama_jurusan_sekolah ?? "");
@@ -804,6 +810,27 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     }
 
     if (currentStep === 3) {
+      // ✅ Validasi: semua nilai rapor wajib diisi
+      const nilaiRapor = nilaiRaporRef.current;
+      const nilaiKosong = [
+        { key: "nilai_semester_1", label: "Nilai Semester 1" },
+        { key: "nilai_semester_2", label: "Nilai Semester 2" },
+        { key: "nilai_semester_3", label: "Nilai Semester 3" },
+        { key: "nilai_semester_4", label: "Nilai Semester 4" },
+        { key: "nilai_semester_5", label: "Nilai Semester 5" },
+      ].filter(
+        ({ key }) =>
+          !nilaiRapor[key as keyof NilaiRaporForm] ||
+          nilaiRapor[key as keyof NilaiRaporForm].trim() === "",
+      );
+
+      if (nilaiKosong.length > 0) {
+        nilaiKosong.forEach(({ label }) => {
+          toast.error(`${label} wajib diisi`);
+        });
+        return;
+      }
+
       try {
         await beasiswaService.saveNilaiRapor(existBeasiswa.id_trx_beasiswa, {
           id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
@@ -959,7 +986,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       // }
 
       // formData.append("id_verifikator", null);
-
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
       formData.append("nkk", data.nkk ?? "");
@@ -1062,7 +1088,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       formData.append("sekolah_provinsi", data.sekolah_provinsi ?? "");
       formData.append("sekolah_kabkot", data.sekolah_kabkot ?? "");
       formData.append("jenjang_sekolah", data.jenjang_sekolah ?? "");
-      formData.append("sekolah", data.sekolah ?? "");
+      const sekolahRaw = data.sekolah ?? "";
+      const npsn = sekolahRaw.match(/\((\d+)\)$/)?.[1] ?? "";
+      const namaSekolah = sekolahRaw.replace(/\s*-\(\d+\)$/, "").trim();
+      formData.append("sekolah", namaSekolah);
+      formData.append("nisn_sekolah", npsn);
       formData.append("jurusan", data.jurusan_sekolah ?? "");
       formData.append("tahun_lulus", data.tahun_lulus ?? "");
       formData.append("nama_jurusan_sekolah", data.nama_jurusan_sekolah ?? "");
@@ -1214,7 +1244,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       formData.append("sekolah_provinsi", data.sekolah_provinsi ?? "");
       formData.append("sekolah_kabkot", data.sekolah_kabkot ?? "");
       formData.append("jenjang_sekolah", data.jenjang_sekolah ?? "");
-      formData.append("sekolah", data.sekolah ?? "");
+      const sekolahRaw = data.sekolah ?? "";
+      const npsn = sekolahRaw.match(/\((\d+)\)$/)?.[1] ?? "";
+      const namaSekolah = sekolahRaw.replace(/\s*-\(\d+\)$/, "").trim();
+      formData.append("sekolah", namaSekolah);
+      formData.append("nisn_sekolah", npsn);
       formData.append("jurusan", data.jurusan_sekolah ?? "");
       formData.append("tahun_lulus", data.tahun_lulus ?? "");
       formData.append("nama_jurusan_sekolah", data.nama_jurusan_sekolah ?? "");

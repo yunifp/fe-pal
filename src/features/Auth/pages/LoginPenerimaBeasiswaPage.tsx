@@ -19,8 +19,9 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import Navbar from "@/features/landing-alt/components/pendaftaran-beasiswa/Navbar";
 import Footer from "@/features/landing-alt/components/Footer";
-import { ForgotPinDialog } from "../components/ForgotPinDialog"; 
+import { ForgotPinDialog } from "../components/ForgotPinDialog";
 import { RefreshCcw } from "lucide-react";
+import { CustPassword } from "@/components/CustPassword";
 
 const loginSchema = z.object({
   user_id: z.string().min(1, { message: "User ID harus diisi" }),
@@ -63,7 +64,7 @@ const LoginPenerimaBeasiswaPage = () => {
       const res = await authService.getCaptcha();
       if (res.success && res.data) {
         setCaptchaData({ id: res.data.captchaId, question: res.data.question });
-        setValue("captchaAnswer", ""); 
+        setValue("captchaAnswer", "");
       }
     } catch (error) {
       console.error(error);
@@ -166,11 +167,11 @@ const LoginPenerimaBeasiswaPage = () => {
                       {...register("user_id")}
                     />
 
-                    <CustInput
-                      label="PIN"
-                      type="password"
+                    <CustPassword
+                      label="Password"
                       id="pin"
-                      placeholder="Masukkan PIN"
+                      placeholder="Masukkan Password"
+                      autoComplete="pin"
                       error={!!errors.pin}
                       errorMessage={errors.pin?.message}
                       {...register("pin")}
@@ -194,9 +195,9 @@ const LoginPenerimaBeasiswaPage = () => {
                             <span className="text-xs text-red-500 font-medium">{errors.captchaAnswer.message}</span>
                           )}
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
+                        <Button
+                          type="button"
+                          variant="outline"
                           size="icon"
                           onClick={fetchCaptcha}
                           className="shrink-0 h-10 w-10 text-gray-500 hover:text-gray-900 transition-colors"
@@ -215,7 +216,7 @@ const LoginPenerimaBeasiswaPage = () => {
                         Lupa PIN?
                       </button>
                     </div>
-                    
+
                     <Button type="submit" className="mt-2 w-full bg-primary" disabled={isSubmitting || !captchaData}>
                       Masuk
                     </Button>

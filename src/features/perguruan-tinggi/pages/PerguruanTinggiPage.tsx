@@ -13,8 +13,9 @@ import type { IPerguruanTinggi } from "@/types/master";
 import useHasAccess from "@/hooks/useHasAccess";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal"; 
+import { Card, CardContent } from "@/components/ui/card";
 
 const PerguruanTinggiPage = () => {
   useRedirectIfHasNotAccess("R");
@@ -27,11 +28,9 @@ const PerguruanTinggiPage = () => {
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
 
-  // State untuk modal Delete
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  // Mengambil Data
   const {
     data: response,
     isLoading,
@@ -59,13 +58,11 @@ const PerguruanTinggiPage = () => {
     }
   }, [isError, error]);
 
-  // Fungsi Panggil API Delete
   const deleteMutation = useMutation({
     mutationFn: (id: number) => masterService.deletePerguruanTinggi(id),
     onSuccess: () => {
       toast.success("Berhasil menghapus perguruan tinggi.");
       queryClient.invalidateQueries({ queryKey: ["perguruan-tinggi"] });
-      // Tutup modal setelah berhasil
       setIsDeleteDialogOpen(false);
       setSelectedId(null);
     },
@@ -73,66 +70,79 @@ const PerguruanTinggiPage = () => {
       toast.error(
         err?.response?.data?.message || "Gagal menghapus perguruan tinggi."
       );
-      // Tutup modal jika gagal
       setIsDeleteDialogOpen(false);
       setSelectedId(null);
     },
   });
 
-  // Handler yang dikirim ke tabel (kolom)
   const handleDeleteClick = useCallback((id: number) => {
     setSelectedId(id);
     setIsDeleteDialogOpen(true);
   }, []);
 
-  // Eksekusi hapus di Modal
   const confirmDelete = () => {
     if (selectedId !== null) {
       deleteMutation.mutate(selectedId);
     }
   };
 
-  // Injeksikan handleDeleteClick ke columns
   const columns = useMemo(() => getColumns(handleDeleteClick), [handleDeleteClick]);
 
   return (
-    <>
-      <CustBreadcrumb
-        items={[{ name: "Perguruan Tinggi", url: "/perguruan-tinggi" }]}
-      />
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb
+          items={[{ name: "Perguruan Tinggi", url: "/perguruan-tinggi" }]}
+        />
 
-      <div className="flex justify-between items-center mt-4">
-        <p className="text-xl font-semibold">Perguruan Tinggi</p>
-        {canCreate && (
-          <Button onClick={() => navigate("/master/perguruan-tinggi/create")}>
-            <Plus className="mr-2 h-4 w-4" /> Tambah Perguruan Tinggi
-          </Button>
-        )}
-      </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 hidden sm:block">
+              <Building2 className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Perguruan Tinggi</h1>
+              <p className="text-sm text-slate-500 mt-1">Kelola data master seluruh institusi dan universitas.</p>
+            </div>
+          </div>
 
-      <div className="mt-3">
-        <DataTable
-          isLoading={isLoading}
-          columns={columns}
-          data={data}
-          pageCount={totalPages}
-          pageIndex={page - 1}
-          onPageChange={(newPage) => setPage(newPage + 1)}
-          searchValue={search}
-          onSearchChange={(value) => setSearch(value)}
+          {canCreate && (
+            <Button 
+              onClick={() => navigate("/master/perguruan-tinggi/create")}
+              className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md transition-all"
+            >
+              <Plus className="mr-2 h-5 w-5" /> Tambah Data Baru
+            </Button>
+          )}
+        </div>
+
+        <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white">
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8">
+              <DataTable
+                isLoading={isLoading}
+                columns={columns}
+                data={data}
+                pageCount={totalPages}
+                pageIndex={page - 1}
+                onPageChange={(newPage) => setPage(newPage + 1)}
+                searchValue={search}
+                onSearchChange={(value) => setSearch(value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <DeleteConfirmModal
+          open={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setSelectedId(null);
+          }}
+          onConfirm={confirmDelete}
         />
       </div>
-
-      {/* PERBAIKAN: Gunakan props 'open' (bukan 'isOpen') dan hapus 'isLoading' */}
-      <DeleteConfirmModal
-        open={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false);
-          setSelectedId(null);
-        }}
-        onConfirm={confirmDelete}
-      />
-    </>
+    </div>
   );
 };
 

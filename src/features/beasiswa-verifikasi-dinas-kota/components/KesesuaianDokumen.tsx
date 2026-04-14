@@ -7,7 +7,7 @@ import {
   type UseFormRegister,
   type FieldErrors,
 } from "react-hook-form";
-import { CustTextArea } from "@/components/CustTextArea";
+// import { CustTextArea } from "@/components/CustTextArea";
 import { Button } from "@/components/ui/button";
 import type {
   ITrxDokumenKhusus,
@@ -25,11 +25,8 @@ interface KesesuaianDokumenProps {
   control: Control<VerifikasiFormData>;
   register: UseFormRegister<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
-  /**
-   * "ditjenbun" → pre-populate dari status_verifikasi (kolom existing)
-   * "dinas"     → pre-populate dari verifikator_dinas_is_valid (kolom baru)
-   */
   verifikatorMode?: "ditjenbun" | "dinas";
+  isReadOnly?: boolean;
 }
 
 export const KesesuaianDokumen = ({
@@ -40,6 +37,7 @@ export const KesesuaianDokumen = ({
   register,
   errors,
   verifikatorMode = "ditjenbun",
+  isReadOnly = false,
 }: KesesuaianDokumenProps) => {
   const nameValid = `${fieldName}.${index}.is_valid` as const;
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
@@ -175,14 +173,31 @@ export const KesesuaianDokumen = ({
             <RadioGroup
               value={field.value?.toString() ?? ""}
               onValueChange={field.onChange}
-              className="flex gap-6">
+              className="flex gap-6"
+              disabled={isReadOnly}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Y" id={`${nameValid}-Y`} />
-                <Label htmlFor={`${nameValid}-Y`}>Sesuai</Label>
+                <RadioGroupItem
+                  value="Y"
+                  id={`${nameValid}-Y`}
+                  disabled={isReadOnly}
+                />
+                <Label
+                  htmlFor={`${nameValid}-Y`}
+                  className={isReadOnly ? "opacity-50 cursor-not-allowed" : ""}>
+                  Sesuai
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="N" id={`${nameValid}-N`} />
-                <Label htmlFor={`${nameValid}-N`}>Tidak Sesuai</Label>
+                <RadioGroupItem
+                  value="N"
+                  id={`${nameValid}-N`}
+                  disabled={isReadOnly}
+                />
+                <Label
+                  htmlFor={`${nameValid}-N`}
+                  className={isReadOnly ? "opacity-50 cursor-not-allowed" : ""}>
+                  Tidak Sesuai
+                </Label>
               </div>
             </RadioGroup>
 

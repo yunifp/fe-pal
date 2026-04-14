@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { CustInput } from "@/components/CustInput";
 import { Button } from "@/components/ui/button";

@@ -46,16 +46,13 @@ interface Verifikator {
 // jumlah yang diinput admin per verifikator
 type JumlahMap = Record<number, string>; // verifikator.id → string input
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main
-// ─────────────────────────────────────────────────────────────────────────────
-
 const ManajemenVerifikator = () => {
   const queryClient = useQueryClient();
 
   const [jumlahMap, setJumlahMap] = useState<JumlahMap>({});
   const [isAssigning, setIsAssigning] = useState(false);
   // const [lockedCount, setLockedCount] = useState<number>(0);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // ── Verifikator IDs ────────────────────────────────────────────────────────
   const { data: responseVerifikatorIds, isLoading: isLoadingV } = useQuery({
@@ -128,6 +125,7 @@ const ManajemenVerifikator = () => {
         page: 1,
         limit: 1000,
         filter: "all",
+        status_filter: "",
       }),
     retry: false,
     refetchOnWindowFocus: false,
@@ -141,6 +139,7 @@ const ManajemenVerifikator = () => {
         page: 1,
         limit: 1000,
         filter: "unassigned",
+        status_filter: "",
       }),
     retry: false,
     refetchOnWindowFocus: false,
@@ -154,6 +153,7 @@ const ManajemenVerifikator = () => {
         page: 1,
         limit: 1,
         filter: "locked" as any,
+        status_filter: "",
       }),
     retry: false,
     refetchOnWindowFocus: false,
@@ -274,6 +274,7 @@ const ManajemenVerifikator = () => {
       debouncedSearchList,
       filterSelektor,
       filterAssign,
+      filterStatus,
     ],
     queryFn: () =>
       beasiswaService.getPendaftarForAssignment({
@@ -281,6 +282,7 @@ const ManajemenVerifikator = () => {
         limit: 10,
         filter: filterAssign, // "filter-assigned" / "filter-unassigned" — backend sudah handle
         search: debouncedSearchList,
+        status_filter: filterStatus !== "all" ? filterStatus : undefined,
         // ✅ hanya kirim id_verifikator jika mode assigned DAN selektor dipilih
         ...(filterAssign === "filter-assigned" && filterSelektor !== "all"
           ? { id_verifikator: Number(filterSelektor) }
@@ -290,7 +292,16 @@ const ManajemenVerifikator = () => {
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
   });
-
+  const { data: responseFlow } = useQuery({
+    queryKey: ["flow-beasiswa"],
+    queryFn: () => beasiswaService.getFlowBeasiswa(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+  useEffect(() => {
+    setPageList(1);
+  }, [debouncedSearchList, filterSelektor, filterAssign, filterStatus]);
   const listRows: ITrxBeasiswa[] = responseListTable?.data?.result ?? [];
   const listTotalPages: number = responseListTable?.data?.total_pages ?? 0;
 
@@ -320,6 +331,7 @@ const ManajemenVerifikator = () => {
   };
 
   const [isLocking, setIsLocking] = useState(false);
+
   return (
     <div className="pb-10">
       <CustBreadcrumb items={[{ name: "Manajemen Selektor" }]} />
@@ -578,35 +590,50 @@ const ManajemenVerifikator = () => {
 
             {/* Dropdown filter selektor — hanya muncul saat mode assigned */}
             {filterAssign === "filter-assigned" && (
-              <Select
-                value={filterSelektor}
-                onValueChange={(val) => {
-                  setFilterSelektor(val);
-                  setPageList(1);
-                }}>
-                <SelectTrigger className="h-8 text-xs w-48">
-                  <SelectValue placeholder="Semua selektor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua selektor</SelectItem>
-                  {isLoadingInfo ? (
-                    <SelectItem value="loading" disabled>
-                      Memuat...
-                    </SelectItem>
-                  ) : (
-                    verifikatorList.map((v) => (
+              <div className="flex items-center gap-2">
+                {/* Filter Selektor */}
+                <Select
+                  value={filterSelektor}
+                  onValueChange={(val) => {
+                    setFilterSelektor(val);
+                    setPageList(1);
+                  }}>
+                  <SelectTrigger className="h-8 text-xs w-48">
+                    <SelectValue placeholder="Semua selektor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua selektor</SelectItem>
+                    {verifikatorList.map((v) => (
                       <SelectItem key={v.id} value={String(v.id)}>
-                        <div className="flex items-center gap-2">
-                          <span>{v.nama}</span>
-                          <span className="text-muted-foreground">
-                            ({v.total_beban})
-                          </span>
-                        </div>
+                        {v.nama} ({v.total_beban})
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filterStatus}
+                  onValueChange={(val) => {
+                    setFilterStatus(val);
+                    setPageList(1);
+                  }}>
+                  <SelectTrigger className="w-[175px] h-8 text-xs w-40">
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    {(responseFlow?.data ?? []).map((opt) => (
+                      <SelectItem key={opt.id} value={String(opt.id)}>
+                        {opt.flow}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="lulus">Lulus Administrasi</SelectItem>
+                    <SelectItem value="tidak_lulus">
+                      Tidak Lulus Administrasi
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {/* Tombol download — letakkan di dalam div Controls, setelah Select selektor */}

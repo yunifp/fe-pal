@@ -11,7 +11,7 @@ import {
   useWatch,
   type Control,
   type FieldErrors,
-  type UseFormRegister
+  type UseFormRegister,
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
 import NilaiRapor, { type NilaiRaporForm } from "./NilaiRapor";
@@ -30,6 +30,8 @@ interface AsalSekolahProps {
   idTrxBeasiswa: number;
   idRefBeasiswa: number;
   onNilaiRaporChange?: (values: NilaiRaporForm) => void;
+  // ✅ TAMBAHAN: prop untuk memicu error visual di NilaiRapor
+  nilaiRaporError?: boolean;
 }
 
 const AsalSekolah = ({
@@ -41,6 +43,7 @@ const AsalSekolah = ({
   idTrxBeasiswa,
   idRefBeasiswa,
   onNilaiRaporChange,
+  nilaiRaporError = false, // ✅ default false
 }: AsalSekolahProps) => {
   const selectedProvinsi = useWatch({
     control,
@@ -89,7 +92,7 @@ const AsalSekolah = ({
     name: "jenjang_sekolah",
   });
 
-  // 👇 PERBAIKAN: Mengecek apakah jenjang yang dipilih adalah SMK
+  // 👇 Mengecek apakah jenjang yang dipilih adalah SMK
   const isSmkSelected = selectedJenjangSekolah?.toLowerCase().includes("smk");
 
   // Fetch jurusan sekolah
@@ -138,14 +141,13 @@ const AsalSekolah = ({
   const sekolahOptions = useMemo(() => {
     return (
       responseSekolah?.data?.map((item) => ({
-        value: `${item.sekolah}-(${item.npsn})`,
+        value: `${item.sekolah}#NPSN:${item.npsn}`,
         label: `${item.sekolah} (${item.npsn})`,
       })) || []
     );
   }, [responseSekolah]);
 
   // Generate opsi tahun lulus: tahun sekarang hingga 6 tahun ke belakang
-  // + tambahkan nilai existing jika di luar range
   const existingTahunLulus = useWatch({ control, name: "tahun_lulus" });
 
   const tahunLulusOptions = useMemo(() => {
@@ -155,7 +157,6 @@ const AsalSekolah = ({
       return { value: year, label: year };
     });
 
-    // Jika nilai existing ada dan tidak ada di options, tambahkan di paling akhir
     if (
       existingTahunLulus &&
       !options.find((opt) => opt.value === existingTahunLulus)
@@ -230,8 +231,8 @@ const AsalSekolah = ({
             isRequired={true}
             error={errors.jurusan_sekolah}
           />
-          
-          {/* 👇 PERBAIKAN: Hanya dirender jika jenjang sekolah adalah SMK */}
+
+          {/* Hanya dirender jika jenjang sekolah adalah SMK */}
           {isSmkSelected && (
             <CustInput
               label="Nama Jurusan Sekolah"
@@ -254,10 +255,13 @@ const AsalSekolah = ({
             error={errors.tahun_lulus}
           />
         </div>
+
+        {/* ✅ Teruskan showError ke NilaiRapor */}
         <NilaiRapor
           idTrxBeasiswa={idTrxBeasiswa}
           idRefBeasiswa={idRefBeasiswa}
           onChange={onNilaiRaporChange}
+          showError={nilaiRaporError}
         />
       </div>
     </div>

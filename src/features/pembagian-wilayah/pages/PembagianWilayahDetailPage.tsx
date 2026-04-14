@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,6 @@ const PembagianWilayahDetailPage = () => {
     enabled: !!kodeKab,
   });
 
-  // Fetch Last Log
   const { data: logResponse } = useQuery({
     queryKey: ["last-log-kewilayahan"],
     queryFn: () => beasiswaService.getLastLogKewilayahan(),
@@ -96,97 +95,106 @@ const PembagianWilayahDetailPage = () => {
   [selectedIds, filteredData]);
 
   return (
-    <div className="space-y-6 pb-8">
-      <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Pembagian Wilayah", url: "/pembagian_wilayah" }, { name: "Detail Kewilayahan" }]} />
-      
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            Detail Pendaftar Berdasarkan Wilayah
-          </h2>
-          <p className="text-sm text-gray-500 mt-1 md:ml-8">
-            Centang pendaftar pada tabel, pilih penempatan kewilayahan, lalu klik Submit.
-          </p>
-        </div>
-        <Link to="/pembagian_wilayah">
-          <Button variant="outline" className="flex items-center gap-2 shadow-sm">
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Rekap
-          </Button>
-        </Link>
-      </div>
-
-      {lastLog && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm">
-          <Clock className="h-5 w-5 text-blue-500 shrink-0" />
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-            <span className="font-semibold">Terakhir Diperbarui:</span>
-            <span>{new Date(lastLog.timestamp).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "medium" })} WIB</span>
-            <span className="hidden sm:inline-block text-blue-300">•</span>
-            <span className="italic">"{lastLog.ket}"</span>
-          </div>
-        </div>
-      )}
-
-      <Card className="shadow-sm border-gray-200 overflow-hidden">
-        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-          <CardTitle className="text-base text-gray-800">Daftar Pelamar Administrasi Lulus</CardTitle>
-          <CardDescription>
-            Kelola penempatan kewilayahan pendaftar secara spesifik di daerah ini.
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-slate-50/50 pb-10">
+      <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
+        <CustBreadcrumb items={[{ name: "Beasiswa" }, { name: "Pembagian Wilayah", url: "/pembagian_wilayah" }, { name: "Detail Kewilayahan" }]} />
         
-        <CardContent className="pt-6">
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 border border-gray-200 rounded-xl shadow-sm transition-all">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2 text-white bg-primary px-3 py-2 rounded-md font-medium text-sm shadow-sm">
-                <Settings2 className="h-4 w-4" />
-                <span>Aksi Massal:</span>
-              </div>
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+          <div className="flex items-start gap-5">
+            <div className="p-3.5 bg-emerald-50 rounded-2xl hidden sm:block mt-1 border border-emerald-100">
+              <Users className="h-8 w-8 text-emerald-600" />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                Detail Pendaftar Wilayah
+              </h2>
+              <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+                Centang pendaftar pada tabel, pilih penempatan kewilayahan, lalu klik Submit untuk memproses data.
+              </p>
+            </div>
+          </div>
+          
+          <Link to="/pembagian_wilayah" className="shrink-0">
+            <Button variant="outline" className="flex items-center gap-2 shadow-sm bg-white hover:bg-slate-50 text-slate-700 border-slate-200 rounded-xl h-11 px-5 transition-all w-full sm:w-auto">
+              <ArrowLeft className="h-4 w-4 text-slate-400" />
+              Kembali ke Rekap
+            </Button>
+          </Link>
+        </div>
+
+        {lastLog && (
+          <div className="bg-teal-50 border border-teal-100 text-teal-800 px-5 py-4 rounded-2xl flex items-center gap-4 shadow-sm">
+            <Clock className="h-6 w-6 text-teal-500 shrink-0" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 text-sm">
+              <span className="font-bold text-teal-900">Terakhir Diperbarui:</span>
+              <span className="font-medium">{new Date(lastLog.timestamp).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "medium" })} WIB</span>
+              <span className="hidden sm:inline-block text-teal-300">•</span>
+              <span className="italic text-teal-700">"{lastLog.ket}"</span>
+            </div>
+          </div>
+        )}
+
+        <Card className="border border-slate-200 shadow-sm rounded-3xl bg-white overflow-hidden">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-8">
+            <CardTitle className="text-xl text-slate-800 font-bold">Daftar Pelamar Administrasi Lulus</CardTitle>
+            <CardDescription className="text-slate-500 mt-1.5">
+              Kelola penempatan kewilayahan pendaftar secara spesifik di daerah ini.
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="p-0">
+            <div className="p-6 sm:p-8 space-y-6">
               
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <Select value={bulkAction} onValueChange={setBulkAction} disabled={isSubmitting}>
-                  <SelectTrigger className="w-full sm:w-[200px] bg-gray-50 h-10 transition-colors focus:bg-white border-gray-300">
-                    <SelectValue placeholder="Pilih Kewilayahan..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">SESUAI KTP</SelectItem>
-                    {/* UBAH DISINI: Dari BERKEBUN menjadi BEKERJA */}
-                    <SelectItem value="1">BEKERJA</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  onClick={handleSubmitBulk} 
-                  disabled={selectedIds.length === 0 || !bulkAction || isSubmitting}
-                  className="h-10 px-6 font-semibold"
-                >
-                  {isSubmitting ? "Memproses..." : "SUBMIT"}
-                </Button>
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 bg-slate-50/80 p-5 border border-slate-200 rounded-2xl shadow-sm transition-all">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+                  <div className="flex items-center gap-2.5 text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm shrink-0">
+                    <Settings2 className="h-4 w-4" />
+                    Aksi Massal
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <Select value={bulkAction} onValueChange={setBulkAction} disabled={isSubmitting}>
+                      <SelectTrigger className="w-full sm:w-[220px] bg-white h-11 rounded-xl transition-colors focus:ring-emerald-500/20 focus:border-emerald-500 border-slate-300 font-medium text-slate-700">
+                        <SelectValue placeholder="Pilih Kewilayahan..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-slate-200 shadow-lg">
+                        <SelectItem value="0" className="font-medium">SESUAI KTP</SelectItem>
+                        <SelectItem value="1" className="font-medium">BEKERJA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      onClick={handleSubmitBulk} 
+                      disabled={selectedIds.length === 0 || !bulkAction || isSubmitting}
+                      className="h-11 px-8 font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all w-full sm:w-auto"
+                    >
+                      {isSubmitting ? "Memproses..." : "SUBMIT"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border font-bold text-sm w-full lg:w-auto justify-center whitespace-nowrap transition-colors shadow-sm ${selectedIds.length > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'}`}>
+                  <CheckSquare className={`h-4 w-4 ${selectedIds.length > 0 ? 'text-emerald-500' : 'text-slate-300'}`} />
+                  {selectedIds.length} Baris Dipilih
+                </div>
+              </div>
+
+              <div className="w-full">
+                <DataTable
+                  isLoading={isLoading || isSubmitting}
+                  columns={columns}
+                  data={filteredData}
+                  pageCount={1}
+                  pageIndex={0}
+                  onPageChange={() => {}}
+                  searchValue={search}
+                  onSearchChange={(val) => setSearch(val)}
+                />
               </div>
             </div>
-
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border font-semibold text-sm w-full sm:w-auto justify-center whitespace-nowrap transition-colors ${selectedIds.length > 0 ? 'bg-primary/10 text-primary border-primary/20' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-              <CheckSquare className="h-4 w-4" />
-              {selectedIds.length} Baris Dipilih
-            </div>
-          </div>
-
-          <div className="rounded-md border border-gray-100 bg-white shadow-sm">
-            <DataTable
-              isLoading={isLoading || isSubmitting}
-              columns={columns}
-              data={filteredData}
-              pageCount={1}
-              pageIndex={0}
-              onPageChange={() => {}}
-              searchValue={search}
-              onSearchChange={(val) => setSearch(val)}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -7,16 +7,22 @@ import type { RekapProvinsiRow } from "@/types/beasiswa";
 export const columnsRekap: ColumnDef<RekapProvinsiRow>[] = [
   {
     header: "No",
-    cell: (info) => info.row.index + 1,
+    cell: (info) => <span className="text-slate-500">{info.row.index + 1}</span>,
     size: 50,
   },
   {
     accessorKey: "nama_dinas_provinsi",
     header: "Provinsi",
+    cell: ({ row }) => <span className="font-bold text-slate-900">{row.original.nama_dinas_provinsi}</span>,
   },
   {
     accessorKey: "jumlah_pendaftar",
     header: "Jumlah Pendaftar",
+    cell: ({ row }) => (
+      <span className="inline-flex items-center justify-center bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm min-w-[3rem]">
+        {row.original.jumlah_pendaftar}
+      </span>
+    ),
   },
   {
     id: "aksi",
@@ -25,8 +31,12 @@ export const columnsRekap: ColumnDef<RekapProvinsiRow>[] = [
       const kodeProvinsi = row.original.kode_dinas_provinsi;
       return (
         <Link to={`/verifikasi-nasional-v2/${kodeProvinsi}`}>
-          <Button variant="outline" size="sm">
-            <Eye className="w-4 h-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-9 px-4 rounded-xl font-semibold border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors shadow-none"
+          >
+            <Eye className="w-3.5 h-3.5 mr-2" />
             Detail
           </Button>
         </Link>

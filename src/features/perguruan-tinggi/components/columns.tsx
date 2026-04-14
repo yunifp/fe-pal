@@ -14,25 +14,26 @@ import {
 import useHasAccess from "@/hooks/useHasAccess";
 import type { IPerguruanTinggi } from "@/types/master";
 
-// Fungsi getColumns SEKARANG HARUS menerima parameter callback onDeleteClick
 export const getColumns = (
   onDeleteClick: (id: number) => void
 ): ColumnDef<IPerguruanTinggi>[] => [
     {
       id: "no",
       header: "No",
-      cell: ({ row }) => row.index + 1,
+      cell: ({ row }) => <span className="text-slate-500">{row.index + 1}</span>,
     },
     {
       accessorKey: "nama_pt",
-      header: "Nama",
+      header: "Nama Perguruan Tinggi",
+      cell: ({ row }) => <span className="font-bold text-slate-900">{row.original.nama_pt}</span>
     },
     {
       header: "Singkatan",
-      cell: ({ row }) => row.original.singkatan ?? "-",
+      cell: ({ row }) => <span className="text-slate-600 font-medium">{row.original.singkatan ?? "-"}</span>,
     },
     {
       id: "aksi",
+      header: "Aksi",
       cell: ({ row }) => {
         const perguruanTinggi = row.original;
         const navigate = useNavigate();
@@ -42,57 +43,57 @@ export const getColumns = (
         return (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 w-8 p-0">
+              <Button variant="outline" className="h-9 w-9 p-0 rounded-xl border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 transition-colors shadow-none">
                 <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="font-inter space-y-0.5">
-              <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="font-sans space-y-1 rounded-xl shadow-lg border-slate-100 p-2 min-w-[200px]">
+              <DropdownMenuLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">Aksi</DropdownMenuLabel>
               <DropdownMenuItem
+                className="cursor-pointer rounded-lg hover:bg-emerald-50 hover:text-emerald-700 py-2.5 font-medium transition-colors"
                 onClick={() =>
                   navigate(`/master/perguruan-tinggi/${perguruanTinggi.id_pt}/program-studi`)
                 }
               >
-                <GraduationCap className="h-4 w-4 mr-1" /> Program Studi
+                <GraduationCap className="h-4 w-4 mr-2" /> Program Studi
               </DropdownMenuItem>
               {canUpdate && (
                 <DropdownMenuItem
+                  className="cursor-pointer rounded-lg hover:bg-emerald-50 hover:text-emerald-700 py-2.5 font-medium transition-colors"
                   onClick={() =>
                     navigate(
                       `/perguruan-tinggi/${perguruanTinggi.id_pt}/mapping-pendaftaran-beasiswa`,
                     )
                   }
                 >
-                  <ListChecks className="h-4 w-4 mr-1" /> Mapping Pendaftaran
-                  Beasiswa
+                  <ListChecks className="h-4 w-4 mr-2" /> Mapping Beasiswa
                 </DropdownMenuItem>
               )}
               {canUpdate && (
                 <>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-slate-100 my-1" />
                   <DropdownMenuItem
+                    className="cursor-pointer rounded-lg hover:bg-emerald-50 hover:text-emerald-700 py-2.5 font-medium transition-colors"
                     onClick={() =>
                       navigate(
                         `/master/perguruan-tinggi/${perguruanTinggi.id_pt}`,
                       )
                     }
                   >
-                    <Edit className="h-4 w-4 mr-1" /> Ubah
+                    <Edit className="h-4 w-4 mr-2" /> Ubah Data
                   </DropdownMenuItem>
                 </>
               )}
-              {/* PERBAIKAN: Tambahkan e.preventDefault() pada onSelect */}
               {canDelete && (
                 <DropdownMenuItem
-                  className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+                  className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer rounded-lg py-2.5 font-medium transition-colors"
                   onSelect={(e) => {
-                    e.preventDefault(); // Mencegah dropdown membatalkan trigger modal
-                    console.log("Tombol hapus diklik, ID:", perguruanTinggi.id_pt); // Log debugging
+                    e.preventDefault(); 
                     onDeleteClick(perguruanTinggi.id_pt);
                   }}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" /> Hapus
+                  <Trash2 className="h-4 w-4 mr-2" /> Hapus
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

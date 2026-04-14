@@ -49,6 +49,8 @@ export interface ITrxDokumenUmum {
   verifikator_timestamp: string | null;
   verifikator_dinas_catatan: string | null;
   verifikator_dinas_timestamp: string | null;
+  is_kabkota: string | null;
+  is_prov: string | null;
 }
 
 export interface IWilayah {
@@ -102,11 +104,14 @@ export interface ITrxDokumenKhusus {
   file: string | null;
   timestamp: string | null;
   status_verifikasi: "sesuai" | "tidak sesuai" | null;
+  verifikasi_prov_is_valid: "sesuai" | "tidak sesuai" | null;
   verifikator_nama: string | null;
   verifikator_catatan: string | null;
   verifikator_timestamp: string | null;
   verifikator_dinas_catatan: string | null;
   verifikator_dinas_timestamp: string | null;
+  is_kabkota: string | null;
+  is_prov: string | null;
 }
 
 export interface ITrxDokumenDinas {
@@ -285,6 +290,7 @@ export interface ITrxBeasiswa {
   id_jenjang_sekolah?: string | null;
   jenjang_sekolah?: string | null;
   sekolah?: string | null;
+  nisn_sekolah?: string | null;
   jurusan?: string | null;
   tahun_lulus?: string | null;
   nama_jurusan_sekolah?: string | null;
@@ -387,10 +393,8 @@ const fotoOptionalSchema = z
     "Ukuran foto maksimal 2MB",
   );
 
-// ============================================================
-// createBeasiswaSchema — data BARU, semua foto wajib
-// ============================================================
-const createBeasiswaSchema = () => {
+
+  const createBaseBeasiswaSchema = () => {
   const baseFields = {
     nama_lengkap: z
       .string()
@@ -542,7 +546,9 @@ const createBeasiswaSchema = () => {
     sekolah: z.string().min(1, "Nama Sekolah wajib diisi"),
     jurusan_sekolah: z.string().min(1, "Jurusan Sekolah wajib diisi"),
     tahun_lulus: z.string().min(1, "Tahun Lulus wajib diisi"),
-    nama_jurusan_sekolah: z.string().min(1, "Nama Jurusan wajib diisi"),
+    
+    // 👇 UBAH INI: Buat opsional secara default agar tidak diblokir untuk jenjang selain SMK
+    nama_jurusan_sekolah: z.string().optional(),
 
     kondisi_buta_warna: z.string().min(1, "Kondisi Buta Warna wajib diisi"),
     pilihan_program_studi: z
@@ -562,11 +568,223 @@ const createBeasiswaSchema = () => {
   return z.object({ ...baseFields });
 };
 
+
+// ============================================================
+// createBeasiswaSchema — data BARU, semua foto wajib
+// ============================================================
+// const createBeasiswaSchema = () => {
+//   const baseFields = {
+//     nama_lengkap: z
+//       .string()
+//       .min(1, "Nama wajib diisi")
+//       .regex(/^[a-zA-Z\s]+$/, "Nama hanya boleh berisi huruf dan spasi"),
+//     nik: z
+//       .string()
+//       .trim()
+//       .length(16, "NIK harus 16 digit")
+//       .regex(/^\d{16}$/, "NIK harus 16 digit angka")
+//       .refine((val) => !/^0+$/.test(val), "NIK tidak valid"),
+//     nkk: z
+//       .string()
+//       .min(16, "NKK harus 16 digit")
+//       .max(16, "NKK harus 16 digit")
+//       .regex(/^\d+$/, "NKK hanya boleh berisi angka"),
+//     jenis_kelamin: z.string().min(1, "Jenis Kelamin wajib dipilih"),
+//     no_hp: z
+//       .string()
+//       .min(8, "No. Telepon minimal 8 digit")
+//       .regex(/^(\+62|62|0)8[1-9][0-9]{6,12}$/, "Format nomor HP tidak valid"),
+//     email: z.string().email("Format Email tidak valid"),
+//     tanggal_lahir: z.string().min(1, "Tanggal Lahir wajib diisi"),
+//     tempat_lahir: z.string().min(1, "Tempat Lahir wajib diisi"),
+//     agama: z.string().min(1, "Agama wajib diisi"),
+//     suku: z.string().min(1, "Suku wajib diisi"),
+//     pekerjaan: z.string().optional(),
+//     instansi_pekerjaan: z.string().optional(),
+//     berat_badan: z.string().min(1, "Berat Badan wajib diisi"),
+//     tinggi_badan: z.string().min(1, "Tinggi Badan wajib diisi"),
+
+//     // ── Foto profil + 4 sisi (wajib untuk data baru) ──
+//     foto: makeFotoRequired("Foto Profil"),
+//     foto_depan: makeFotoRequired("Foto Tampak Depan"),
+//     foto_samping_kiri: makeFotoRequired("Foto Tampak Samping Kiri"),
+//     foto_samping_kanan: makeFotoRequired("Foto Tampak Samping Kanan"),
+//     foto_belakang: makeFotoRequired("Foto Tampak Belakang"),
+
+//     tinggal_provinsi: z.string().min(1, "Provinsi Tempat Tinggal wajib diisi"),
+//     kode_dinas_provinsi: z
+//       .string()
+//       .min(1, "Dinas Provinsi wajib diisi")
+//       .optional(),
+//     tinggal_kabkot: z
+//       .string()
+//       .min(1, "Kabupaten / Kota Tempat Tinggal wajib diisi"),
+//     kode_dinas_kabkot: z
+//       .string()
+//       .min(1, "Dinas Kabupaten / Kota wajib diisi")
+//       .optional(),
+//     tinggal_kecamatan: z
+//       .string()
+//       .min(1, "Kecamatan Tempat Tinggal wajib diisi"),
+//     tinggal_kelurahan: z
+//       .string()
+//       .min(1, "Kelurahan Tempat Tinggal wajib diisi"),
+//     tinggal_dusun: z.string().min(1, "Dusun Tempat Tinggal wajib diisi"),
+//     tinggal_rt: z.string().min(1, "RT Tempat Tinggal wajib diisi"),
+//     tinggal_rw: z.string().min(1, "RW Tempat Tinggal wajib diisi"),
+//     tinggal_kode_pos: z.string().min(1, "Kode pos Tempat Tinggal wajib diisi"),
+//     tinggal_alamat: z.string().min(1, "Alamat Tempat Tinggal wajib diisi"),
+//     alamat_kerja_sama_dengan_tinggal: z.boolean().optional(),
+
+//     kerja_provinsi: z
+//       .string()
+//       .min(1, "Provinsi Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_kabkot: z
+//       .string()
+//       .min(1, "Kabupaten / Kota Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_kecamatan: z
+//       .string()
+//       .min(1, "Kecamatan Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_kelurahan: z
+//       .string()
+//       .min(1, "Kelurahan Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_dusun: z.string().min(1, "Dusun Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_rt: z.string().min(1, "RT Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_rw: z.string().min(1, "RW Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_kode_pos: z
+//       .string()
+//       .min(1, "Kode pos Tempat Bekerja / Kebun wajib diisi"),
+//     kerja_alamat: z
+//       .string()
+//       .min(1, "Alamat Tempat Bekerja / Kebun wajib diisi"),
+
+//     // Data Ayah
+//     ayah_nama: z.string().min(1, "Nama Ayah wajib diisi"),
+//     ayah_nik: z
+//       .string()
+//       .min(16, "NIK Ayah harus 16 digit")
+//       .max(16, "NIK Ayah harus 16 digit"),
+//     ayah_jenjang_pendidikan: z
+//       .string()
+//       .min(1, "Jenjang Pendidikan Ayah wajib diisi"),
+//     ayah_pekerjaan: z.string().min(1, "Pekerjaan Ayah wajib diisi"),
+//     ayah_penghasilan: z.string().min(1, "Penghasilan Ayah wajib diisi"),
+//     ayah_status_hidup: z.string().min(1, "Status Hidup Ayah wajib diisi"),
+//     ayah_status_kekerabatan: z
+//       .string()
+//       .min(1, "Status Kekerabatan Ayah wajib diisi"),
+//     ayah_alamat: z.string().min(1, "Alamat Ayah wajib diisi"),
+//     ayah_tempat_lahir: z.string().min(1, "Tempat Lahir Ayah wajib diisi"),
+//     ayah_tanggal_lahir: z.string().min(1, "Tanggal Lahir Ayah wajib diisi"),
+//     ayah_no_hp: z.string().min(1, "No. Telepon Ayah wajib diisi"),
+//     ayah_email: z.string().optional(),
+
+//     // Data Ibu
+//     ibu_nama: z.string().min(1, "Nama Ibu wajib diisi"),
+//     ibu_nik: z
+//       .string()
+//       .min(16, "NIK Ibu harus 16 digit")
+//       .max(16, "NIK Ibu harus 16 digit"),
+//     ibu_jenjang_pendidikan: z
+//       .string()
+//       .min(1, "Jenjang Pendidikan Ibu wajib diisi"),
+//     ibu_pekerjaan: z.string().min(1, "Pekerjaan Ibu wajib diisi"),
+//     ibu_penghasilan: z.string().min(1, "Penghasilan Ibu wajib diisi"),
+//     ibu_status_hidup: z.string().min(1, "Status Hidup Ibu wajib diisi"),
+//     ibu_status_kekerabatan: z
+//       .string()
+//       .min(1, "Status Kekerabatan Ibu wajib diisi"),
+//     ibu_alamat: z.string().min(1, "Alamat Ibu wajib diisi"),
+//     ibu_tempat_lahir: z.string().min(1, "Tempat Lahir Ibu wajib diisi"),
+//     ibu_tanggal_lahir: z.string().min(1, "Tanggal Lahir Ibu wajib diisi"),
+//     ibu_no_hp: z.string().min(1, "No. Telepon Ibu wajib diisi"),
+//     ibu_email: z.string().optional(),
+
+//     // Data Wali (opsional)
+//     wali_nama: z.string().optional(),
+//     wali_nik: z.string().optional(),
+//     wali_jenjang_pendidikan: z.string().optional(),
+//     wali_pekerjaan: z.string().optional(),
+//     wali_penghasilan: z.string().optional(),
+//     wali_status_hidup: z.string().optional(),
+//     wali_status_kekerabatan: z.string().optional(),
+//     wali_alamat: z.string().optional(),
+//     wali_tempat_lahir: z.string().optional(),
+//     wali_tanggal_lahir: z.string().optional(),
+//     wali_no_hp: z.string().optional(),
+//     wali_email: z
+//       .string()
+//       .email("Format Email Wali tidak valid")
+//       .optional()
+//       .or(z.literal("")),
+
+//     sekolah_provinsi: z.string().min(1, "Provinsi Sekolah wajib diisi"),
+//     sekolah_kabkot: z.string().min(1, "Kabupaten / Kota Sekolah wajib diisi"),
+//     jenjang_sekolah: z.string().min(1, "Jenjang Sekolah wajib dipilih"),
+//     sekolah: z.string().min(1, "Nama Sekolah wajib diisi"),
+//     jurusan_sekolah: z.string().min(1, "Jurusan Sekolah wajib diisi"),
+//     tahun_lulus: z.string().min(1, "Tahun Lulus wajib diisi"),
+//     nama_jurusan_sekolah: z.string().min(1, "Nama Jurusan wajib diisi"),
+
+//     kondisi_buta_warna: z.string().min(1, "Kondisi Buta Warna wajib diisi"),
+//     pilihan_program_studi: z
+//       .array(
+//         z.object({
+//           perguruan_tinggi: z.string().min(1, "Wajib dipilih"),
+//           program_studi: z.string().min(1, "Wajib dipilih"),
+//         }),
+//       )
+//       .min(1),
+
+//     jalur: z.string().min(1, "Jalur wajib dipilih"),
+//     id_verifikasi: z.string().optional(),
+//     suku_lainnya: z.string().optional(),
+//   };
+
+//   return z.object({ ...baseFields });
+// };
+
+
+const createBeasiswaSchema = () => {
+  return createBaseBeasiswaSchema().superRefine((data, ctx) => {
+    // Validasi custom: Nama Jurusan Sekolah wajib diisi jika jenjang adalah SMK
+    if (data.jenjang_sekolah?.toLowerCase().includes("smk")) {
+      if (!data.nama_jurusan_sekolah || data.nama_jurusan_sekolah.trim() === "") {
+        ctx.addIssue({
+          path: ["nama_jurusan_sekolah"],
+          message: "Nama Jurusan wajib diisi",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+    }
+  });
+};
 // ============================================================
 // editBeasiswaSchema — data LAMA, semua foto opsional
 // ============================================================
+// export const editBeasiswaSchema = () =>
+//   createBeasiswaSchema()
+//     .omit({
+//       foto: true,
+//       foto_depan: true,
+//       foto_samping_kiri: true,
+//       foto_samping_kanan: true,
+//       foto_belakang: true,
+//     })
+//     .merge(
+//       z.object({
+//         // Foto profil — opsional saat edit
+//         foto: fotoOptionalSchema,
+//         // 4 foto badan — opsional saat edit (sudah ada sebelumnya)
+//         foto_depan: fotoOptionalSchema,
+//         foto_samping_kiri: fotoOptionalSchema,
+//         foto_samping_kanan: fotoOptionalSchema,
+//         foto_belakang: fotoOptionalSchema,
+//       }),
+//     );
+
 export const editBeasiswaSchema = () =>
-  createBeasiswaSchema()
+  createBaseBeasiswaSchema()
     .omit({
       foto: true,
       foto_depan: true,
@@ -584,8 +802,19 @@ export const editBeasiswaSchema = () =>
         foto_samping_kanan: fotoOptionalSchema,
         foto_belakang: fotoOptionalSchema,
       }),
-    );
-
+    )
+    .superRefine((data, ctx) => {
+      // Terapkan validasi custom yang sama untuk edit
+      if (data.jenjang_sekolah?.toLowerCase().includes("smk")) {
+        if (!data.nama_jurusan_sekolah || data.nama_jurusan_sekolah.trim() === "") {
+          ctx.addIssue({
+            path: ["nama_jurusan_sekolah"],
+            message: "Nama Jurusan wajib diisi",
+            code: z.ZodIssueCode.custom,
+          });
+        }
+      }
+    });
 // ============================================================
 // createBeasiswaDraftSchema — semua foto opsional
 // ============================================================
@@ -777,6 +1006,11 @@ export interface CatatanDataSection {
 
   data_program_studi_is_valid: "Y" | "N" | null;
   data_program_studi_catatan: string | null;
+
+  data_pribadi_revised_at: string | null;
+  data_tempat_tinggal_bekerja_revised_at: string | null;
+  data_orang_tua_revised_at: string | null;
+  data_pendidikan_revised_at: string | null;
 
   created_at: string | null;
   created_by: string | null;

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Edit, FileText, MoreHorizontal, Trash } from "lucide-react";
@@ -21,23 +24,10 @@ export const getColumns = (
     cell: ({ row }) => row.index + 1,
   },
   {
-    accessorKey: "user_id",
+    id: "username",
     header: "Username",
-    cell: ({ row }) => row.original.user_id,
+    cell: ({ row }) => row.original.username || row.original.user_id || "-",
   },
-  // {
-  //     accessorKey: "pin",
-  //     header: "PIN",
-  //     cell: ({ row }) => {
-  //       return row.original.telah_ganti_pin === "Y" ? (
-  //         <span className="text-sm text-muted-foreground">
-  //           Pin telah diganti pengguna
-  //         </span>
-  //       ) : (
-  //         "123123"
-  //       );
-  //     },
-  //   },
   {
     header: "Status Akun",
     cell: ({ row }) => {
@@ -56,26 +46,37 @@ export const getColumns = (
     },
   },
   {
-    accessorKey: "nama_lengkap",
+    id: "nama_lengkap",
     header: "Penanggung Jawab",
+    cell: ({ row }) => row.original.nama_lengkap || row.original.nama || "-",
   },
   {
     header: "No. HP / Email",
     cell: ({ row }) => (
       <div className="flex flex-col leading-tight">
-        <span className="font-medium">{row.original.no_hp ?? "-"}</span>
+        <span className="font-medium">{row.original.no_hp || "-"}</span>
         <span className="text-sm text-muted-foreground">
-          {row.original.email ?? "-"}
+          {row.original.email || "-"}
         </span>
       </div>
     ),
   },
   {
-    accessorKey: "lembaga_pendidikan",
-    header: "Lembaga Pendidikan",
-    cell: ({ getValue }) => (
-      <div className="whitespace-normal break-words">{getValue<string>()}</div>
-    ),
+    id: "instansi",
+    header: "Instansi / Lembaga",
+    cell: ({ row }) => {
+      const data = row.original as any;
+      const instansiName = 
+        data.kab_kota || 
+        data.kabkota || 
+        data.prov || 
+        data.provinsi || 
+        "-";
+      
+      return (
+        <div className="whitespace-normal break-words">{instansiName}</div>
+      );
+    },
   },
   {
     header: "Surat Penunjukan",
@@ -87,7 +88,7 @@ export const getColumns = (
       return (
         <Button variant="outline" size="sm" asChild>
           <a href={file} target="_blank" rel="noopener noreferrer">
-            <FileText className="w-4 h-4" />
+            <FileText className="w-4 h-4 mr-1" />
             Lihat
           </a>
         </Button>

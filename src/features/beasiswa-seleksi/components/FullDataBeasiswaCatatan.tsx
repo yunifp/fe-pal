@@ -315,6 +315,26 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     findDokumenFile("kartu keluarga") ??
     findDokumenFile(" kk");
 
+  const findDokumenKhususFile = (
+    keyword: string,
+  ): { nama: string; file: string } | null => {
+    if (!persyaratan_khusus?.length) return null;
+    const doc = persyaratan_khusus.find((d) =>
+      d.nama_dokumen_persyaratan?.toLowerCase().includes(keyword.toLowerCase()),
+    );
+    if (!doc?.file) return null;
+    return { nama: doc.nama_dokumen_persyaratan ?? keyword, file: doc.file };
+  };
+
+  const jalur = data_beasiswa.jalur?.toLowerCase() ?? "";
+
+  const dokumenKhususJalur = (() => {
+    if (jalur.includes("pekebun")) return findDokumenKhususFile("legalitas");
+    if (jalur.includes("lembaga")) return findDokumenKhususFile("kelembagaan");
+    if (jalur.includes("pekerja") || jalur.includes("keluarga"))
+      return findDokumenKhususFile("bekerja");
+    return null;
+  })();
   const InfoItem = ({
     icon: Icon,
     label,
@@ -371,10 +391,13 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             ]}
           />
 
+          <HasilButaWarnaCard
+            kondisiButaWarna={data_beasiswa.kondisi_buta_warna}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
             <InfoItem
               icon={IdCard}
-              label="No Registrasi"
+              label="ID Pendaftaran"
               value={data_beasiswa.kode_pendaftaran}
             />
             <InfoItem
@@ -392,7 +415,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             />
             <InfoItem
               icon={IdCard}
-              label="NKK"
+              label="No Kartu Keluarga"
               value={data_beasiswa.nkk}
               fileUrl={nkkFile}
             />
@@ -469,6 +492,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 data_beasiswa.catatan_data_section?.data_pribadi_is_valid,
               catatan: data_beasiswa.catatan_data_section?.data_pribadi_catatan,
             }}
+            revisedAt={
+              data_beasiswa.catatan_data_section?.data_pribadi_revised_at
+            }
           />
         </>
       </CollapsibleSection>
@@ -479,6 +505,78 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
         icon={MapPin}
         defaultOpen={false}>
         <>
+          {dokumenKhususJalur && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "1rem",
+                padding: "10px 14px",
+                borderRadius: "var(--border-radius-md)",
+                border: "0.5px solid var(--color-border-secondary)",
+                background: "var(--color-background-secondary)",
+              }}>
+              <FileText
+                style={{
+                  width: "15px",
+                  height: "15px",
+                  flexShrink: 0,
+                  color: "var(--color-text-secondary)",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "var(--color-text-secondary)",
+                  flexShrink: 0,
+                }}>
+                Dokumen jalur
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "var(--color-text-primary)",
+                  textTransform: "capitalize",
+                  flexShrink: 0,
+                }}>
+                {jalur}
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "var(--color-text-secondary)",
+                  flexShrink: 0,
+                }}>
+                —
+              </span>
+              <a
+                href={dokumenKhususJalur.file}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "var(--color-text-info)",
+                  textDecoration: "none",
+                  marginLeft: "auto",
+                  flexShrink: 0,
+                  padding: "3px 10px",
+                  borderRadius: "var(--border-radius-md)",
+                  border: "0.5px solid var(--color-border-info)",
+                  background: "var(--color-background-info)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+                <ExternalLink style={{ width: "12px", height: "12px" }} />
+                Lihat dokumen
+              </a>
+            </div>
+          )}
           {/* Data Tempat Tinggal */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
@@ -595,140 +693,14 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   data_beasiswa.catatan_data_section
                     ?.data_tempat_tinggal_bekerja_catatan,
               }}
+              revisedAt={
+                data_beasiswa.catatan_data_section
+                  ?.data_tempat_tinggal_bekerja_revised_at
+              } // ✅
             />
           </div>
         </>
       </CollapsibleSection>
-
-      {/* Data Tempat Tinggal */}
-      {/* <CollapsibleSection
-        title="Data Tempat Tinggal"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={MapPin}
-              label="Provinsi"
-              value={data_beasiswa.tinggal_prov}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.tinggal_kab_kota}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kecamatan"
-              value={data_beasiswa.tinggal_kec}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kelurahan"
-              value={data_beasiswa.tinggal_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.tinggal_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.tinggal_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.tinggal_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.tinggal_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.tinggal_alamat}
-            />
-          </div>
-
-          <KesesuaianSection
-            title="Kesesuaian Data Tempat Tinggal"
-            nameValid="data_tempat_tinggal_is_valid"
-            nameCatatan="data_tempat_tinggal_catatan"
-            control={control}
-            register={register}
-            errors={errors}
-            textareaPlaceholder="Contoh: Alamat kurang lengkap, mohon ditambahkan nama jalan dan nomor rumah. RT/RW tidak sesuai dengan KK yang diupload."
-            sectionCatatan={{
-              isValid:
-                data_beasiswa.catatan_data_section
-                  ?.data_tempat_tinggal_is_valid,
-              catatan:
-                data_beasiswa.catatan_data_section?.data_tempat_tinggal_catatan,
-            }}
-          />
-        </>
-      </CollapsibleSection> */}
-
-      {/* Data Tempat Bekerja / Kebun */}
-      {/* <CollapsibleSection
-        title="Data Tempat Bekerja / Kebun"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={Briefcase}
-              label="Provinsi"
-              value={data_beasiswa.kerja_prov}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.kerja_kab_kota}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kecamatan"
-              value={data_beasiswa.kerja_kec}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kelurahan"
-              value={data_beasiswa.kerja_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.kerja_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.kerja_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.kerja_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.kerja_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.kerja_alamat}
-            />
-          </div>
-
-          <KesesuaianSection
-            title="Kesesuaian Data Tempat Bekerja / Kebun"
-            nameValid="data_tempat_bekerja_is_valid"
-            nameCatatan="data_tempat_bekerja_catatan"
-            control={control}
-            register={register}
-            errors={errors}
-            textareaPlaceholder="Contoh: Alamat kurang lengkap, mohon ditambahkan nama jalan dan nomor rumah. RT/RW tidak sesuai dengan KK yang diupload."
-            sectionCatatan={{
-              isValid:
-                data_beasiswa.catatan_data_section
-                  ?.data_tempat_bekerja_is_valid,
-              catatan:
-                data_beasiswa.catatan_data_section?.data_tempat_bekerja_catatan,
-            }}
-          />
-        </>
-      </CollapsibleSection> */}
 
       {/* Data Orang Tua */}
       <CollapsibleSection
@@ -967,6 +939,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_orang_tua_catatan,
             }}
+            revisedAt={
+              data_beasiswa.catatan_data_section?.data_orang_tua_revised_at
+            }
           />
         </>
       </CollapsibleSection>
@@ -1027,20 +1002,57 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 Rata-Rata Nilai Rapor
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6">
-                {[
-                  { label: "Semester 1", value: nilaiRapor.nilai_semester_1 },
-                  { label: "Semester 2", value: nilaiRapor.nilai_semester_2 },
-                  { label: "Semester 3", value: nilaiRapor.nilai_semester_3 },
-                  { label: "Semester 4", value: nilaiRapor.nilai_semester_4 },
-                  { label: "Semester 5", value: nilaiRapor.nilai_semester_5 },
-                ].map(({ label, value }) => (
-                  <InfoItem
-                    key={label}
-                    icon={BookOpen}
-                    label={label}
-                    value={value != null ? String(value) : null}
-                  />
-                ))}
+                {(() => {
+                  // Helper parse nilai string "80,50" → 80.5
+                  const parseNilai = (
+                    v: string | number | null | undefined,
+                  ): number | null => {
+                    if (v == null) return null;
+                    const parsed = parseFloat(String(v).replace(",", "."));
+                    return isNaN(parsed) ? null : parsed;
+                  };
+
+                  const semesters = [
+                    { label: "Semester 1", value: nilaiRapor.nilai_semester_1 },
+                    { label: "Semester 2", value: nilaiRapor.nilai_semester_2 },
+                    { label: "Semester 3", value: nilaiRapor.nilai_semester_3 },
+                    { label: "Semester 4", value: nilaiRapor.nilai_semester_4 },
+                    { label: "Semester 5", value: nilaiRapor.nilai_semester_5 },
+                  ];
+
+                  const validValues = semesters
+                    .map((s) => parseNilai(s.value))
+                    .filter((v): v is number => v !== null);
+
+                  const rata2 =
+                    validValues.length > 0
+                      ? (
+                          validValues.reduce((acc, v) => acc + v, 0) /
+                          validValues.length
+                        )
+                          .toFixed(2)
+                          .replace(".", ",") // kembalikan ke format koma
+                      : null;
+                  return (
+                    <>
+                      {semesters.map(({ label, value }) => (
+                        <InfoItem
+                          key={label}
+                          icon={BookOpen}
+                          label={label}
+                          value={value != null ? String(value) : null}
+                        />
+                      ))}
+                      <div className="col-span-2 md:col-span-3 border-t pt-2 mt-1">
+                        <InfoItem
+                          icon={Award}
+                          label="Rata-Rata Semester 1–5"
+                          value={rata2 ?? "-"}
+                        />
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1059,8 +1071,10 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_pendidikan_catatan,
             }}
+            revisedAt={
+              data_beasiswa.catatan_data_section?.data_pendidikan_revised_at
+            }
           />
-          
         </>
       </CollapsibleSection>
 
@@ -1071,9 +1085,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             icon={BookOpen}
             defaultOpen={false}>
             <div className="space-y-3">
-              <HasilButaWarnaCard
-                kondisiButaWarna={data_beasiswa.kondisi_buta_warna}
-              />
               {data_beasiswa.pilihan_program_studi.map((pilihan, index) => (
                 <PilihanProgramStudiItem
                   key={pilihan.id}
@@ -1119,6 +1130,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors}
                   fieldName="data_persyaratan_umum"
+                  revisedAt={(dokumen as any).peserta_revised_at ?? null}
                 />
               ))}
             </div>
@@ -1143,6 +1155,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors}
                   fieldName="data_persyaratan_khusus"
+                  revisedAt={(dokumen as any).peserta_revised_at ?? null}
                 />
               ))}
             </div>

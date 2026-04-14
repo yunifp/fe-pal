@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { BadgeStatusTransfer } from "@/components/pks/BadgeStatusTransfer";
 import { Button } from "@/components/ui/button";
 import type { ITrxBiayaPendidikanPksWithPks } from "@/types/biayaPendidikan";

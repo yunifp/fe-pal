@@ -1,6 +1,6 @@
 import { type FC } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { HasilButaWarnaCard } from "@/components/beasiswa/HasilButaWarnaCard";
 import {
@@ -23,15 +23,14 @@ import {
   Ruler,
   Weight,
   Map,
-  Award,
+  FileText,
+  ImageOff,
 } from "lucide-react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "@/components/beasiswa/CollapsibleSection";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
 import { formatRupiah } from "@/utils/stringFormatter";
-// import { KesesuaianSection } from "./KesesuaianSection";
-// import { KesesuaianPilihanProdi } from "./KesesuaianPilihanProdi";
 import { PilihanProgramStudiItem } from "@/components/beasiswa/PilihanProgramStudiItem";
 import { type VerifikasiFormData } from "@/types/beasiswa";
 import {
@@ -40,21 +39,86 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { KesesuaianDokumen } from "./KesesuaianDokumen";
-import CardPersyaratanDinas from "./CardPersyaratanDinas";
 
 interface FullDataBeasiswaCatatanProps {
   idTrxBeasiswa: number;
-
   register: UseFormRegister<VerifikasiFormData>;
   control: Control<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
+  verifikatorMode?: "ditjenbun" | "dinas";
+  isReadOnly?: boolean;
 }
 
+// ── InfoItem ────────────────────────────────────────────────────────────────
+const InfoItem = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value?: string | null;
+}) => (
+  <div className="flex items-start gap-3 py-2.5 border-b border-border/40 last:border-0">
+    <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium mt-0.5 break-words">
+        {value || (
+          <span className="text-muted-foreground/50 font-normal">—</span>
+        )}
+      </p>
+    </div>
+  </div>
+);
+
+// ── SectionHeader ────────────────────────────────────────────────────────────
+const SubSectionHeader = ({
+  icon: Icon,
+  title,
+  badge,
+}: {
+  icon: any;
+  title: string;
+  badge?: string;
+}) => (
+  <div className="flex items-center gap-2 mb-4">
+    <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <Icon className="w-3.5 h-3.5 text-primary" />
+    </div>
+    <p className="text-sm font-semibold">{title}</p>
+    {badge && (
+      <Badge variant="secondary" className="text-xs ml-1">
+        {badge}
+      </Badge>
+    )}
+  </div>
+);
+
+// ── LoadingSkeleton ──────────────────────────────────────────────────────────
+const LoadingSkeleton = () => (
+  <div className="space-y-3 animate-in fade-in duration-300">
+    {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="rounded-xl border border-border overflow-hidden">
+        <div className="flex items-center gap-3 p-4 bg-muted/30">
+          <Skeleton className="w-7 h-7 rounded-md" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// ── Main Component ───────────────────────────────────────────────────────────
 const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   idTrxBeasiswa,
   register,
   control,
   errors,
+  verifikatorMode = "ditjenbun",
+  isReadOnly,
 }) => {
   const { data, isLoading } = useQuery({
     queryKey: ["full-data-beasiswa", idTrxBeasiswa],
@@ -64,104 +128,80 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     staleTime: STALE_TIME,
   });
 
-  // Simpan timeout untuk debounce (per dokumen)
-  if (isLoading) {
-    return (
-      <Card className="shadow-none">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  if (isLoading) return <LoadingSkeleton />;
   if (!data) return null;
 
-  const { data_beasiswa, persyaratan_khusus, persyaratan_dinas } = data.data!!;
+  const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data!!;
 
-  const InfoItem = ({
-    icon: Icon,
-    label,
-    value,
-  }: {
-    icon: any;
-    label: string;
-    value?: string | null;
-  }) => (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-sm mt-1 break-words">{value || "-"}</p>
-      </div>
-    </div>
-  );
+  const fotoSisi = [
+    { label: "Depan", src: data_beasiswa.foto_depan },
+    { label: "Samping Kiri", src: data_beasiswa.foto_samping_kiri },
+    { label: "Samping Kanan", src: data_beasiswa.foto_samping_kanan },
+    { label: "Belakang", src: data_beasiswa.foto_belakang },
+  ];
+
+  const hasFotoSisi = fotoSisi.some((f) => f.src);
 
   return (
-    <>
-      {/* Data Pribadi */}
+    <div className="space-y-3 animate-in fade-in duration-300">
+      {/* ── Data Pribadi ── */}
       <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <div className="col-span-2 flex items-center justify-center mb-8">
-              <img
-                src={data_beasiswa.foto!!}
-                alt="Foto"
-                className="h-64 w-auto rounded-lg"
-              />
-            </div>
-
-            {(data_beasiswa.foto_depan ||
-              data_beasiswa.foto_samping_kiri ||
-              data_beasiswa.foto_samping_kanan ||
-              data_beasiswa.foto_belakang) && (
-              <div className="col-span-2 mb-6">
-                <p className="text-sm font-semibold text-gray-700 mb-3">
-                  Foto Full Body (4 Sisi)
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: "Depan", src: data_beasiswa.foto_depan },
-                    {
-                      label: "Samping Kiri",
-                      src: data_beasiswa.foto_samping_kiri,
-                    },
-                    {
-                      label: "Samping Kanan",
-                      src: data_beasiswa.foto_samping_kanan,
-                    },
-                    { label: "Belakang", src: data_beasiswa.foto_belakang },
-                  ].map(({ label, src }) => (
-                    <div
-                      key={label}
-                      className="flex flex-col items-center gap-2">
-                      <p className="text-xs text-muted-foreground font-medium">
-                        {label}
-                      </p>
-                      {src ? (
-                        <img
-                          src={src}
-                          alt={`Foto ${label}`}
-                          className="h-48 w-full rounded-lg object-cover border border-gray-200"
-                        />
-                      ) : (
-                        <div className="h-48 w-full rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
-                          <p className="text-xs text-muted-foreground">
-                            Tidak ada foto
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+        <div className="space-y-6">
+          {/* Foto utama */}
+          {data_beasiswa.foto && (
+            <div className="flex justify-center">
+              <div className="relative">
+                <img
+                  src={data_beasiswa.foto}
+                  alt="Foto Pendaftar"
+                  className="h-52 w-auto rounded-xl object-cover border border-border"
+                />
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background border border-border rounded-full px-3 py-0.5">
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    Foto Pendaftar
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
+          {/* Foto 4 sisi */}
+          {hasFotoSisi && (
+            <div className="pt-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                Foto Full Body (4 Sisi)
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {fotoSisi.map(({ label, src }) => (
+                  <div
+                    key={label}
+                    className="flex flex-col items-center gap-1.5">
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    {src ? (
+                      <img
+                        src={src}
+                        alt={`Foto ${label}`}
+                        className="h-40 w-full rounded-lg object-cover border border-border"
+                      />
+                    ) : (
+                      <div className="h-40 w-full rounded-lg border border-dashed border-border flex flex-col items-center justify-center gap-1">
+                        <ImageOff className="w-5 h-5 text-muted-foreground/30" />
+                        <p className="text-xs text-muted-foreground/50">
+                          Tidak ada
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Info grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
             <InfoItem
-              icon={IdCard}
-              label="No Registrasi Pendaftaran"
+              icon={Hash}
+              label="No. Registrasi"
               value={data_beasiswa.kode_pendaftaran}
             />
             <InfoItem
@@ -187,9 +227,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               label="Tempat, Tanggal Lahir"
               value={
                 data_beasiswa.tempat_lahir && data_beasiswa.tanggal_lahir
-                  ? `${data_beasiswa.tempat_lahir}, ${formatTanggalIndo(
-                      data_beasiswa.tanggal_lahir,
-                    )}`
+                  ? `${data_beasiswa.tempat_lahir}, ${formatTanggalIndo(data_beasiswa.tanggal_lahir)}`
                   : null
               }
             />
@@ -230,20 +268,17 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               }
             />
           </div>
-        </>
+        </div>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal & Bekerja / Kebun */}
+      {/* ── Tempat Tinggal & Bekerja ── */}
       <CollapsibleSection
-        title="Data Tempat Tinggal & Tempat Bekerja / Kebun"
+        title="Tempat Tinggal & Tempat Bekerja / Kebun"
         icon={MapPin}
         defaultOpen={false}>
-        <>
-          {/* Data Tempat Tinggal */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Data Tempat Tinggal
-            </h3>
+        <div className="space-y-6">
+          <div>
+            <SubSectionHeader icon={Home} title="Tempat Tinggal" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               <InfoItem
                 icon={MapPin}
@@ -293,31 +328,26 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             </div>
           </div>
 
-          <hr className="border-gray-200 my-4" />
-
-          {/* Data Tempat Bekerja / Kebun */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Data Tempat Bekerja / Kebun
-            </h3>
+          <div className="border-t border-border/50 pt-5">
+            <SubSectionHeader icon={Briefcase} title="Tempat Bekerja / Kebun" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               <InfoItem
-                icon={Briefcase}
+                icon={MapPin}
                 label="Provinsi"
                 value={data_beasiswa.kerja_prov}
               />
               <InfoItem
-                icon={Briefcase}
+                icon={MapPin}
                 label="Kabupaten / Kota"
                 value={data_beasiswa.kerja_kab_kota}
               />
               <InfoItem
-                icon={Briefcase}
+                icon={MapPin}
                 label="Kecamatan"
                 value={data_beasiswa.kerja_kec}
               />
               <InfoItem
-                icon={Briefcase}
+                icon={MapPin}
                 label="Kelurahan"
                 value={data_beasiswa.kerja_kel}
               />
@@ -340,379 +370,272 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               />
             </div>
           </div>
-        </>
+        </div>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal */}
-      {/* <CollapsibleSection
-        title="Data Tempat Tinggal"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={MapPin}
-              label="Provinsi"
-              value={data_beasiswa.tinggal_prov}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.tinggal_kab_kota}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kecamatan"
-              value={data_beasiswa.tinggal_kec}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kelurahan"
-              value={data_beasiswa.tinggal_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.tinggal_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.tinggal_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.tinggal_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.tinggal_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.tinggal_alamat}
-            />
-          </div>
-        </>
-      </CollapsibleSection> */}
-      {/* Data Tempat Bekerja / Kebun */}
-      {/* <CollapsibleSection
-        title="Data Tempat Bekerja / Kebun"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={Briefcase}
-              label="Provinsi"
-              value={data_beasiswa.kerja_prov}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.kerja_kab_kota}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kecamatan"
-              value={data_beasiswa.kerja_kec}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kelurahan"
-              value={data_beasiswa.kerja_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.kerja_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.kerja_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.kerja_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.kerja_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.kerja_alamat}
-            />
-          </div>
-        </>
-      </CollapsibleSection> */}
-
-      {/* Data Orang Tua */}
+      {/* ── Data Orang Tua ── */}
       <CollapsibleSection
         title="Data Orang Tua"
         icon={Users}
         defaultOpen={false}>
-        <>
-          <div className="space-y-8">
-            {/* Data Ayah */}
-            <div>
-              <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Data Ayah
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
-                <InfoItem
-                  icon={User}
-                  label="Nama Ayah"
-                  value={data_beasiswa.ayah_nama}
-                />
-                <InfoItem
-                  icon={IdCard}
-                  label="NIK Ayah"
-                  value={data_beasiswa.ayah_nik}
-                />
-                <InfoItem
-                  icon={GraduationCap}
-                  label="Pendidikan Terakhir"
-                  value={data_beasiswa.ayah_jenjang_pendidikan}
-                />
-                <InfoItem
-                  icon={Briefcase}
-                  label="Pekerjaan"
-                  value={data_beasiswa.ayah_pekerjaan}
-                />
-                <InfoItem
-                  icon={Wallet}
-                  label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
-                />
-                <InfoItem
-                  icon={HeartPulse}
-                  label="Status Hidup"
-                  value={data_beasiswa.ayah_status_hidup}
-                />
-                <InfoItem
-                  icon={Users}
-                  label="Status Kekerabatan"
-                  value={data_beasiswa.ayah_status_kekerabatan}
-                />
-                <InfoItem
-                  icon={MapPin}
-                  label="Tempat Lahir"
-                  value={data_beasiswa.ayah_tempat_lahir}
-                />
-                <InfoItem
-                  icon={Calendar}
-                  label="Tanggal Lahir"
-                  value={formatTanggalIndo(data_beasiswa.ayah_tanggal_lahir)}
-                />
-                <InfoItem
-                  icon={Phone}
-                  label="No. HP"
-                  value={data_beasiswa.ayah_no_hp}
-                />
-                <InfoItem
-                  icon={Mail}
-                  label="Email"
-                  value={data_beasiswa.ayah_email}
-                />
-                <InfoItem
-                  icon={Map}
-                  label="Alamat"
-                  value={data_beasiswa.ayah_alamat}
-                />
-              </div>
+        <div className="space-y-6">
+          {/* Ayah */}
+          <div>
+            <SubSectionHeader icon={User} title="Data Ayah" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+              <InfoItem
+                icon={User}
+                label="Nama Ayah"
+                value={data_beasiswa.ayah_nama}
+              />
+              <InfoItem
+                icon={IdCard}
+                label="NIK Ayah"
+                value={data_beasiswa.ayah_nik}
+              />
+              <InfoItem
+                icon={GraduationCap}
+                label="Pendidikan Terakhir"
+                value={data_beasiswa.ayah_jenjang_pendidikan}
+              />
+              <InfoItem
+                icon={Briefcase}
+                label="Pekerjaan"
+                value={data_beasiswa.ayah_pekerjaan}
+              />
+              <InfoItem
+                icon={Wallet}
+                label="Penghasilan"
+                value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
+              />
+              <InfoItem
+                icon={HeartPulse}
+                label="Status Hidup"
+                value={data_beasiswa.ayah_status_hidup}
+              />
+              <InfoItem
+                icon={Users}
+                label="Status Kekerabatan"
+                value={data_beasiswa.ayah_status_kekerabatan}
+              />
+              <InfoItem
+                icon={MapPin}
+                label="Tempat Lahir"
+                value={data_beasiswa.ayah_tempat_lahir}
+              />
+              <InfoItem
+                icon={Calendar}
+                label="Tanggal Lahir"
+                value={formatTanggalIndo(data_beasiswa.ayah_tanggal_lahir)}
+              />
+              <InfoItem
+                icon={Phone}
+                label="No. HP"
+                value={data_beasiswa.ayah_no_hp}
+              />
+              <InfoItem
+                icon={Mail}
+                label="Email"
+                value={data_beasiswa.ayah_email}
+              />
+              <InfoItem
+                icon={Map}
+                label="Alamat"
+                value={data_beasiswa.ayah_alamat}
+              />
             </div>
-
-            <div className="border-t pt-6">
-              <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Data Ibu
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
-                <InfoItem
-                  icon={User}
-                  label="Nama Ibu"
-                  value={data_beasiswa.ibu_nama}
-                />
-                <InfoItem
-                  icon={IdCard}
-                  label="NIK Ibu"
-                  value={data_beasiswa.ibu_nik}
-                />
-                <InfoItem
-                  icon={GraduationCap}
-                  label="Pendidikan Terakhir"
-                  value={data_beasiswa.ibu_jenjang_pendidikan}
-                />
-                <InfoItem
-                  icon={Briefcase}
-                  label="Pekerjaan"
-                  value={data_beasiswa.ibu_pekerjaan}
-                />
-                <InfoItem
-                  icon={Wallet}
-                  label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
-                />
-                <InfoItem
-                  icon={HeartPulse}
-                  label="Status Hidup"
-                  value={data_beasiswa.ibu_status_hidup}
-                />
-                <InfoItem
-                  icon={Users}
-                  label="Status Kekerabatan"
-                  value={data_beasiswa.ibu_status_kekerabatan}
-                />
-                <InfoItem
-                  icon={MapPin}
-                  label="Tempat Lahir"
-                  value={data_beasiswa.ibu_tempat_lahir}
-                />
-                <InfoItem
-                  icon={Calendar}
-                  label="Tanggal Lahir"
-                  value={formatTanggalIndo(data_beasiswa.ibu_tanggal_lahir)}
-                />
-                <InfoItem
-                  icon={Phone}
-                  label="No. HP"
-                  value={data_beasiswa.ibu_no_hp}
-                />
-                <InfoItem
-                  icon={Mail}
-                  label="Email"
-                  value={data_beasiswa.ibu_email}
-                />
-                <InfoItem
-                  icon={Map}
-                  label="Alamat"
-                  value={data_beasiswa.ibu_alamat}
-                />
-              </div>
-            </div>
-
-            {/* Data Wali - Only show if data exists */}
-            {(data_beasiswa.wali_nama ||
-              data_beasiswa.wali_nik ||
-              data_beasiswa.wali_email) && (
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Data Wali
-                  <Badge variant="secondary" className="text-xs">
-                    Opsional
-                  </Badge>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
-                  <InfoItem
-                    icon={User}
-                    label="Nama Wali"
-                    value={data_beasiswa.wali_nama}
-                  />
-                  <InfoItem
-                    icon={IdCard}
-                    label="NIK Wali"
-                    value={data_beasiswa.wali_nik}
-                  />
-                  <InfoItem
-                    icon={GraduationCap}
-                    label="Pendidikan Terakhir"
-                    value={data_beasiswa.wali_jenjang_pendidikan}
-                  />
-                  <InfoItem
-                    icon={Briefcase}
-                    label="Pekerjaan"
-                    value={data_beasiswa.wali_pekerjaan}
-                  />
-                  <InfoItem
-                    icon={Wallet}
-                    label="Penghasilan"
-                    value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
-                  />
-                  <InfoItem
-                    icon={HeartPulse}
-                    label="Status Hidup"
-                    value={data_beasiswa.wali_status_hidup}
-                  />
-                  <InfoItem
-                    icon={Users}
-                    label="Status Kekerabatan"
-                    value={data_beasiswa.wali_status_kekerabatan}
-                  />
-                  <InfoItem
-                    icon={MapPin}
-                    label="Tempat Lahir"
-                    value={data_beasiswa.wali_tempat_lahir}
-                  />
-                  <InfoItem
-                    icon={Calendar}
-                    label="Tanggal Lahir"
-                    value={formatTanggalIndo(data_beasiswa.wali_tanggal_lahir)}
-                  />
-                  <InfoItem
-                    icon={Phone}
-                    label="No. HP"
-                    value={data_beasiswa.wali_no_hp}
-                  />
-                  <InfoItem
-                    icon={Mail}
-                    label="Email"
-                    value={data_beasiswa.wali_email}
-                  />
-                  <InfoItem
-                    icon={Map}
-                    label="Alamat"
-                    value={data_beasiswa.wali_alamat}
-                  />
-                </div>
-              </div>
-            )}
           </div>
-        </>
+
+          {/* Ibu */}
+          <div className="border-t border-border/50 pt-5">
+            <SubSectionHeader icon={User} title="Data Ibu" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+              <InfoItem
+                icon={User}
+                label="Nama Ibu"
+                value={data_beasiswa.ibu_nama}
+              />
+              <InfoItem
+                icon={IdCard}
+                label="NIK Ibu"
+                value={data_beasiswa.ibu_nik}
+              />
+              <InfoItem
+                icon={GraduationCap}
+                label="Pendidikan Terakhir"
+                value={data_beasiswa.ibu_jenjang_pendidikan}
+              />
+              <InfoItem
+                icon={Briefcase}
+                label="Pekerjaan"
+                value={data_beasiswa.ibu_pekerjaan}
+              />
+              <InfoItem
+                icon={Wallet}
+                label="Penghasilan"
+                value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
+              />
+              <InfoItem
+                icon={HeartPulse}
+                label="Status Hidup"
+                value={data_beasiswa.ibu_status_hidup}
+              />
+              <InfoItem
+                icon={Users}
+                label="Status Kekerabatan"
+                value={data_beasiswa.ibu_status_kekerabatan}
+              />
+              <InfoItem
+                icon={MapPin}
+                label="Tempat Lahir"
+                value={data_beasiswa.ibu_tempat_lahir}
+              />
+              <InfoItem
+                icon={Calendar}
+                label="Tanggal Lahir"
+                value={formatTanggalIndo(data_beasiswa.ibu_tanggal_lahir)}
+              />
+              <InfoItem
+                icon={Phone}
+                label="No. HP"
+                value={data_beasiswa.ibu_no_hp}
+              />
+              <InfoItem
+                icon={Mail}
+                label="Email"
+                value={data_beasiswa.ibu_email}
+              />
+              <InfoItem
+                icon={Map}
+                label="Alamat"
+                value={data_beasiswa.ibu_alamat}
+              />
+            </div>
+          </div>
+
+          {/* Wali (opsional) */}
+          {(data_beasiswa.wali_nama ||
+            data_beasiswa.wali_nik ||
+            data_beasiswa.wali_email) && (
+            <div className="border-t border-border/50 pt-5">
+              <SubSectionHeader
+                icon={User}
+                title="Data Wali"
+                badge="Opsional"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                <InfoItem
+                  icon={User}
+                  label="Nama Wali"
+                  value={data_beasiswa.wali_nama}
+                />
+                <InfoItem
+                  icon={IdCard}
+                  label="NIK Wali"
+                  value={data_beasiswa.wali_nik}
+                />
+                <InfoItem
+                  icon={GraduationCap}
+                  label="Pendidikan Terakhir"
+                  value={data_beasiswa.wali_jenjang_pendidikan}
+                />
+                <InfoItem
+                  icon={Briefcase}
+                  label="Pekerjaan"
+                  value={data_beasiswa.wali_pekerjaan}
+                />
+                <InfoItem
+                  icon={Wallet}
+                  label="Penghasilan"
+                  value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
+                />
+                <InfoItem
+                  icon={HeartPulse}
+                  label="Status Hidup"
+                  value={data_beasiswa.wali_status_hidup}
+                />
+                <InfoItem
+                  icon={Users}
+                  label="Status Kekerabatan"
+                  value={data_beasiswa.wali_status_kekerabatan}
+                />
+                <InfoItem
+                  icon={MapPin}
+                  label="Tempat Lahir"
+                  value={data_beasiswa.wali_tempat_lahir}
+                />
+                <InfoItem
+                  icon={Calendar}
+                  label="Tanggal Lahir"
+                  value={formatTanggalIndo(data_beasiswa.wali_tanggal_lahir)}
+                />
+                <InfoItem
+                  icon={Phone}
+                  label="No. HP"
+                  value={data_beasiswa.wali_no_hp}
+                />
+                <InfoItem
+                  icon={Mail}
+                  label="Email"
+                  value={data_beasiswa.wali_email}
+                />
+                <InfoItem
+                  icon={Map}
+                  label="Alamat"
+                  value={data_beasiswa.wali_alamat}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </CollapsibleSection>
-      {/* Data Pendidikan */}
+
+      {/* ── Data Pendidikan ── */}
       <CollapsibleSection
         title="Data Pendidikan"
         icon={GraduationCap}
         defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={GraduationCap}
-              label="Nama Beasiswa"
-              value={data_beasiswa.nama_beasiswa}
-            />
-            <InfoItem
-              icon={GraduationCap}
-              label="Jalur"
-              value={data_beasiswa.jalur}
-            />
-            <InfoItem
-              icon={GraduationCap}
-              label="Jenjang Sekolah"
-              value={data_beasiswa.jenjang_sekolah}
-            />
-            <InfoItem
-              icon={GraduationCap}
-              label="Nama Sekolah"
-              value={data_beasiswa.sekolah}
-            />
-            <InfoItem
-              icon={Map}
-              label="Provinsi Sekolah"
-              value={data_beasiswa.sekolah_prov}
-            />
-            <InfoItem
-              icon={Map}
-              label="Kabupaten / Kota Sekolah"
-              value={data_beasiswa.sekolah_kab_kota}
-            />
-            <InfoItem
-              icon={BookOpen}
-              label="Jurusan Sekolah"
-              value={data_beasiswa.jurusan}
-            />
-            <InfoItem
-              icon={CalendarCheck}
-              label="Tahun Lulus Sekolah"
-              value={data_beasiswa.tahun_lulus}
-            />
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+          <InfoItem
+            icon={GraduationCap}
+            label="Nama Beasiswa"
+            value={data_beasiswa.nama_beasiswa}
+          />
+          <InfoItem icon={BookOpen} label="Jalur" value={data_beasiswa.jalur} />
+          <InfoItem
+            icon={GraduationCap}
+            label="Jenjang Sekolah"
+            value={data_beasiswa.jenjang_sekolah}
+          />
+          <InfoItem
+            icon={Building2}
+            label="Nama Sekolah"
+            value={data_beasiswa.sekolah}
+          />
+          <InfoItem
+            icon={Map}
+            label="Provinsi Sekolah"
+            value={data_beasiswa.sekolah_prov}
+          />
+          <InfoItem
+            icon={MapPin}
+            label="Kabupaten / Kota Sekolah"
+            value={data_beasiswa.sekolah_kab_kota}
+          />
+          <InfoItem
+            icon={BookOpen}
+            label="Jurusan"
+            value={data_beasiswa.jurusan}
+          />
+          <InfoItem
+            icon={CalendarCheck}
+            label="Tahun Lulus"
+            value={data_beasiswa.tahun_lulus}
+          />
+        </div>
       </CollapsibleSection>
+
+      {/* ── Pilihan Program Studi ── */}
       {data_beasiswa.pilihan_program_studi &&
         data_beasiswa.pilihan_program_studi.length > 0 && (
           <CollapsibleSection
@@ -733,15 +656,17 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             </div>
           </CollapsibleSection>
         )}
-      {/* Persyaratan Umum */}
-      {/* {persyaratan_umum && persyaratan_umum.length > 0 && (
+
+      {/* ── Persyaratan Umum ── */}
+      {persyaratan_umum && persyaratan_umum.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Umum"
           icon={FileText}
           defaultOpen={false}>
-          <>
-            <div className="space-y-3">
-              {persyaratan_umum.map((dokumen, index) => (
+          <div className="space-y-3">
+            {persyaratan_umum
+              .filter((dokumen) => dokumen.is_prov === "Y")
+              .map((dokumen, index) => (
                 <KesesuaianDokumen
                   key={dokumen.id}
                   dokumen={dokumen}
@@ -750,22 +675,24 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors}
                   fieldName="data_persyaratan_umum"
+                  verifikatorMode={verifikatorMode}
+                  isReadOnly={isReadOnly}
                 />
               ))}
-            </div>
-          </>
+          </div>
         </CollapsibleSection>
-      )} */}
+      )}
 
-      {/* Persyaratan Khusus */}
+      {/* ── Persyaratan Khusus ── */}
       {persyaratan_khusus && persyaratan_khusus.length > 0 && (
         <CollapsibleSection
-          title="Persyaratan Khusus"
-          icon={Award}
+          title="Persyaratan khusus"
+          icon={FileText}
           defaultOpen={false}>
-          <>
-            <div className="space-y-3">
-              {persyaratan_khusus.map((dokumen, index) => (
+          <div className="space-y-3">
+            {persyaratan_khusus
+              .filter((dokumen) => dokumen.is_prov === "Y")
+              .map((dokumen, index) => (
                 <KesesuaianDokumen
                   key={dokumen.id}
                   dokumen={dokumen}
@@ -774,14 +701,14 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors}
                   fieldName="data_persyaratan_khusus"
+                  verifikatorMode={verifikatorMode}
+                  isReadOnly={isReadOnly}
                 />
               ))}
-            </div>
-          </>
+          </div>
         </CollapsibleSection>
       )}
-      <CardPersyaratanDinas data={persyaratan_dinas || []} />
-    </>
+    </div>
   );
 };
 

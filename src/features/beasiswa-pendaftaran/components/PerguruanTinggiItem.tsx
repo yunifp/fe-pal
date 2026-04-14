@@ -25,6 +25,8 @@ type Props = {
     value: string;
     label: string;
     has_d1_d2?: boolean;
+    lockedPtValue?: string;
+    onResetSlot?: () => void; // ← TAMBAHAN
   }[];
   setValue: UseFormSetValue<any>;
   isPopulating?: boolean;
@@ -32,6 +34,7 @@ type Props = {
   slotType?: SlotType; // <-- BARU
   disabledPtIds?: Set<string>; // PT yang tidak boleh dipilih di slot ini
   lockedPtValue?: string; // PT yang di-lock untuk slot non_d1d2
+  onResetSlot?: () => void; // ← TAMBAHAN
 };
 
 // Jenjang D1/D2 dan non-D1/D2
@@ -49,6 +52,7 @@ export const PerguruanTinggiItem: FC<Props> = ({
   slotType = "all",
   disabledPtIds = new Set(),
   lockedPtValue,
+  onResetSlot, // ← TAMBAHAN
 }) => {
   const selectedPT = useWatch({
     control,
@@ -75,16 +79,21 @@ export const PerguruanTinggiItem: FC<Props> = ({
   const prevIdPtRef = useRef<string | undefined>(undefined);
 
   // Di body komponen langsung (bukan dalam useEffect)
-  if (prevIdPtRef.current !== idPt) {
-    prevIdPtRef.current = idPt;
-    // Reset prodi saat user ganti PT
-    if (prevIdPtRef.current !== undefined) {
-      setValue(`pilihan_program_studi.${index}.program_studi`, "", {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+  useEffect(() => {
+    if (prevIdPtRef.current === undefined) {
+      // mount pertama, simpan nilai awal tanpa reset
+      prevIdPtRef.current = idPt;
+      return;
     }
-  }
+    if (prevIdPtRef.current === idPt) return;
+
+    // PT benar-benar berubah oleh user → reset prodi
+    prevIdPtRef.current = idPt;
+    setValue(`pilihan_program_studi.${index}.program_studi`, "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }, [idPt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fetch Prodi ───────────────────────────────────────────────
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
@@ -249,6 +258,17 @@ export const PerguruanTinggiItem: FC<Props> = ({
             <AlertCircle className="w-3 h-3" />
             Wajib diisi
           </span>
+        )}
+
+        {slotType === "d1d2" && selectedPT && !isPopulating && (
+          <button
+            type="button"
+            onClick={onResetSlot}
+            title="Reset pilihan ini"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border text-muted-foreground border-muted hover:text-destructive hover:border-destructive hover:bg-destructive/5 transition-colors duration-150 mb-3">
+            <RotateCcw className="w-3 h-3" />
+            Reset Pilihan
+          </button>
         )}
 
         {/* Tombol reset program studi */}

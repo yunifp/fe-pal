@@ -25,6 +25,7 @@ interface KesesuaianDokumenProps {
   control: Control<VerifikasiFormData>;
   register: UseFormRegister<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
+  revisedAt?: string | null;
 }
 
 export const KesesuaianDokumen = ({
@@ -34,6 +35,7 @@ export const KesesuaianDokumen = ({
   fieldName,
   register,
   errors,
+  revisedAt,
 }: KesesuaianDokumenProps) => {
   const nameValid = `${fieldName}.${index}.is_valid` as const;
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
@@ -95,6 +97,41 @@ export const KesesuaianDokumen = ({
               {...register(`${fieldName}.${index}.kategori` as const)}
               value={fieldName === "data_persyaratan_umum" ? "Umum" : "Khusus"}
             />
+            {/* ✅ Banner biru dokumen diupload ulang */}
+            {revisedAt && (
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-r-lg p-3 mb-2 text-sm text-blue-800">
+                <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-500" />
+                <div className="w-full">
+                  <p className="font-medium text-blue-900 text-xs mb-0.5">
+                    Dokumen diupload ulang oleh peserta
+                  </p>
+                  <p>
+                    Peserta telah mengupload ulang dokumen ini — periksa file
+                    terbaru sebelum memverifikasi.
+                  </p>
+
+                  {/* ✅ Catatan verifikasi sebelumnya */}
+                  {dokumen.verifikator_catatan && (
+                    <div className="mt-2 bg-white/60 border border-blue-200 rounded-md p-2">
+                      <p className="text-xs font-medium text-blue-900 mb-1">
+                        Catatan verifikasi sebelumnya:
+                      </p>
+                      <p className="text-xs text-blue-800 whitespace-pre-wrap leading-relaxed">
+                        {dokumen.verifikator_catatan}
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-blue-600 mt-2">
+                    Diupload ulang:{" "}
+                    {new Date(revisedAt).toLocaleString("id-ID", {
+                      dateStyle: "long",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* HEADER */}
             <div className="flex items-start justify-between gap-4">
