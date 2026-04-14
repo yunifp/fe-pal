@@ -165,6 +165,7 @@ export interface ITrxBeasiswa {
   nama_lengkap?: string | null;
   nik?: string | null;
   nkk?: string | null;
+  // kode_pendaftaran?: string | null;
 
   jenis_kelamin?: "L" | "P" | null;
   no_hp?: string | null;
@@ -393,8 +394,7 @@ const fotoOptionalSchema = z
     "Ukuran foto maksimal 2MB",
   );
 
-
-  const createBaseBeasiswaSchema = () => {
+const createBaseBeasiswaSchema = () => {
   const baseFields = {
     nama_lengkap: z
       .string()
@@ -546,7 +546,7 @@ const fotoOptionalSchema = z
     sekolah: z.string().min(1, "Nama Sekolah wajib diisi"),
     jurusan_sekolah: z.string().min(1, "Jurusan Sekolah wajib diisi"),
     tahun_lulus: z.string().min(1, "Tahun Lulus wajib diisi"),
-    
+
     // 👇 UBAH INI: Buat opsional secara default agar tidak diblokir untuk jenjang selain SMK
     nama_jurusan_sekolah: z.string().optional(),
 
@@ -567,7 +567,6 @@ const fotoOptionalSchema = z
 
   return z.object({ ...baseFields });
 };
-
 
 // ============================================================
 // createBeasiswaSchema — data BARU, semua foto wajib
@@ -744,12 +743,14 @@ const fotoOptionalSchema = z
 //   return z.object({ ...baseFields });
 // };
 
-
 const createBeasiswaSchema = () => {
   return createBaseBeasiswaSchema().superRefine((data, ctx) => {
     // Validasi custom: Nama Jurusan Sekolah wajib diisi jika jenjang adalah SMK
     if (data.jenjang_sekolah?.toLowerCase().includes("smk")) {
-      if (!data.nama_jurusan_sekolah || data.nama_jurusan_sekolah.trim() === "") {
+      if (
+        !data.nama_jurusan_sekolah ||
+        data.nama_jurusan_sekolah.trim() === ""
+      ) {
         ctx.addIssue({
           path: ["nama_jurusan_sekolah"],
           message: "Nama Jurusan wajib diisi",
@@ -806,7 +807,10 @@ export const editBeasiswaSchema = () =>
     .superRefine((data, ctx) => {
       // Terapkan validasi custom yang sama untuk edit
       if (data.jenjang_sekolah?.toLowerCase().includes("smk")) {
-        if (!data.nama_jurusan_sekolah || data.nama_jurusan_sekolah.trim() === "") {
+        if (
+          !data.nama_jurusan_sekolah ||
+          data.nama_jurusan_sekolah.trim() === ""
+        ) {
           ctx.addIssue({
             path: ["nama_jurusan_sekolah"],
             message: "Nama Jurusan wajib diisi",
@@ -840,6 +844,7 @@ export const createBeasiswaDraftSchema = () => {
     instansi_pekerjaan: z.string().optional(),
     berat_badan: z.string().optional(),
     tinggi_badan: z.string().optional(),
+    kode_pendaftaran: z.string().optional(),
 
     // ── Semua foto opsional untuk draft ──
     foto: fotoOptionalSchema,

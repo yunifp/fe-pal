@@ -174,7 +174,6 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
   };
 
   return (
-    // ✅ FormProvider agar useFormContext bisa dipakai di KesesuaianDokumen
     <FormProvider {...methods}>
       <>
         <CustBreadcrumb
@@ -192,11 +191,6 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
         </p>
         <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            {/*
-              ✅ Pass verifikatorMode="dinas" ke FullDataBeasiswaCatatan
-              agar KesesuaianDokumen di dalamnya pre-populate dari
-              verifikator_dinas_is_valid bukan status_verifikasi ditjenbun
-            */}
             <FullDataBeasiswaCatatan
               idTrxBeasiswa={id}
               register={register}

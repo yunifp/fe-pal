@@ -120,6 +120,11 @@ import DokumenUmumPage from "./features/dokumen-umum/pages/DokumenUmumPage";
 import DokumenKhususPage from "./features/dokumen-khusus/pages/DokumenKhususPage";
 import SukuPage from "./features/suku/pages/SukuPage";
 import DokumenPendaftaran from "./features/dokumen-pendaftar/pages/DokumenPendaftarPage";
+import CmsHeroPage from "./features/cms-landing/pages/CmsPage";
+import JalurPendaftaran from "./features/cms-landing/pages/JalurPendaftaranPage";
+import CmsKontakPage from "./features/cms-landing/pages/CmsKontakPage";
+import CmsTentangPage from "./features/cms-landing/pages/CmsTentangPage";
+import MappingProdiByPtPage from "./features/setting-jurusan-prodi/pages/MappingProdiByPtPage";
 
 const queryClient = new QueryClient();
 
@@ -233,6 +238,10 @@ function App() {
               <Route
                 path="/master/perguruan-tinggi/create"
                 element={<PerguruanTinggiCreatePage />}
+              />
+              <Route
+                path="/perguruan-tinggi/:id_pt/mapping-pendaftaran-beasiswa"
+                element={<MappingProdiByPtPage />}
               />
               <Route
                 path="/master/program-studi/:id_prodi/edit"
@@ -513,6 +522,13 @@ function App() {
                 path="dokumen-pendaftar/"
                 element={<DokumenPendaftaran />}
               />
+              <Route path="cms-hero/" element={<CmsHeroPage />} />
+              <Route
+                path="cms-jalur-pendaftaran/"
+                element={<JalurPendaftaran />}
+              />
+              <Route path="cms-kontak/" element={<CmsKontakPage />} />
+              <Route path="cms-about/" element={<CmsTentangPage />} />
             </Route>
           </Route>
 

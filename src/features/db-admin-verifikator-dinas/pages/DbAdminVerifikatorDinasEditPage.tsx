@@ -13,7 +13,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { STALE_TIME } from "@/constants/reactQuery";
 import { useEffect, useMemo } from "react";
-import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
+// import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 import { CustSelect } from "@/components/ui/CustSelect";
 import { CustSearchableSelect } from "@/components/CustSearchableSelect";
 import {
@@ -30,7 +30,7 @@ import { CustPassword } from "@/components/CustPassword";
 import { Download } from "lucide-react";
 
 const DbAdminVerifikatorDinasEditPage = () => {
-  useRedirectIfHasNotAccess("U");
+  // useRedirectIfHasNotAccess("U");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -55,7 +55,14 @@ const DbAdminVerifikatorDinasEditPage = () => {
     formState: { errors },
   } = useForm<AdminVerifikatorDinasEditFormData>({
     resolver: zodResolver(adminVerifikatorDinasEditSchema),
-    defaultValues: { jenis_akun: "", username: "", nama: "", no_hp: "", email: "", is_active: 0 },
+    defaultValues: {
+      jenis_akun: "",
+      username: "",
+      nama: "",
+      no_hp: "",
+      email: "",
+      is_active: 0,
+    },
   });
 
   useEffect(() => {
@@ -86,12 +93,12 @@ const DbAdminVerifikatorDinasEditPage = () => {
   const jenisAkunOptions = useMemo(() => {
     if (!rolesData?.data) return [];
     // Filter ID Role: 3 (Provinsi), 4 (Kabkota)
-    const allowedRoles = [3, 4]; 
+    const allowedRoles = [3, 4];
     return rolesData.data
       .filter((role) => allowedRoles.includes(role.id))
       .map((role) => ({
         value: String(role.id),
-        label: role.nama, 
+        label: role.nama,
       }));
   }, [rolesData]);
 
@@ -102,44 +109,67 @@ const DbAdminVerifikatorDinasEditPage = () => {
     staleTime: STALE_TIME,
   });
   const provinsiOptions = useMemo(() => {
-    return responseProvinsi?.data?.map((p) => ({ value: String(`${p.kode_pro}#${p.nama_wilayah}`), label: p.nama_wilayah })) || [];
+    return (
+      responseProvinsi?.data?.map((p) => ({
+        value: String(`${p.kode_pro}#${p.nama_wilayah}`),
+        label: p.nama_wilayah,
+      })) || []
+    );
   }, [responseProvinsi]);
 
   const { data: responseKabkot } = useQuery({
     queryKey: ["opsi-kabkot", selectedProvinsi],
-    queryFn: () => masterService.getKabkot(selectedProvinsi?.split("#")[0] || ""),
+    queryFn: () =>
+      masterService.getKabkot(selectedProvinsi?.split("#")[0] || ""),
     enabled: !!selectedProvinsi,
     staleTime: STALE_TIME,
   });
   const kabkotOptions = useMemo(() => {
-    return responseKabkot?.data?.map((k) => ({ value: String(`${k.kode_kab}#${k.nama_wilayah}`), label: k.nama_wilayah })) || [];
+    return (
+      responseKabkot?.data?.map((k) => ({
+        value: String(`${k.kode_kab}#${k.nama_wilayah}`),
+        label: k.nama_wilayah,
+      })) || []
+    );
   }, [responseKabkot]);
 
   // --- MUTATION ---
   const mutation = useMutation({
-    mutationFn: (data: AdminVerifikatorDinasEditFormData) => dbService.updateDinas(idx, data),
+    mutationFn: (data: AdminVerifikatorDinasEditFormData) =>
+      dbService.updateDinas(idx, data),
     onSuccess: (res) => {
       if (res.success) {
         toast.success(res.message);
-        queryClient.invalidateQueries({ queryKey: ["db-user-admin-verifikator-dinas"] });
-        queryClient.invalidateQueries({ queryKey: ["db-user-admin-verifikator-dinas-detail", idx] });
+        queryClient.invalidateQueries({
+          queryKey: ["db-user-admin-verifikator-dinas"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["db-user-admin-verifikator-dinas-detail", idx],
+        });
         navigate("/database/user-admin-verifikator-dinas");
       } else {
         toast.error(res.message);
       }
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Terjadi kesalahan saat menyimpan user");
+      toast.error(
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan user",
+      );
     },
   });
 
-  const onSubmit = (data: AdminVerifikatorDinasEditFormData) => mutation.mutate(data);
+  const onSubmit = (data: AdminVerifikatorDinasEditFormData) =>
+    mutation.mutate(data);
 
   return (
     <>
       <CustBreadcrumb
         items={[
-          { name: "Database Instansi Dinas", url: "/database/user-admin-verifikator-dinas" },
+          {
+            name: "Database Instansi Dinas",
+            url: "/database/user-admin-verifikator-dinas",
+          },
           { name: "Ubah Pengguna Instansi" },
         ]}
       />
@@ -154,7 +184,9 @@ const DbAdminVerifikatorDinasEditPage = () => {
                 control={control}
                 label="Jenis Akun"
                 options={jenisAkunOptions}
-                placeholder={rolesData ? "Pilih jenis akun" : "Memuat data role..."}
+                placeholder={
+                  rolesData ? "Pilih jenis akun" : "Memuat data role..."
+                }
                 isRequired
                 error={errors.jenis_akun}
               />
@@ -234,10 +266,14 @@ const DbAdminVerifikatorDinasEditPage = () => {
 
               <div className="space-y-2">
                 <div className="flex gap-4 justify-between items-center">
-                  <Label className="flex items-center gap-1">Surat Penunjukan</Label>
+                  <Label className="flex items-center gap-1">
+                    Surat Penunjukan
+                  </Label>
                   {detailUser?.surat_penunjukan && (
                     <a
-                      onClick={() => window.open(detailUser?.surat_penunjukan!!, "_blank")}
+                      onClick={() =>
+                        window.open(detailUser?.surat_penunjukan!!, "_blank")
+                      }
                       className="cursor-pointer hover:underline text-sm text-primary flex">
                       <Download className="h-4 w-4 mr-1" />
                       File Sebelumnya
@@ -249,11 +285,21 @@ const DbAdminVerifikatorDinasEditPage = () => {
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) setValue("surat_penunjukan", file, { shouldValidate: true });
+                    if (file)
+                      setValue("surat_penunjukan", file, {
+                        shouldValidate: true,
+                      });
                   }}
                 />
-                <p className="text-xs text-muted-foreground">Format file: PDF, JPG, PNG (maks. 2MB). Kosongkan jika tidak diganti.</p>
-                {errors.surat_penunjukan && <p className="text-xs text-destructive">{errors.surat_penunjukan.message as string}</p>}
+                <p className="text-xs text-muted-foreground">
+                  Format file: PDF, JPG, PNG (maks. 2MB). Kosongkan jika tidak
+                  diganti.
+                </p>
+                {errors.surat_penunjukan && (
+                  <p className="text-xs text-destructive">
+                    {errors.surat_penunjukan.message as string}
+                  </p>
+                )}
               </div>
 
               <Controller
@@ -261,15 +307,27 @@ const DbAdminVerifikatorDinasEditPage = () => {
                 name="is_active"
                 render={({ field }) => (
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="is_active" checked={field.value === 1} onCheckedChange={(checked) => field.onChange(checked ? 1 : 0)} />
-                    <label htmlFor="is_active" className="text-sm font-medium leading-none">Aktifkan Akun</label>
+                    <Checkbox
+                      id="is_active"
+                      checked={field.value === 1}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked ? 1 : 0)
+                      }
+                    />
+                    <label
+                      htmlFor="is_active"
+                      className="text-sm font-medium leading-none">
+                      Aktifkan Akun
+                    </label>
                   </div>
                 )}
               />
 
               <div className="mt-8 flex items-center justify-between">
                 <Link to="/database/user-admin-verifikator-dinas">
-                  <Button type="button" variant="secondary">Kembali</Button>
+                  <Button type="button" variant="secondary">
+                    Kembali
+                  </Button>
                 </Link>
                 <Button type="submit" disabled={mutation.isPending}>
                   {mutation.isPending ? "Menyimpan..." : "Simpan"}

@@ -210,6 +210,29 @@ export interface PaginatedNpsnResponse {
   total_pages: number;
 }
 
+export interface ICmsHero {
+  id: number;
+  judul: string;
+  subjudul: string | null;
+  bg_image_url: string | null;
+  label_cta: string | null;
+  url_cta: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
+export interface ICmsHeroFormData {
+  judul: string;
+  subjudul?: string;
+  bg_image_url?: string;
+  label_cta?: string;
+  url_cta?: string;
+  is_active?: number;
+}
+
 // --- Zod Schema ---
 export const npsnSchema = z.object({
   id_jenjang: z
@@ -237,3 +260,123 @@ export type NpsnFormData = z.infer<typeof npsnSchema>;
 export type PerguruanTinggiEditFormData = z.infer<
   typeof perguruanEditTinggiSchema
 >;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tambahkan type berikut ke @/types/master.ts
+// ─────────────────────────────────────────────────────────────────────────────
+//
+export interface ICmsJalurSyarat {
+  id: number;
+  id_jalur: number;
+  syarat: string;
+  urutan: number;
+}
+
+export interface ICmsJalurDokumen {
+  id: number;
+  id_jalur: number;
+  dokumen: string;
+  urutan: number;
+}
+
+export interface ICmsJalurPendaftaran {
+  id: number;
+  urutan: number;
+  judul: string;
+  deskripsi: string | null;
+  gambar_url: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+  syarat: ICmsJalurSyarat[];
+  dokumen: ICmsJalurDokumen[];
+}
+
+export interface ICmsJalurFormData {
+  judul: string;
+  deskripsi?: string;
+  gambar_url?: string;
+  urutan?: number;
+  is_active?: number;
+  syarat?: { syarat: string; urutan?: number }[];
+  dokumen?: { dokumen: string; urutan?: number }[];
+}
+
+export interface ICmsItemFormData {
+  syarat?: string;
+  dokumen?: string;
+  urutan?: number;
+}
+
+// export interface ICmsKontak {
+//   id: number;
+//   judul_section: string;
+//   nama_instansi: string | null;
+//   alamat: string | null;
+//   telepon: string | null;
+//   email: string | null;
+//   whatsapp: string | null;
+//   jam_operasional: string | null;
+//   maps_embed_url: string | null;
+//   maps_lat: string | null;
+//   maps_lng: string | null;
+//   is_active: number;
+//   created_by: string | null;
+//   updated_by: string | null;
+// }
+
+// Tambahkan ke @/types/master.ts
+
+export interface ICmsKontak {
+  id: number;
+  judul_section: string;
+  nama_instansi: string | null;
+  alamat: string | null;
+  telepon: string | null;
+  email: string | null;
+  whatsapp: string | null;
+  jam_operasional: string | null;
+  maps_embed_url: string | null;
+  maps_lat: string | null;
+  maps_lng: string | null;
+  is_active: number;
+  // created_at: string;
+  // updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
+export interface ICmsKontakFormData {
+  judul_section: string;
+  nama_instansi?: string;
+  alamat?: string;
+  telepon?: string;
+  email?: string;
+  whatsapp?: string;
+  jam_operasional?: string;
+  maps_embed_url?: string;
+  maps_lat?: string;
+  maps_lng?: string;
+  is_active?: number;
+}
+
+export interface ICmsTentang {
+  id: number;
+  judul_section: string;
+  deskripsi: string | null; // LONGTEXT — support HTML
+  gambar_url: string | null;
+  is_active: number;
+  // created_at: string;
+  // updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
+export interface ICmsTentangFormData {
+  judul_section: string;
+  deskripsi?: string;
+  gambar_url?: string;
+  is_active?: number;
+}

@@ -96,7 +96,7 @@ const BeasiswaPendaftaranPage = () => {
             existBeasiswa.id_flow === 7) && (
             <>
               <AlertSudahSubmit />
-              <FlowBeasiswaStepper currentIdFlow={existBeasiswa.id_flow!!} />
+              {/* <FlowBeasiswaStepper currentIdFlow={existBeasiswa.id_flow!!} /> */}
               <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
             </>
           )}

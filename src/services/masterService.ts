@@ -25,6 +25,17 @@ import type {
   NpsnFormData,
   INpsn,
   PaginatedNpsnResponse,
+  ICmsHeroFormData,
+  ICmsHero,
+  ICmsJalurFormData,
+  ICmsJalurPendaftaran,
+  ICmsItemFormData,
+  ICmsJalurSyarat,
+  ICmsJalurDokumen,
+  ICmsKontakFormData,
+  ICmsKontak,
+  ICmsTentang,
+  ICmsTentangFormData,
 } from "@/types/master";
 import type { Response } from "@/types/response";
 
@@ -412,6 +423,448 @@ export const masterService = {
     const response = await axiosInstanceJson.get(
       `${MASTER_SERVICE_BASE_URL}/jalur/paginate`,
       { params: { page: 1, limit: 100, ...params } },
+    );
+    return response.data;
+  },
+  getCmsHeroAktif: async (): Promise<Response<ICmsHero>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Ambil semua data hero (dipakai di halaman CMS admin)
+   * GET /cms/hero/all
+   */
+  getAllCmsHero: async (): Promise<Response<ICmsHero[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero/all`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Ambil detail hero by id
+   * GET /cms/hero/:id
+   */
+  getCmsHeroById: async (id: number): Promise<Response<ICmsHero>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Buat hero baru
+   * POST /cms/hero
+   */
+  createCmsHero: async (
+    data: ICmsHeroFormData,
+  ): Promise<Response<ICmsHero>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update hero by id
+   * PUT /cms/hero/:id
+   */
+  updateCmsHero: async (
+    id: number,
+    data: ICmsHeroFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus hero by id
+   * DELETE /cms/hero/:id
+   */
+  deleteCmsHero: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Toggle aktif/nonaktif hero
+   * PATCH /cms/hero/:id/toggle-active
+   */
+  toggleActiveCmsHero: async (
+    id: number,
+  ): Promise<Response<{ is_active: number }>> => {
+    const response = await axiosInstanceJson.patch(
+      `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}/toggle-active`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Semua jalur aktif + syarat + dokumen (landing page publik)
+   * GET /cms/jalur
+   */
+  getCmsJalurAktif: async (): Promise<Response<ICmsJalurPendaftaran[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Semua jalur aktif & nonaktif (CMS admin)
+   * GET /cms/jalur/all
+   */
+  getAllCmsJalur: async (
+    search?: string,
+  ): Promise<Response<ICmsJalurPendaftaran[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/all`,
+      { params: { search } },
+    );
+    return response.data;
+  },
+
+  /**
+   * Detail jalur by id (termasuk syarat & dokumen)
+   * GET /cms/jalur/:id
+   */
+  getCmsJalurById: async (
+    id: number,
+  ): Promise<Response<ICmsJalurPendaftaran>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Buat jalur baru (beserta syarat & dokumen sekaligus)
+   * POST /cms/jalur
+   */
+  createCmsJalur: async (
+    data: ICmsJalurFormData,
+  ): Promise<Response<ICmsJalurPendaftaran>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update jalur + replace syarat & dokumen
+   * PUT /cms/jalur/:id
+   */
+  updateCmsJalur: async (
+    id: number,
+    data: ICmsJalurFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus jalur (cascade ke syarat & dokumen)
+   * DELETE /cms/jalur/:id
+   */
+  deleteCmsJalur: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Toggle aktif/nonaktif jalur
+   * PATCH /cms/jalur/:id/toggle-active
+   */
+  toggleActiveCmsJalur: async (
+    id: number,
+  ): Promise<Response<{ is_active: number }>> => {
+    const response = await axiosInstanceJson.patch(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}/toggle-active`,
+    );
+    return response.data;
+  },
+
+  // ── CMS JALUR SYARAT (item individual) ───────────────────────────────────
+
+  /**
+   * Tambah satu syarat ke jalur
+   * POST /cms/jalur/:id/syarat
+   */
+  addCmsJalurSyarat: async (
+    idJalur: number,
+    data: ICmsItemFormData,
+  ): Promise<Response<ICmsJalurSyarat>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/syarat`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update satu syarat
+   * PUT /cms/jalur/:id/syarat/:syaratId
+   */
+  updateCmsJalurSyarat: async (
+    idJalur: number,
+    syaratId: number,
+    data: ICmsItemFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/syarat/${syaratId}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus satu syarat
+   * DELETE /cms/jalur/:id/syarat/:syaratId
+   */
+  deleteCmsJalurSyarat: async (
+    idJalur: number,
+    syaratId: number,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/syarat/${syaratId}`,
+    );
+    return response.data;
+  },
+
+  // ── CMS JALUR DOKUMEN (item individual) ──────────────────────────────────
+
+  /**
+   * Tambah satu dokumen ke jalur
+   * POST /cms/jalur/:id/dokumen
+   */
+  addCmsJalurDokumen: async (
+    idJalur: number,
+    data: ICmsItemFormData,
+  ): Promise<Response<ICmsJalurDokumen>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/dokumen`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update satu dokumen
+   * PUT /cms/jalur/:id/dokumen/:dokumenId
+   */
+  updateCmsJalurDokumen: async (
+    idJalur: number,
+    dokumenId: number,
+    data: ICmsItemFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/dokumen/${dokumenId}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus satu dokumen
+   * DELETE /cms/jalur/:id/dokumen/:dokumenId
+   */
+  deleteCmsJalurDokumen: async (
+    idJalur: number,
+    dokumenId: number,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/jalur/${idJalur}/dokumen/${dokumenId}`,
+    );
+    return response.data;
+  },
+
+  // ── CMS KONTAK ────────────────────────────────────────────────────────────
+
+  /**
+   * Ambil kontak yang sedang aktif (landing page publik)
+   * GET /cms/kontak
+   */
+  getCmsKontakAktif: async (): Promise<Response<ICmsKontak>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Ambil semua data kontak (CMS admin)
+   * GET /cms/kontak/all
+   */
+  getAllCmsKontak: async (): Promise<Response<ICmsKontak[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak/all`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Detail kontak by id
+   * GET /cms/kontak/:id
+   */
+  getCmsKontakById: async (id: number): Promise<Response<ICmsKontak>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Buat kontak baru
+   * POST /cms/kontak
+   */
+  createCmsKontak: async (
+    data: ICmsKontakFormData,
+  ): Promise<Response<ICmsKontak>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update kontak by id
+   * PUT /cms/kontak/:id
+   */
+  updateCmsKontak: async (
+    id: number,
+    data: ICmsKontakFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus kontak by id
+   * DELETE /cms/kontak/:id
+   */
+  deleteCmsKontak: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Toggle aktif/nonaktif kontak
+   * PATCH /cms/kontak/:id/toggle-active
+   */
+  toggleActiveCmsKontak: async (
+    id: number,
+  ): Promise<Response<{ is_active: number }>> => {
+    const response = await axiosInstanceJson.patch(
+      `${MASTER_SERVICE_BASE_URL}/cms/kontak/${id}/toggle-active`,
+    );
+    return response.data;
+  },
+
+  // ── CMS TENTANG BEASISWA ──────────────────────────────────────────────────
+
+  /**
+   * Ambil tentang beasiswa yang aktif (landing page publik)
+   * GET /cms/tentang
+   */
+  getCmsTentangAktif: async (): Promise<Response<ICmsTentang>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Ambil semua data tentang (CMS admin)
+   * GET /cms/tentang/all
+   */
+  getAllCmsTentang: async (): Promise<Response<ICmsTentang[]>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang/all`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Detail tentang by id
+   * GET /cms/tentang/:id
+   */
+  getCmsTentangById: async (id: number): Promise<Response<ICmsTentang>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Buat data tentang baru
+   * POST /cms/tentang
+   */
+  createCmsTentang: async (
+    data: ICmsTentangFormData,
+  ): Promise<Response<ICmsTentang>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update tentang by id
+   * PUT /cms/tentang/:id
+   */
+  updateCmsTentang: async (
+    id: number,
+    data: ICmsTentangFormData,
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  /**
+   * Hapus tentang by id
+   * DELETE /cms/tentang/:id
+   */
+  deleteCmsTentang: async (id: number): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.delete(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Toggle aktif/nonaktif tentang
+   * PATCH /cms/tentang/:id/toggle-active
+   */
+  toggleActiveCmsTentang: async (
+    id: number,
+  ): Promise<Response<{ is_active: number }>> => {
+    const response = await axiosInstanceJson.patch(
+      `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}/toggle-active`,
     );
     return response.data;
   },

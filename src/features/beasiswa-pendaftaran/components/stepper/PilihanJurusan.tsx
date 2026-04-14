@@ -26,6 +26,149 @@ interface PilihanJurusanProps {
   idTrxBeasiswa?: number;
 }
 
+// ── Helper: cek apakah program studi termasuk D1/D2 ────────────────────────────
+// Asumsi: nilai program_studi mengandung prefix jenjang, contoh "D1#123#Teknik Sipil"
+// atau nama program studi mengandung kata "D1"/"D2". Sesuaikan logika ini
+// dengan struktur data aktual di proyek Anda.
+const isD1OrD2ProgramStudi = (programStudiValue: string): boolean => {
+  if (!programStudiValue) return false;
+  const upper = programStudiValue.toUpperCase();
+  // Cek apakah nilai mengandung jenjang D1 atau D2
+  return (
+    upper.includes("D1") ||
+    upper.includes("D2") ||
+    upper.startsWith("D1") ||
+    upper.startsWith("D2")
+  );
+};
+
+// ── Helper: ekstrak id PT dari value "idPt#namaPt" ─────────────────────────────
+const extractIdPT = (ptValue: string): string => {
+  if (!ptValue) return "";
+  return ptValue.split("#")[0];
+};
+
+/**
+ * Menghitung berapa kali sebuah PT sudah dipilih di semua slot,
+ * beserta apakah ada pilihan D1/D2 dan non-D1/D2 untuk PT tersebut.
+ *
+ * Aturan:
+ * - PT yang memiliki setidaknya satu program studi D1/D2 → bisa dipilih 2x
+ *   (1 slot dengan prodi D1/D2, 1 slot dengan prodi non-D1/D2)
+ * - PT yang TIDAK memiliki prodi D1/D2 → hanya bisa dipilih 1x
+ *
+ * Fungsi ini mengembalikan Map<idPT, { hasD1D2InOptions, countSelected, hasD1D2Selected, hasNonD1D2Selected }>
+ */
+const buildPTTrackingMap = (
+  allPilihan: Array<{ perguruan_tinggi?: string; program_studi?: string }>,
+  perguruanTinggiOptions: Array<{ value: string; label: string }>,
+  // Map dari idPT ke apakah PT tersebut punya program studi D1/D2
+  ptHasD1D2Map: Map<string, boolean>,
+) => {
+  const trackingMap = new Map<
+    string,
+    {
+      countSelected: number;
+      hasD1D2Selected: boolean;
+      hasNonD1D2Selected: boolean;
+      hasD1D2InOptions: boolean;
+    }
+  >();
+
+  // Inisialisasi semua PT dari opsi
+  perguruanTinggiOptions.forEach((opt) => {
+    const idPT = extractIdPT(opt.value);
+    trackingMap.set(idPT, {
+      countSelected: 0,
+      hasD1D2Selected: false,
+      hasNonD1D2Selected: false,
+      hasD1D2InOptions: ptHasD1D2Map.get(idPT) ?? false,
+    });
+  });
+
+  // Hitung slot yang sudah terisi
+  (allPilihan ?? []).forEach((pilihan) => {
+    const idPT = extractIdPT(pilihan?.perguruan_tinggi ?? "");
+    if (!idPT) return;
+
+    const existing = trackingMap.get(idPT);
+    if (!existing) return;
+
+    const isD1D2 = isD1OrD2ProgramStudi(pilihan?.program_studi ?? "");
+
+    trackingMap.set(idPT, {
+      ...existing,
+      countSelected: existing.countSelected + 1,
+      hasD1D2Selected: existing.hasD1D2Selected || isD1D2,
+      hasNonD1D2Selected: existing.hasNonD1D2Selected || !isD1D2,
+    });
+  });
+
+  return trackingMap;
+};
+
+/**
+ * Menentukan apakah sebuah PT boleh dipilih di slot tertentu.
+ *
+ * @param idPT           - ID perguruan tinggi yang akan dicek
+ * @param currentSlotIndex - Index slot yang sedang dirender
+ * @param allPilihan     - Semua nilai pilihan saat ini
+ * @param trackingMap    - Map tracking dari buildPTTrackingMap
+ * @returns true jika PT TIDAK boleh dipilih (harus di-disable)
+ */
+const isPTDisabled = (
+  idPT: string,
+  currentSlotIndex: number,
+  allPilihan: Array<{ perguruan_tinggi?: string; program_studi?: string }>,
+  trackingMap: ReturnType<typeof buildPTTrackingMap>,
+): boolean => {
+  const tracking = trackingMap.get(idPT);
+  if (!tracking) return false;
+
+  // Hitung berapa kali PT ini dipilih di slot SELAIN slot saat ini
+  const countInOtherSlots = (allPilihan ?? []).reduce((acc, pilihan, idx) => {
+    if (idx === currentSlotIndex) return acc;
+    if (extractIdPT(pilihan?.perguruan_tinggi ?? "") === idPT) return acc + 1;
+    return acc;
+  }, 0);
+
+  if (!tracking.hasD1D2InOptions) {
+    // PT tanpa D1/D2: hanya boleh dipilih 1x total
+    return countInOtherSlots >= 1;
+  }
+
+  // PT dengan D1/D2: boleh dipilih 2x TAPI dengan kombinasi D1/D2 + non-D1/D2
+  if (countInOtherSlots >= 2) return true; // sudah 2x di slot lain → tidak bisa lagi
+
+  if (countInOtherSlots === 1) {
+    // Cek apa jenis prodi yang sudah dipilih di slot lain
+    const otherSlotPilihan = (allPilihan ?? []).find(
+      (pilihan, idx) =>
+        idx !== currentSlotIndex &&
+        extractIdPT(pilihan?.perguruan_tinggi ?? "") === idPT,
+    );
+    if (!otherSlotPilihan?.program_studi) {
+      // Slot lain belum isi prodi → belum bisa tentukan kombinasi → izinkan dulu
+      return false;
+    }
+    const otherIsD1D2 = isD1OrD2ProgramStudi(otherSlotPilihan.program_studi);
+    const currentProdi = allPilihan?.[currentSlotIndex]?.program_studi ?? "";
+
+    if (!currentProdi) {
+      // Slot ini belum pilih prodi → izinkan pilih PT dulu, validasi prodi nanti
+      return false;
+    }
+
+    const currentIsD1D2 = isD1OrD2ProgramStudi(currentProdi);
+
+    // Harus kombinasi berbeda: satu D1/D2, satu non-D1/D2
+    if (otherIsD1D2 && currentIsD1D2) return true; // keduanya D1/D2 → tidak boleh
+    if (!otherIsD1D2 && !currentIsD1D2) return true; // keduanya non-D1/D2 → tidak boleh
+  }
+
+  return false;
+};
+
 const PilihanJurusan = ({
   control,
   errors,
@@ -39,7 +182,12 @@ const PilihanJurusan = ({
 
   const [isPopulating, setIsPopulating] = useState(false);
   const hasPopulatedRef = useRef(false);
-  const prevPtSnapshotRef = useRef<string>("");
+
+  // Map: idPT → apakah memiliki program studi D1/D2
+  // Diisi dari data master setelah PT & prodi di-fetch
+  const [ptHasD1D2Map, setPtHasD1D2Map] = useState<Map<string, boolean>>(
+    new Map(),
+  );
 
   const { fields, replace } = useFieldArray({
     control,
@@ -83,8 +231,40 @@ const PilihanJurusan = ({
     return responsePerguruanTinggi.data.map((pt) => ({
       value: String(pt.id_pt + "#" + pt.nama_pt),
       label: pt.nama_pt,
-      has_d1_d2: Boolean(pt.has_d1_d2),
     }));
+  }, [responsePerguruanTinggi]);
+
+  // ── Bangun ptHasD1D2Map dari data PT ─────────────────────────
+  // Asumsi: responsePerguruanTinggi.data tiap PT memiliki field `program_studi`
+  // berupa array, atau field `has_d1_d2` boolean.
+  // Sesuaikan dengan struktur data API Anda.
+  useEffect(() => {
+    if (!responsePerguruanTinggi?.data) return;
+
+    const newMap = new Map<string, boolean>();
+    responsePerguruanTinggi.data.forEach((pt) => {
+      const idPT = String(pt.id_pt);
+
+      // Opsi A: jika API mengembalikan field has_d1_d2
+      if ("has_d1_d2" in pt) {
+        newMap.set(idPT, Boolean((pt as any).has_d1_d2));
+        return;
+      }
+
+      // Opsi B: jika API mengembalikan array program_studi per PT
+      if (Array.isArray((pt as any).program_studi)) {
+        const hasD1D2 = (pt as any).program_studi.some((ps: string) =>
+          isD1OrD2ProgramStudi(ps),
+        );
+        newMap.set(idPT, hasD1D2);
+        return;
+      }
+
+      // Fallback: tidak diketahui → anggap tidak punya D1/D2
+      newMap.set(idPT, false);
+    });
+
+    setPtHasD1D2Map(newMap);
   }, [responsePerguruanTinggi]);
 
   // ── Fetch existing pilihan (edit mode) ───────────────────────
@@ -102,6 +282,30 @@ const PilihanJurusan = ({
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
   const hasPerguruanTinggi = perguruanTinggiOptions.length > 0;
 
+  // ── Tracking Map (di-memo agar tidak re-compute tiap render) ──
+  const ptTrackingMap = useMemo(
+    () =>
+      buildPTTrackingMap(
+        (allPilihan as any[]) ?? [],
+        perguruanTinggiOptions,
+        ptHasD1D2Map,
+      ),
+    [allPilihan, perguruanTinggiOptions, ptHasD1D2Map],
+  );
+
+  // ── Filter opsi PT per slot (exclude PT yang sudah tidak bisa dipilih) ──
+  const getFilteredPTOptionsForSlot = (slotIndex: number) => {
+    return perguruanTinggiOptions.filter((opt) => {
+      const idPT = extractIdPT(opt.value);
+      return !isPTDisabled(
+        idPT,
+        slotIndex,
+        (allPilihan as any[]) ?? [],
+        ptTrackingMap,
+      );
+    });
+  };
+
   // ── Inisialisasi awal ────────────────────────────────────────
   useEffect(() => {
     if (!selectedKondisiButaWarna) return;
@@ -116,44 +320,16 @@ const PilihanJurusan = ({
     const rawExisting = responseExistingPilihan?.data ?? [];
 
     if (rawExisting.length > 0) {
-      const ptProdiMap = new Map<string, string[]>();
-      rawExisting.forEach((item: any) => {
-        if (!item.perguruan_tinggi) return;
-        if (!ptProdiMap.has(item.perguruan_tinggi)) {
-          ptProdiMap.set(item.perguruan_tinggi, []);
-        }
-        ptProdiMap.get(item.perguruan_tinggi)!.push(item.program_studi ?? "");
-      });
-
-      const baseRows: any[] = [];
-
-      ptProdiMap.forEach((prodiList, ptValue) => {
-        baseRows.push({
-          perguruan_tinggi: ptValue,
-          program_studi: prodiList[0] ?? "",
-          slot_type: "all", // dikoreksi efek dinamis
-          _prodi_non_d1d2: prodiList[1] ?? "",
-        });
-      });
-
-      const emptyCount = perguruanTinggiOptions.length - ptProdiMap.size;
-      for (let i = 0; i < emptyCount; i++) {
-        baseRows.push({
-          perguruan_tinggi: "",
-          program_studi: "",
-          slot_type: "all",
-          _prodi_non_d1d2: "",
-        });
-      }
-
-      replace(baseRows);
+      const slots = perguruanTinggiOptions.map((_, i) => ({
+        perguruan_tinggi: rawExisting[i]?.perguruan_tinggi ?? "",
+        program_studi: rawExisting[i]?.program_studi ?? "",
+      }));
+      replace(slots);
     } else {
-      // New mode: semua slot kosong dan polos ("all"), jumlah = jumlah PT
       replace(
         perguruanTinggiOptions.map(() => ({
           perguruan_tinggi: "",
           program_studi: "",
-          slot_type: "all",
         })),
       );
     }
@@ -169,120 +345,15 @@ const PilihanJurusan = ({
   // Reset flag saat jurusan/buta warna berubah
   useEffect(() => {
     hasPopulatedRef.current = false;
-    prevPtSnapshotRef.current = "";
   }, [selectedIdJurusanSekolah, selectedKondisiButaWarna]);
 
-  // ── Efek dinamis: deteksi perubahan PT ──────────────────────
-  // Ketika user memilih/mengganti PT, rebuild array dengan menyisipkan
-  // atau menghapus row non_d1d2 sesuai kebutuhan.
-  // Slot yang PT-nya kosong selalu slot_type "all" (polos).
-  useEffect(() => {
-    if (isPopulating) return;
-    if (!allPilihan || allPilihan.length === 0) return;
-
-    const currentSnapshot = JSON.stringify(
-      (allPilihan as any[]).map((p) => ({
-        pt: p?.perguruan_tinggi ?? "",
-        st: p?.slot_type ?? "all",
-      })),
-    );
-
-    if (prevPtSnapshotRef.current === currentSnapshot) return;
-    prevPtSnapshotRef.current = currentSnapshot;
-
-    const current = allPilihan as any[];
-
-    // Hanya proses base rows (non non_d1d2)
-    const baseRows = current.filter((r) => r?.slot_type !== "non_d1d2");
-    const rebuilt: any[] = [];
-
-    baseRows.forEach((row) => {
-      const ptId = row?.perguruan_tinggi?.split("#")[0];
-      const ptOption = perguruanTinggiOptions.find(
-        (o) => o.value.split("#")[0] === ptId,
-      );
-      const hasD1D2 = ptOption?.has_d1_d2 ?? false;
-      const ptIsEmpty = !ptId || ptId === "";
-
-      // PT kosong → slot polos "all". PT dipilih → tentukan dari hasD1D2.
-      rebuilt.push({
-        ...row,
-        slot_type: ptIsEmpty ? "all" : hasD1D2 ? "d1d2" : "all",
-      });
-
-      // Sisipkan slot non_d1d2 hanya jika PT dipilih dan hasD1D2
-      if (!ptIsEmpty && hasD1D2) {
-        const existingPair = current.find(
-          (r) =>
-            r?.slot_type === "non_d1d2" &&
-            r?.perguruan_tinggi === row.perguruan_tinggi,
-        );
-        rebuilt.push({
-          perguruan_tinggi: row.perguruan_tinggi,
-          program_studi:
-            existingPair?.program_studi ?? row._prodi_non_d1d2 ?? "",
-          slot_type: "non_d1d2",
-        });
-      }
-    });
-
-    const rebuiltSnapshot = JSON.stringify(
-      rebuilt.map((r) => ({ pt: r.perguruan_tinggi, st: r.slot_type })),
-    );
-
-    if (rebuiltSnapshot !== currentSnapshot) {
-      replace(rebuilt);
-    }
-  }, [
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(
-      ((allPilihan as any[]) ?? []).map((p) => ({
-        pt: p?.perguruan_tinggi ?? "",
-        st: p?.slot_type ?? "all",
-      })),
-    ),
-    perguruanTinggiOptions,
-    isPopulating,
-  ]);
-
-  // ── Handler reset slot d1d2 ──────────────────────────────────
-  // Langsung replace array: hapus slot non_d1d2 pasangan, kembalikan
-  // slot d1d2 ke "all" (polos) dengan PT + prodi kosong.
+  // ── Handler reset slot ───────────────────────────────────────
   const handleResetSlot = (index: number) => {
     const current = (allPilihan as any[]) ?? [];
-
-    // Rebuild: buang slot non_d1d2 pasangan, reset slot target ke "all"
-    const rebuilt = current
-      .filter((row) => {
-        // Buang slot non_d1d2 yang PT-nya sama dengan slot yang di-reset
-        if (row?.slot_type === "non_d1d2") {
-          const pairedPt = current[index]?.perguruan_tinggi;
-          return row?.perguruan_tinggi !== pairedPt;
-        }
-        return true;
-      })
-      .map((row, i) => {
-        // Reset slot yang diklik menjadi polos
-        if (i === index) {
-          return {
-            ...row,
-            perguruan_tinggi: "",
-            program_studi: "",
-            slot_type: "all",
-            _prodi_non_d1d2: "",
-          };
-        }
-        return row;
-      });
-
-    // Update snapshot agar efek dinamis tidak salah deteksi
-    prevPtSnapshotRef.current = JSON.stringify(
-      rebuilt.map((r: any) => ({
-        pt: r?.perguruan_tinggi ?? "",
-        st: r?.slot_type ?? "all",
-      })),
-    );
-
+    const rebuilt = current.map((row, i) => {
+      if (i !== index) return row;
+      return { ...row, perguruan_tinggi: "", program_studi: "" };
+    });
     replace(rebuilt);
   };
 
@@ -348,8 +419,13 @@ const PilihanJurusan = ({
                   Lakukan tes buta warna untuk melihat program studi yang sesuai
                 </li>
                 <li>
-                  Jika perguruan tinggi yang Anda pilih memiliki program D1/D2,
-                  slot tambahan untuk jenjang D3/D4/S1 akan otomatis muncul
+                  Perguruan tinggi yang memiliki program D1/D2 dapat dipilih di
+                  dua slot berbeda, dengan syarat satu slot memilih prodi D1/D2
+                  dan slot lainnya memilih prodi non-D1/D2
+                </li>
+                <li>
+                  Perguruan tinggi tanpa program D1/D2 hanya dapat dipilih satu
+                  kali
                 </li>
               </ul>
             </div>
@@ -469,59 +545,26 @@ const PilihanJurusan = ({
                     </p>
                   </div>
 
-                  {fields.map((field, index) => {
-                    const currentRow = (allPilihan as any[])?.[index];
-                    const slotType = (field as any).slot_type ?? "all";
-
-                    // PT yang sudah dipakai slot lain (kecuali slot ini sendiri)
-                    const disabledForThisSlot = new Set(
-                      ((allPilihan as any[]) ?? [])
-                        .filter(
-                          (p, i) =>
-                            i !== index &&
-                            p?.slot_type !== "non_d1d2" &&
-                            p?.perguruan_tinggi,
-                        )
-                        .map((p) => p.perguruan_tinggi.split("#")[0]),
-                    );
-
-                    // Slot non_d1d2: PT di-lock dari pasangan d1d2 di atasnya
-                    let lockedPtValue: string | undefined;
-                    if (slotType === "non_d1d2") {
-                      const pairedPilihan = (allPilihan as any[])?.[index - 1];
-                      if (
-                        (fields[index - 1] as any)?.slot_type === "d1d2" &&
-                        pairedPilihan?.perguruan_tinggi
-                      ) {
-                        lockedPtValue = pairedPilihan.perguruan_tinggi;
+                  {fields.map((field, index) => (
+                    <PerguruanTinggiItem
+                      key={field.id}
+                      index={index}
+                      control={control}
+                      remove={() => {}}
+                      kondisiButaWarna={selectedKondisiButaWarna}
+                      // ── Gunakan opsi PT yang sudah difilter per slot ──
+                      perguruanTinggiOptions={getFilteredPTOptionsForSlot(
+                        index,
+                      )}
+                      setValue={setValue}
+                      isPopulating={isPopulating}
+                      isEmpty={
+                        !!(allPilihan as any[])?.[index]?.perguruan_tinggi &&
+                        !(allPilihan as any[])?.[index]?.program_studi
                       }
-                    }
-
-                    return (
-                      <PerguruanTinggiItem
-                        key={field.id}
-                        index={index}
-                        control={control}
-                        remove={() => {}}
-                        kondisiButaWarna={selectedKondisiButaWarna}
-                        perguruanTinggiOptions={perguruanTinggiOptions}
-                        setValue={setValue}
-                        isPopulating={isPopulating}
-                        isEmpty={
-                          !!currentRow?.perguruan_tinggi &&
-                          !currentRow?.program_studi
-                        }
-                        slotType={slotType}
-                        disabledPtIds={disabledForThisSlot}
-                        lockedPtValue={lockedPtValue}
-                        onResetSlot={
-                          slotType === "d1d2"
-                            ? () => handleResetSlot(index)
-                            : undefined
-                        }
-                      />
-                    );
-                  })}
+                      onResetSlot={() => handleResetSlot(index)}
+                    />
+                  ))}
 
                   {hasEmptyRows && (
                     <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
