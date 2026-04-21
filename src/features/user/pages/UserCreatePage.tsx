@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,17 +20,25 @@ import { useMemo } from "react";
 import DropAndCropCircle from "@/components/DropAndCropCircle";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 import { CustPassword } from "@/components/CustPassword";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const UserCreatePage = () => {
   useRedirectIfHasNotAccess("C");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Setup form dengan zod
   const {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UserCreateFormData>({
     resolver: zodResolver(userCreateSchema),
@@ -37,10 +48,11 @@ const UserCreatePage = () => {
       is_active: 0,
       id_role: [],
       department_id: "",
+      id_lembaga_pendidikan: "",
+      lembaga_pendidikan: "",
     },
   });
 
-  // Mengambil role
   const { data: rolesData } = useQuery({
     queryKey: ["roles"],
     queryFn: () => roleService.getAll(),
@@ -58,7 +70,23 @@ const UserCreatePage = () => {
     );
   }, [rolesData]);
 
-  // Mengirim data ke API dan refresh cache
+  const selectedRoles = watch("id_role");
+
+  const isLembagaPendidikan = useMemo(() => {
+    if (!selectedRoles || !rolesData?.data) return false;
+    const roleTarget = rolesData.data.find(
+      (r: any) => r.nama === "Lembaga Pendidikan"
+    );
+    return roleTarget ? selectedRoles.includes(roleTarget.id) : false;
+  }, [selectedRoles, rolesData]);
+
+  const { data: ptData } = useQuery({
+    queryKey: ["perguruan-tinggi"],
+    queryFn: () => userService.getPerguruanTinggi(),
+    enabled: isLembagaPendidikan,
+    staleTime: STALE_TIME,
+  });
+
   const mutation = useMutation({
     mutationFn: (data: UserCreateFormData) => userService.create(data),
     onSuccess: (res) => {
@@ -81,6 +109,10 @@ const UserCreatePage = () => {
   });
 
   const onSubmit = (data: UserCreateFormData) => {
+    if (!isLembagaPendidikan) {
+      data.id_lembaga_pendidikan = null;
+      data.lembaga_pendidikan = null;
+    }
     mutation.mutate(data);
   };
 
@@ -179,6 +211,48 @@ const UserCreatePage = () => {
                   />
                 )}
               />
+
+              {isLembagaPendidikan && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Perguruan Tinggi</label>
+                  <Controller
+                    control={control}
+                    name="id_lembaga_pendidikan"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const selectedPt = ptData?.data?.find(
+                            (pt: any) => String(pt.id_pt) === val
+                          );
+                          if (selectedPt) {
+                            setValue("lembaga_pendidikan", selectedPt.nama_pt);
+                          } else {
+                            setValue("lembaga_pendidikan", "");
+                          }
+                        }}
+                        value={field.value || ""}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih Perguruan Tinggi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ptData?.data?.map((pt: any) => (
+                            <SelectItem key={pt.id_pt} value={String(pt.id_pt)}>
+                              {pt.nama_pt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.id_lembaga_pendidikan && (
+                    <span className="text-red-500 text-xs">
+                      {errors.id_lembaga_pendidikan.message}
+                    </span>
+                  )}
+                </div>
+              )}
 
               <Controller
                 control={control}

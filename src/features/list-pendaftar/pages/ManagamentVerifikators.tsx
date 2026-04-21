@@ -336,7 +336,6 @@ const ManajemenVerifikator = () => {
     <div className="pb-10">
       <CustBreadcrumb items={[{ name: "Manajemen Selektor" }]} />
 
-      {/* Header */}
       {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">

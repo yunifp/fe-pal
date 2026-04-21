@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { toast } from "sonner";
 import type { IPersyaratanKhususBeasiswa } from "@/types/beasiswa";
 import { beasiswaService } from "@/services/beasiswaService";
@@ -9,20 +12,81 @@ interface UploadPersyaratanKhususProps {
   idTrxBeasiswa: number;
   persyaratanKhusus: IPersyaratanKhususBeasiswa[];
 }
-
-const UploadPersyaratanKhusus = ({
-  idTrxBeasiswa,
-  persyaratanKhusus,
-}: UploadPersyaratanKhususProps) => {
+// Tambah interface untuk ref
+export interface UploadPersyaratanKhususRef {
+  uploadAllPending: () => Promise<void>;
+  hasPendingFiles: () => boolean;
+  resetAll: () => void; // ← add this
+}
+const UploadPersyaratanKhusus = forwardRef<
+  UploadPersyaratanKhususRef,
+  UploadPersyaratanKhususProps
+>(({ idTrxBeasiswa, persyaratanKhusus }, ref) => {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(
     {},
   );
   // ✅ State baru untuk menyimpan catatan per dokumen
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
+  const [pendingFiles, setPendingFiles] = useState<Record<number, File>>({});
+  const [skipNextFetch, setSkipNextFetch] = useState(false);
+
+  const uploadAllPending = async () => {
+    for (const [idStr, file] of Object.entries(pendingFiles)) {
+      const id = Number(idStr);
+      const item = persyaratanKhusus.find((p) => p.id === id);
+      if (!item) continue;
+
+      try {
+        setUploadingId(id);
+        const formData = new FormData();
+        formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
+        formData.append("file", file);
+        formData.append("id_ref_dokumen", id.toString());
+        formData.append("nama_dokumen_persyaratan", item.persyaratan);
+
+        const response = await beasiswaService.uploadPersyaratan(
+          "khusus",
+          formData,
+        );
+
+        setUploadedFiles((prev) => ({
+          ...prev,
+          [id]: response.data?.file ?? "",
+        }));
+        setPendingFiles((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      } catch (error: any) {
+        toast.error(
+          `Gagal upload ${item.persyaratan}: ${error.response?.data?.message ?? "Error"}`,
+        );
+        throw error;
+      } finally {
+        setUploadingId(null);
+      }
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    uploadAllPending,
+    hasPendingFiles: () => Object.keys(pendingFiles).length > 0,
+    resetAll: () => {
+      setSkipNextFetch(true); // ← skip 1x fetch berikutnya
+      setPendingFiles({});
+      setUploadedFiles({});
+      setCatatanMap({});
+    },
+  }));
 
   // 🧠 Ambil data file yang sudah pernah diunggah
   useEffect(() => {
+    if (skipNextFetch) {
+      setSkipNextFetch(false); // ← reset flag, fetch berikutnya jalan normal
+      return;
+    }
     const fetchUploadedFiles = async () => {
       // Reset dulu sebelum fetch ulang
       setUploadedFiles({});
@@ -61,52 +125,75 @@ const UploadPersyaratanKhusus = ({
   }, [idTrxBeasiswa, persyaratanKhusus]);
 
   // ketika user memilih file
-  const handleFileChange = async (
+  // const handleFileChange = async (
+  //   item: IPersyaratanKhususBeasiswa,
+  //   file: File | null,
+  // ) => {
+  //   if (!file) return;
+
+  //   const allowedTypes = parseValidTypes(item.valid_type);
+
+  //   if (!isValidByDocType(file, item.valid_type)) {
+  //     toast.error(`File tidak valid. Gunakan: ${allowedTypes.join(", ")}`);
+  //     return;
+  //   }
+
+  //   try {
+  //     setUploadingId(item.id);
+
+  //     const formData = new FormData();
+  //     formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
+  //     formData.append("file", file);
+  //     formData.append("id_ref_dokumen", item.id.toString());
+  //     formData.append("nama_dokumen_persyaratan", item.persyaratan);
+
+  //     const response = await beasiswaService.uploadPersyaratan(
+  //       "khusus",
+  //       formData,
+  //     );
+
+  //     toast.success("File berhasil diunggah");
+
+  //     setUploadedFiles((prev) => ({
+  //       ...prev,
+  //       [item.id]: response.data?.file ?? "",
+  //     }));
+
+  //     setCatatanMap((prev) => {
+  //       const newMap = { ...prev };
+  //       delete newMap[item.id];
+  //       return newMap;
+  //     });
+  //   } catch (error: any) {
+  //     toast.error(error.response?.data?.message ?? "Gagal upload");
+  //   } finally {
+  //     setUploadingId(null);
+  //   }
+  // };
+  const handleFileChange = (
     item: IPersyaratanKhususBeasiswa,
     file: File | null,
   ) => {
     if (!file) return;
 
-    const allowedTypes = parseValidTypes(item.valid_type);
-
     if (!isValidByDocType(file, item.valid_type)) {
+      const allowedTypes = parseValidTypes(item.valid_type);
       toast.error(`File tidak valid. Gunakan: ${allowedTypes.join(", ")}`);
       return;
     }
 
-    try {
-      setUploadingId(item.id);
+    // Simpan ke state lokal, belum upload
+    setPendingFiles((prev) => ({ ...prev, [item.id]: file }));
 
-      const formData = new FormData();
-      formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
-      formData.append("file", file);
-      formData.append("id_ref_dokumen", item.id.toString());
-      formData.append("nama_dokumen_persyaratan", item.persyaratan);
+    // Hapus catatan karena user sudah pilih file baru
+    setCatatanMap((prev) => {
+      const newMap = { ...prev };
+      delete newMap[item.id];
+      return newMap;
+    });
 
-      const response = await beasiswaService.uploadPersyaratan(
-        "khusus",
-        formData,
-      );
-
-      toast.success("File berhasil diunggah");
-
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [item.id]: response.data?.file ?? "",
-      }));
-
-      setCatatanMap((prev) => {
-        const newMap = { ...prev };
-        delete newMap[item.id];
-        return newMap;
-      });
-    } catch (error: any) {
-      toast.error(error.response?.data?.message ?? "Gagal upload");
-    } finally {
-      setUploadingId(null);
-    }
+    toast.info(`File "${file.name}" dipilih. Akan diunggah saat submit.`);
   };
-
   return (
     <div className="space-y-4">
       {persyaratanKhusus.map((item) => {
@@ -117,19 +204,43 @@ const UploadPersyaratanKhusus = ({
         const hasCatatan = !!catatan;
         const isRequired = item.is_required === "Y";
 
+        const isPending = !!pendingFiles[item.id];
+        const pendingFileName = pendingFiles[item.id]?.name;
+
         return (
           <div
             key={item.id}
             className={`
             relative border-2 rounded-xl p-5 transition-all duration-200
-            ${
-              hasCatatan
-                ? "border-amber-300 bg-amber-50/50"
-                : isUploaded
-                  ? "border-green-200 bg-green-50/50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-            }
+        ${
+          hasCatatan
+            ? "border-amber-300 bg-amber-50/50"
+            : isPending
+              ? "border-blue-300 bg-blue-50/50"
+              : isUploaded
+                ? "border-green-200 bg-green-50/50"
+                : "border-gray-200 bg-white hover:border-gray-300"
+        }
           `}>
+            {isPending && !hasCatatan && (
+              <div className="absolute top-3 right-3">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Menunggu Upload
+                </span>
+              </div>
+            )}
             {/* Status Badge */}
             {isUploaded && !hasCatatan && (
               <div className="absolute top-3 right-3">
@@ -237,13 +348,16 @@ const UploadPersyaratanKhusus = ({
                     className={`
                       flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg
                       cursor-pointer transition-all duration-200
-                      ${
-                        hasCatatan
-                          ? "border-amber-400 bg-white hover:bg-amber-50"
-                          : isUploaded
-                            ? "border-green-300 bg-white hover:bg-green-50"
-                            : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
-                      }
+                   // Tambah kondisi isPending:
+${
+  hasCatatan
+    ? "border-amber-400 bg-white hover:bg-amber-50"
+    : isPending
+      ? "border-blue-400 bg-white hover:bg-blue-50"
+      : isUploaded
+        ? "border-green-300 bg-white hover:bg-green-50"
+        : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+}
                     `}>
                     <input
                       id={`persyaratan-${item.id}`}
@@ -263,15 +377,18 @@ const UploadPersyaratanKhusus = ({
                     <div
                       className={`
                         flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
-                        ${
-                          hasCatatan
-                            ? "bg-amber-100"
-                            : isUploaded
-                              ? "bg-green-100"
-                              : "bg-gray-200"
-                        }
+                       ${hasCatatan ? "bg-amber-100" : isPending ? "bg-blue-100" : isUploaded ? "bg-green-100" : "bg-gray-200"}
                       `}>
-                      {hasCatatan ? (
+                      {isPending ? (
+                        <>
+                          <p className="text-sm font-medium text-blue-700 truncate">
+                            {pendingFileName}
+                          </p>
+                          <p className="text-xs text-blue-500 mt-0.5">
+                            Akan diunggah saat submit / simpan draft
+                          </p>
+                        </>
+                      ) : hasCatatan ? (
                         <svg
                           className="w-5 h-5 text-amber-600"
                           fill="none"
@@ -337,9 +454,9 @@ const UploadPersyaratanKhusus = ({
                             Ekstensi yang diterima:{" "}
                             {validTypeToAccept(item.valid_type)}. Maksimal 10MB
                           </p>
-                          <p className="text-[11px] text-red-500 mt-1">
+                          {/* <p className="text-[11px] text-red-500 mt-1">
                             File akan otomatis diunggah setelah dipilih
-                          </p>
+                          </p> */}
                         </>
                       )}
                     </div>
@@ -381,6 +498,6 @@ const UploadPersyaratanKhusus = ({
       })}
     </div>
   );
-};
+});
 
 export default UploadPersyaratanKhusus;

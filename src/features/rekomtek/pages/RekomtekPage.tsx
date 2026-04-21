@@ -33,6 +33,7 @@ import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api";
 import useHasAccess from "@/hooks/useHasAccess"; 
 import { useAuthRole } from "@/hooks/useAuthRole";
 import { useAuthStore } from "@/stores/authStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const getUploadUrl = () => {
   try {
@@ -48,7 +49,11 @@ const BACKEND_PUBLIC_URL = getUploadUrl();
 const RekomtekPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"pendaftar" | "kuota">("pendaftar");
+  
   const [search, setSearch] = useState("");
+  const [jenjangFilter, setJenjangFilter] = useState("all");
+  const [ptFilter, setPtFilter] = useState("all");
+  
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
 
@@ -75,16 +80,28 @@ const RekomtekPage = () => {
     !!user?.id_lembaga_pendidikan || 
     (user?.id_role && user.id_role.includes(111));
 
-  const { data: response, isLoading } = useQuery({
-    queryKey: ["rekomtek-list", pageIndex, search],
-    queryFn: () => rekomtekService.getListRekomtek(pageIndex + 1, pageSize, search),
-    enabled: activeTab === "pendaftar" && canRead
-  });
-
   const { data: kuotaResponse, isLoading: isKuotaLoading } = useQuery({
     queryKey: ["rekomtek-summary-kuota"],
     queryFn: () => rekomtekService.getSummaryKuota(),
-    enabled: activeTab === "kuota" && canRead,
+    enabled: canRead, 
+  });
+
+  const uniquePTs = useMemo(() => {
+    if (!kuotaResponse?.data) return [];
+    const pts = kuotaResponse.data.map((item: any) => item.perguruan_tinggi);
+    return Array.from(new Set(pts)).filter(Boolean) as string[];
+  }, [kuotaResponse?.data]);
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["rekomtek-list", pageIndex, search, jenjangFilter, ptFilter],
+    queryFn: () => rekomtekService.getListRekomtek(
+      pageIndex + 1, 
+      pageSize, 
+      search, 
+      jenjangFilter === "all" ? "" : jenjangFilter, 
+      ptFilter === "all" ? "" : ptFilter 
+    ),
+    enabled: activeTab === "pendaftar" && canRead
   });
 
   const { data: docResponse, refetch: refetchDoc } = useQuery({
@@ -113,7 +130,9 @@ const RekomtekPage = () => {
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const blob = await rekomtekService.downloadDataRekomtek();
+      const activeJenjang = jenjangFilter === "all" ? "" : jenjangFilter;
+      const activePT = ptFilter === "all" ? "" : ptFilter;
+      const blob = await rekomtekService.downloadDataRekomtek(activeJenjang, activePT);
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
       link.href = url;
@@ -239,56 +258,60 @@ const RekomtekPage = () => {
               </div>
             </div>
 
-            {!isLembagaPendidikan && (
-              <div className="flex flex-wrap items-center gap-3 shrink-0">
-                <Button 
-                  onClick={handleDownload} 
-                  disabled={isActionDisabled || !canRead} 
-                  variant="outline" 
-                  className="h-11 px-5 flex items-center gap-2 bg-white border-slate-200 hover:bg-slate-50 shadow-sm text-slate-700 rounded-xl transition-all"
-                >
-                  <FileDown className="h-4 w-4 text-slate-500" />
-                  Download Data
-                </Button>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              {/* Tombol Download Data dikeluarkan dari kondisi agar muncul untuk semua */}
+              <Button 
+                onClick={handleDownload} 
+                disabled={isActionDisabled || !canRead} 
+                variant="outline" 
+                className="h-11 px-5 flex items-center gap-2 bg-white border-slate-200 hover:bg-slate-50 shadow-sm text-slate-700 rounded-xl transition-all"
+              >
+                <FileDown className="h-4 w-4 text-slate-500" />
+                Download Data
+              </Button>
 
-                {canCreate && (
-                  <>
-                    <input type="file" accept=".pdf,.doc,.docx" className="hidden" ref={fileInputRef} onChange={handleUpload} />
+              {/* Tiga Tombol ini disembunyikan untuk Lembaga Pendidikan */}
+              {!isLembagaPendidikan && (
+                <>
+                  {canCreate && (
+                    <>
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" ref={fileInputRef} onChange={handleUpload} />
+                      <Button 
+                        onClick={() => fileInputRef.current?.click()} 
+                        disabled={isActionDisabled} 
+                        className="h-11 px-5 flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-sm rounded-xl transition-all"
+                      >
+                        <UploadCloud className="h-4 w-4" />
+                        Upload SK Dirut
+                      </Button>
+                    </>
+                  )}
+
+                  {uploadedFilename && (
                     <Button 
-                      onClick={() => fileInputRef.current?.click()} 
-                      disabled={isActionDisabled} 
-                      className="h-11 px-5 flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-sm rounded-xl transition-all"
+                      onClick={handleViewDokumen} 
+                      disabled={isActionDisabled || !canRead} 
+                      variant="outline"
+                      className="h-11 px-5 flex items-center gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-all"
                     >
-                      <UploadCloud className="h-4 w-4" />
-                      Upload SK Dirut
+                      <Eye className="h-4 w-4" />
+                      Lihat Dokumen
                     </Button>
-                  </>
-                )}
+                  )}
 
-                {uploadedFilename && (
+                  <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2"></div>
+
                   <Button 
-                    onClick={handleViewDokumen} 
-                    disabled={isActionDisabled || !canRead} 
-                    variant="outline"
-                    className="h-11 px-5 flex items-center gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-all"
+                    onClick={() => setShowConfirmModal(true)} 
+                    disabled={isActionDisabled || totalData === 0} 
+                    className="h-11 px-6 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-xl font-semibold transition-all"
                   >
-                    <Eye className="h-4 w-4" />
-                    Lihat Dokumen
+                    <Send className="h-4 w-4" />
+                    Kirim ke Penetapan
                   </Button>
-                )}
-
-                <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2"></div>
-
-                <Button 
-                  onClick={() => setShowConfirmModal(true)} 
-                  disabled={isActionDisabled || totalData === 0} 
-                  className="h-11 px-6 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-xl font-semibold transition-all"
-                >
-                  <Send className="h-4 w-4" />
-                  Kirim ke Penetapan
-                </Button>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -339,6 +362,40 @@ const RekomtekPage = () => {
 
           <CardContent className="p-0">
             <div className="p-6 sm:p-8">
+              {activeTab === "pendaftar" && (
+                <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                  <Select value={jenjangFilter} onValueChange={(val) => { setJenjangFilter(val); setPageIndex(0); }}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-10">
+                      <SelectValue placeholder="Semua Jenjang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Jenjang</SelectItem>
+                      <SelectItem value="D1">D1</SelectItem>
+                      <SelectItem value="D2">D2</SelectItem>
+                      <SelectItem value="D3">D3</SelectItem>
+                      <SelectItem value="D4">D4</SelectItem>
+                      <SelectItem value="S1">S1</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {!isLembagaPendidikan && (
+                    <Select value={ptFilter} onValueChange={(val) => { setPtFilter(val); setPageIndex(0); }}>
+                      <SelectTrigger className="w-full sm:w-[280px] h-10">
+                        <SelectValue placeholder="Semua Perguruan Tinggi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua Perguruan Tinggi</SelectItem>
+                        {uniquePTs.map((pt, idx) => (
+                          <SelectItem key={idx} value={pt}>
+                            {pt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
               {activeTab === "pendaftar" ? (
                 <DataTable
                   isLoading={isLoading}

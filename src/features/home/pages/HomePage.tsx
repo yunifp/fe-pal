@@ -1,9 +1,8 @@
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
-import NotifikasiPengajuan from "../components/NotifikasiPengajuan";
 import { HomeGreeting } from "../components/HomeGreeting";
 import { useAuthRole } from "@/hooks/useAuthRole";
 import { Separator } from "@/components/ui/separator";
-import NotifikasiPerubahanDataMahasiswa from "../components/NotifikasiPerubahanDataMahasiswa";
+// import NotifikasiPerubahanDataMahasiswa from "../components/NotifikasiPerubahanDataMahasiswa";
 
 const HomePage = () => {
   useRedirectIfHasNotAccess("R");
@@ -12,18 +11,18 @@ const HomePage = () => {
     isStaffDivisiBeasiswa,
     isLembagaPendidikanVerifikator,
     isVerifikatorPjk,
-    isBpdp,
+    // isBpdp,
   } = useAuthRole();
 
   return (
     <div className="space-y-6">
       <HomeGreeting />
       <Separator />
-      {(isStaffDivisiBeasiswa ||
+      {isStaffDivisiBeasiswa ||
         isLembagaPendidikanVerifikator ||
-        isVerifikatorPjk) && <NotifikasiPengajuan />}
+        isVerifikatorPjk}
 
-      {isBpdp && <NotifikasiPerubahanDataMahasiswa />}
+      {/* {isBpdp && <NotifikasiPerubahanDataMahasiswa />} */}
     </div>
   );
 };

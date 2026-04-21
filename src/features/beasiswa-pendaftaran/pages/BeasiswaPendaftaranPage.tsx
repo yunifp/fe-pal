@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
@@ -8,7 +10,7 @@ import {
 } from "@/types/beasiswa";
 import FullDataBeasiswa from "../../../components/beasiswa/FullDataBeasiswa";
 import AlertSudahSubmit from "../components/AlertSudahSubmit";
-import FlowBeasiswaStepper from "@/components/beasiswa/FlowBeasiswaStepper";
+// import FlowBeasiswaStepper from "@/components/beasiswa/FlowBeasiswaStepper";
 import AlertDitolak from "../components/AlertDitolak";
 import AlertPerbaikan from "../components/AlertPerbaikan";
 import BeasiswaForm from "../components/BeasiswaForm";

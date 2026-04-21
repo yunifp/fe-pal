@@ -40,23 +40,9 @@ const PenetapanMainPage = () => {
       cell: ({ row }: any) => <span className="text-slate-600">{row.original.tanggal_penetapan}</span>
     },
     { 
-      accessorKey: "instansi", 
-      header: "Instansi",
-      cell: ({ row }: any) => <span className="text-slate-700">{row.original.instansi}</span>
-    },
-    { 
       accessorKey: "jumlah_kuota", 
       header: "Jumlah Kuota", 
       cell: ({ row }: any) => <span className="font-bold text-slate-800">{row.original.jumlah_kuota}</span> 
-    },
-    { 
-      accessorKey: "keterangan", 
-      header: "Keterangan",
-      cell: ({ row }: any) => (
-        <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
-          {row.original.keterangan}
-        </span>
-      )
     },
     {
       id: "aksi",

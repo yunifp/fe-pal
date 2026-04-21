@@ -38,16 +38,8 @@ import PendaftarByProvinsiPage from "./features/verifikasi-hasil-nasional/pages/
 import PendaftarListPage from "./features/beasiswa-hasil-verifikasi-daerah/pages/PendaftarListPage";
 
 import RegisterInstansiPage from "./features/Auth/pages/RegisterInstansiPage";
-import DbAdminVerifikatorPage from "./features/db-admin-verifikator/pages/DbAdminVerifikatorPage";
 import DbAdminVerifikatorDinasPage from "./features/db-admin-verifikator-dinas/pages/DbAdminVerifikatorDinasPage";
-import DbAdminVerifikatorCreatePage from "./features/db-admin-verifikator/pages/DbAdminVerifikatorCreatePage";
 import DbAdminVerifikatorDinasCreatePage from "./features/db-admin-verifikator-dinas/pages/DbAdminVerifikatorDinasCreatePage";
-import KeuanganPage from "./features/keuangan/pages/KeuanganPage";
-import KeuanganCreatePage from "./features/keuangan/pages/KeuanganCreatePage";
-import MahasiswaPksPage from "./features/mahasiswa-pks/pages/MahasiswaPksPage";
-import MahasiswaListPksPage from "./features/mahasiswa-pks/pages/MahasiswaPksListPage";
-import KeuanganEditPage from "./features/keuangan/pages/KeuanganEditPage";
-import DbAdminVerifikatorEditPage from "./features/db-admin-verifikator/pages/DbAdminVerifikatorEditPage";
 import DbAdminVerifikatorDinasEditPage from "./features/db-admin-verifikator-dinas/pages/DbAdminVerifikatorDinasEditPage";
 import LandingPageAlt from "./features/landing-alt/pages/LandingPageAlt";
 import PendaftaranBeasiswa from "./features/landing-alt/pages/PendaftaranBeasiswa";
@@ -55,11 +47,7 @@ import LoginInstansiPage from "./features/Auth/pages/LoginInstansiPage";
 import PerguruanTinggiPage from "./features/perguruan-tinggi/pages/PerguruanTinggiPage";
 import JenjangSekolahPage from "./features/sekolah/pages/JenjangSekolahPage";
 import JurusanSekolahPage from "./features/sekolah/pages/JurusanSekolahPage";
-import PembiayaanPage from "./features/pembiayaan/pages/PembiayaanPage";
-import PembiayaanBiayaHidupPage from "./features/pembiayaan/pages/PembiayaanBiayaHidupPage";
 import LogoutPage from "./features/Auth/pages/LogoutPage";
-import StatusAktifMahasiswaPage from "./features/status-aktif-mahasiswa/pages/StatusAktifMahasiswaPage";
-import PengajuanBiayaHidupPage from "./features/pengajuan-biaya-hidup/pages/PengajuanBiayaHidupPage";
 import PerguruanTinggiEditPage from "./features/perguruan-tinggi/pages/PerguruanTinggiEditPage";
 import PerguruanTinggiCreatePage from "./features/perguruan-tinggi/pages/PerguruanTinggiCreatePage";
 import ProgramStudiPage from "./features/program-studi/pages/ProgramStudiPage";
@@ -67,23 +55,6 @@ import ProgramStudiCreatePage from "./features/program-studi/pages/ProgramStudiC
 import ProgramStudiEditPage from "./features/program-studi/pages/ProgramStudiEditPage";
 import SettingKuotaPage from "./features/setting-kuota-butawarna/pages/SettingKuotaPage";
 import SettingJurusanProdiPage from "./features/setting-jurusan-prodi/pages/SettingJurusanProdiPage";
-import BatchBiayaHidupPage from "./features/batch-biaya-hidup/pages/BatchBiayaHidupPage";
-import PengajuanBiayaBukuPage from "./features/pengajuan-biaya-buku/pages/PengajuanBiayaBukuPage";
-import PengajuanBiayaPendidikanPage from "./features/pengajuan-biaya-pendidikan/pages/PengajuanBiayaPendidikanPage";
-import BatchBiayaBukuPage from "./features/batch-biaya-buku/pages/BatchBiayaBukuPage";
-import BatchBiayaPendidikanPage from "./features/batch-biaya-pendidikan/pages/BatchBiayaPendidikanPage";
-import PengajuanBiayaTransportasiPage from "./features/pengajuan-biaya-transportasi/pages/PengajuanBiayaTransportasiPage";
-import BatchBiayaTransportasiPage from "./features/batch-biaya-transportasi/pages/BatchBiayaBukuPage";
-import ProfilLembagaPendidikanPage from "./features/profil-lembaga-pendidikan/pages/ProfilLembagaPendidikanPage";
-import PerubahanDataMahasiswaPage from "./features/perubahan-data-mahasiswa/pages/PerubahanDataMahasiswaPage";
-import ValiditasKeaktifanMahasiswaPage from "./features/validitas-keaktifan-mahasiswa/pages/ValiditasKeaktifanMahasiswaPage";
-import MonitoringBiayaHidupPage from "./features/monitoring-biaya-hidup/pages/MonitoringBiayaHidupPage";
-import ValiditasIpkMahasiswaPage from "./features/validitas-ipk-mahasiswa/pages/ValiditasIpkMahasiswaPage";
-import PengajuanBiayaSertifikasiPage from "./features/pengajuan-biaya-sertifikasi/pages/PengajuanBiayaSertifikasiPage";
-import KeuanganSwakelolaPage from "./features/keuangan-swakelola/pages/KeuanganSwakelolaPage";
-import KeuanganSwakelolaCreatePage from "./features/keuangan-swakelola/pages/KeuanganSwakelolaCreatePage";
-import KeuanganSwakelolaEditPage from "./features/keuangan-swakelola/pages/KeuanganSwakelolaEditPage";
-import PerubahanDataLembagaPendidikanPage from "./features/perubahan-data-lembaga-pendidikan/pages/PerubahanDataLembagaPendidikanPage";
 import VerifikasiHasilNasional from "./features/verifikasi-hasil-nasional/pages/VerifikasiHasilNasional";
 import DetailPendaftarPage from "./features/verifikasi-hasil-nasional/components/DetailPendaftarPage";
 import ResetPinPage from "./features/Auth/pages/ResetPinPage";
@@ -345,18 +316,6 @@ function App() {
                 element={<BeasiswaHasilVerifikasiPage />}
               />
               <Route
-                path="/database/user-admin-verifikator"
-                element={<DbAdminVerifikatorPage />}
-              />
-              <Route
-                path="/database/user-admin-verifikator/create"
-                element={<DbAdminVerifikatorCreatePage />}
-              />
-              <Route
-                path="/database/user-admin-verifikator/edit/:id"
-                element={<DbAdminVerifikatorEditPage />}
-              />
-              <Route
                 path="/database/user-admin-verifikator-dinas"
                 element={<DbAdminVerifikatorDinasPage />}
               />
@@ -368,107 +327,7 @@ function App() {
                 path="/database/user-admin-verifikator-dinas/edit/:id"
                 element={<DbAdminVerifikatorDinasEditPage />}
               />
-              <Route path="/database/keuangan" element={<KeuanganPage />} />
-              <Route
-                path="/database/keuangan/create"
-                element={<KeuanganCreatePage />}
-              />
-              <Route
-                path="/database/keuangan/edit/:idTrxPks"
-                element={<KeuanganEditPage />}
-              />
-              <Route
-                path="/database/keuangan-swakelola"
-                element={<KeuanganSwakelolaPage />}
-              />
-              <Route
-                path="/database/keuangan-swakelola/create"
-                element={<KeuanganSwakelolaCreatePage />}
-              />
-              <Route
-                path="/database/keuangan-swakelola/edit/:idTrxPks"
-                element={<KeuanganSwakelolaEditPage />}
-              />
-              <Route
-                path="/database/mahasiswa"
-                element={<MahasiswaPksPage />}
-              />
-              <Route
-                path="/database/mahasiswa/pks/:idTrxPks"
-                element={<MahasiswaListPksPage />}
-              />
-              <Route path="/database/pembayaran" element={<PembiayaanPage />} />
-              <Route
-                path="/database/pembayaran/:idTrxPks/biaya-hidup"
-                element={<PembiayaanBiayaHidupPage />}
-              />
-              <Route
-                path="/database/update-status-aktif-mahasiswa"
-                element={<StatusAktifMahasiswaPage />}
-              />
-              <Route
-                path="/database/perubahan-data-mahasiswa"
-                element={<PerubahanDataMahasiswaPage />}
-              />
-              <Route
-                path="/database/perubahan-data-lembaga-pendidikan"
-                element={<PerubahanDataLembagaPendidikanPage />}
-              />
-              <Route
-                path="/pengajuan-biaya-hidup"
-                element={<PengajuanBiayaHidupPage />}
-              />
-              <Route
-                path="/batch-pembayaran/biaya-hidup"
-                element={<BatchBiayaHidupPage />}
-              />
-              <Route
-                path="/pengajuan-biaya-buku"
-                element={<PengajuanBiayaBukuPage />}
-              />
-              <Route
-                path="/batch-pembayaran/biaya-buku"
-                element={<BatchBiayaBukuPage />}
-              />
-              <Route
-                path="/pengajuan-biaya-pendidikan"
-                element={<PengajuanBiayaPendidikanPage />}
-              />
-              <Route
-                path="/batch-pembayaran/biaya-pendidikan"
-                element={<BatchBiayaPendidikanPage />}
-              />
-              <Route
-                path="/pengajuan-biaya-transportasi"
-                element={<PengajuanBiayaTransportasiPage />}
-              />
-              <Route
-                path="/pengajuan-biaya-sertifikasi"
-                element={<PengajuanBiayaSertifikasiPage />}
-              />
-              <Route
-                path="/batch-pembayaran/biaya-transportasi"
-                element={<BatchBiayaTransportasiPage />}
-              />
 
-              <Route
-                path="/validitas-keaktifan-mahasiswa"
-                element={<ValiditasKeaktifanMahasiswaPage />}
-              />
-              <Route
-                path="/validitas-ipk-mahasiswa"
-                element={<ValiditasIpkMahasiswaPage />}
-              />
-
-              <Route
-                path="/profil-lembaga-pendidikan"
-                element={<ProfilLembagaPendidikanPage />}
-              />
-
-              <Route
-                path="/monitoring-pengajuan/biaya-hidup"
-                element={<MonitoringBiayaHidupPage />}
-              />
               <Route
                 path="/verifikasi-hasil-nasional"
                 element={<VerifikasiHasilNasional />}

@@ -6,7 +6,6 @@ import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
 import { ShieldCheck, Eye, User } from "lucide-react";
 
-// ⚠️ Hooks (useNavigate, useHasAccess) must NOT be called inside cell renderers.
 // They belong in a wrapper component instead.
 const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();

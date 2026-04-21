@@ -4,55 +4,61 @@ import { masterService } from "@/services/masterService";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, type FC } from "react";
 import { useWatch, type Control, type UseFormSetValue } from "react-hook-form";
-import {
-  GraduationCap,
-  Loader2,
-  AlertCircle,
-  RotateCcw,
-  BookOpen,
-} from "lucide-react";
+import { GraduationCap, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-// import { Badge } from "@/components/ui/badge";
-
-type SlotType = "d1d2" | "non_d1d2" | "all";
+import {
+  extractIdPT,
+  extractJenjangFromProdiValue,
+  isJenjangD1D2,
+  isJenjangNonD1D2,
+} from "./stepper/PilihanJurusan";
 
 type Props = {
   kondisiButaWarna: string;
   index: number;
   control: Control<any>;
   remove: (index: number) => void;
-  perguruanTinggiOptions: {
+  onProdiReady?: (index: number) => void; // ← tambahkan
+  /**
+   * Hanya berisi PT yang punya prodi (sudah difilter di PilihanJurusan).
+   */
+  perguruanTinggiOptions: Array<{
     value: string;
     label: string;
     has_d1_d2?: boolean;
-    lockedPtValue?: string;
-    onResetSlot?: () => void; // ← TAMBAHAN
-  }[];
+  }>;
+  /**
+   * Map idPT → array jenjang prodi yang tersedia.
+   * Digunakan untuk:
+   *   - menentukan apakah PT bisa dipilih 2× (harus punya D1/D2 dan non-D1/D2)
+   *   - memfilter prodi yang ditampilkan berdasarkan sibling slot
+   */
+  ptProdiMap: Map<string, string[]>;
+  /**
+   * Semua nilai pilihan saat ini, untuk menghitung sibling dan disable PT.
+   */
+  allPilihan: Array<{
+    perguruan_tinggi?: string;
+    program_studi?: string;
+  }>;
   setValue: UseFormSetValue<any>;
   isPopulating?: boolean;
   isEmpty?: boolean;
-  slotType?: SlotType; // <-- BARU
-  disabledPtIds?: Set<string>; // PT yang tidak boleh dipilih di slot ini
-  lockedPtValue?: string; // PT yang di-lock untuk slot non_d1d2
-  onResetSlot?: () => void; // ← TAMBAHAN
+  onResetSlot?: () => void;
 };
 
-// Jenjang D1/D2 dan non-D1/D2
-const D1D2_JENJANG = ["D1", "D2"];
-const NON_D1D2_JENJANG = ["D3", "D4", "S1"];
-
-export const PerguruanTinggiItem: FC<Props> = ({
+const PerguruanTinggiItem: FC<Props> = ({
   kondisiButaWarna,
   index,
   control,
   perguruanTinggiOptions,
+  ptProdiMap,
+  allPilihan,
   setValue,
   isPopulating = false,
   isEmpty = false,
-  slotType = "all",
-  disabledPtIds = new Set(),
-  lockedPtValue,
-  onResetSlot, // ← TAMBAHAN
+  onResetSlot,
+  onProdiReady,
 }) => {
   const selectedPT = useWatch({
     control,
@@ -71,31 +77,34 @@ export const PerguruanTinggiItem: FC<Props> = ({
 
   const selectedJurusanSekolah = selectedJurusanSekolahRaw?.split("#")[0];
   const idPt = selectedPT?.split("#")[0];
-  // const namaPt = selectedPT?.split("#")[1] ?? "";
 
   // ── Refs ─────────────────────────────────────────────────────
   const isProdiLoadedRef = useRef(false);
-  // Ganti dua useEffect ref yang lama dengan ini
   const prevIdPtRef = useRef<string | undefined>(undefined);
+  const pendingProdiValueRef = useRef<string | undefined>(undefined);
 
-  // Di body komponen langsung (bukan dalam useEffect)
+  // Reset prodi saat user mengganti PT
   useEffect(() => {
     if (prevIdPtRef.current === undefined) {
-      // mount pertama, simpan nilai awal tanpa reset
+      // Mount pertama kali — simpan nilai existing, jangan reset
       prevIdPtRef.current = idPt;
       return;
     }
     if (prevIdPtRef.current === idPt) return;
 
-    // PT benar-benar berubah oleh user → reset prodi
+    // User mengganti PT secara aktif → reset prodi
     prevIdPtRef.current = idPt;
+    isProdiLoadedRef.current = false;
+    pendingProdiValueRef.current = undefined; // ← bersihkan pending juga
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
       shouldDirty: true,
       shouldValidate: true,
     });
   }, [idPt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Fetch Prodi ───────────────────────────────────────────────
+  // ── Fetch prodi untuk PT yang dipilih ─────────────────────────
+  // Data ini sudah di-cache oleh React Query dari batch-fetch di PilihanJurusan,
+  // sehingga request ini hampir selalu gratis (tidak ada network trip baru).
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
     queryKey: ["program-studi", idPt, kondisiButaWarna, selectedJurusanSekolah],
     queryFn: () =>
@@ -108,7 +117,16 @@ export const PerguruanTinggiItem: FC<Props> = ({
     refetchOnWindowFocus: false,
   });
 
-  // ── Filter Prodi berdasarkan slotType + buta warna ───────────
+  /**
+   * Filter prodi yang ditampilkan:
+   *  1. Buta warna → hanya boleh_buta_warna = "Y"
+   *  2. Sibling slot memilih PT yang sama:
+   *       - Sibling sudah pilih D1/D2 → slot ini hanya tampilkan non-D1/D2
+   *       - Sibling sudah pilih non-D1/D2 → slot ini hanya tampilkan D1/D2
+   *
+   * Value prodi disimpan sebagai "idProdi#namaProdi#jenjang" agar parent
+   * bisa ekstrak jenjang tanpa fetch ulang.
+   */
   const filteredProdiOptions = useMemo(() => {
     if (!responseProdi?.data) return [];
 
@@ -119,62 +137,114 @@ export const PerguruanTinggiItem: FC<Props> = ({
       list = list.filter((ps) => ps.boleh_buta_warna === "Y");
     }
 
-    // Filter jenjang berdasarkan slot
-    if (slotType === "d1d2") {
-      list = list.filter((ps) => D1D2_JENJANG.includes(ps.jenjang));
-    } else if (slotType === "non_d1d2") {
-      list = list.filter((ps) => NON_D1D2_JENJANG.includes(ps.jenjang));
+    // Filter berdasarkan sibling
+    if (idPt) {
+      const sibling = allPilihan.find((p, i) => {
+        if (i === index) return false;
+        return extractIdPT(p?.perguruan_tinggi ?? "") === idPt;
+      });
+
+      if (sibling?.program_studi) {
+        const siblingJenjang = extractJenjangFromProdiValue(
+          sibling.program_studi,
+        );
+        if (isJenjangD1D2(siblingJenjang)) {
+          list = list.filter((ps) => isJenjangNonD1D2(ps.jenjang));
+        } else if (isJenjangNonD1D2(siblingJenjang)) {
+          list = list.filter((ps) => isJenjangD1D2(ps.jenjang));
+        }
+      }
     }
-    // slotType === "all" → tidak filter jenjang
 
     return list.map((ps) => ({
-      value: `${ps.id_prodi}#${ps.nama_prodi}`,
+      value: `${ps.id_prodi}#${ps.nama_prodi}#${ps.jenjang}`,
       label: `${ps.nama_prodi} (${ps.jenjang})`,
       kuota: ps.kuota,
     }));
-  }, [responseProdi, kondisiButaWarna, slotType]);
+  }, [responseProdi, kondisiButaWarna, idPt, allPilihan, index]);
 
-  // Build filtered PT options untuk slot ini
-  const filteredPtOptions = useMemo(() => {
-    return perguruanTinggiOptions
-      .filter((pt) => {
-        // Filter berdasarkan slotType
-        if (slotType === "d1d2") return pt.has_d1_d2 === true;
-        if (slotType === "non_d1d2") return pt.has_d1_d2 === true; // pasangan D1/D2 juga PT yang sama
-        return true;
-      })
-      .map((pt) => ({
-        ...pt,
-        // Disable PT yang sudah dipakai slot lain
-        isDisabled: disabledPtIds.has(pt.value.split("#")[0]),
-      }));
-  }, [perguruanTinggiOptions, slotType, disabledPtIds]);
+  /**
+   * Disable PT yang tidak bisa dipilih di slot ini.
+   *
+   * PT di-disable jika:
+   *  a. PT biasa (tidak punya D1/D2 dan non-D1/D2 sekaligus) sudah dipilih
+   *     di slot lain.
+   *  b. PT yang layak 2× sudah dipilih 2× di slot lain.
+   *  c. PT yang layak 2× sudah dipilih 1× di slot lain dengan prodi D1/D2,
+   *     dan PT ini tidak punya prodi non-D1/D2 (atau sebaliknya) → tidak ada
+   *     kombinasi valid tersisa. Kondisi ini tercermin dari filteredProdiOptions
+   *     yang akan kosong, jadi kita tidak perlu disable di sini (user bisa pilih
+   *     PT, lalu lihat pesan "tidak ada prodi").
+   */
+  const disabledPtIdSet = useMemo(() => {
+    const disabled = new Set<string>();
 
-  useEffect(() => {
-    if (!isFetchingProdi && filteredProdiOptions.length > 0) {
-      isProdiLoadedRef.current = true;
-    }
-  }, [isFetchingProdi, filteredProdiOptions]);
+    perguruanTinggiOptions.forEach((opt) => {
+      const optIdPT = extractIdPT(opt.value);
+      if (optIdPT === idPt) return; // jangan disable PT yang sudah dipilih di slot ini
 
-  const selectedProdi = useMemo(() => {
-    if (!filteredProdiOptions.length || !selectedProdiValue) return null;
-    return filteredProdiOptions.find((p) => p.value === selectedProdiValue);
-  }, [filteredProdiOptions, selectedProdiValue]);
+      const countInOtherSlots = allPilihan.filter((p, i) => {
+        if (i === index) return false;
+        return extractIdPT(p?.perguruan_tinggi ?? "") === optIdPT;
+      }).length;
 
-  useEffect(() => {
-    if (!lockedPtValue) return;
-    if (selectedPT === lockedPtValue) return; // sudah benar, skip
-    setValue(`pilihan_program_studi.${index}.perguruan_tinggi`, lockedPtValue, {
-      shouldDirty: true,
+      if (countInOtherSlots === 0) return;
+
+      // Cek apakah PT layak dipilih 2×
+      const prodiList = ptProdiMap.get(optIdPT) ?? [];
+      const ptCanDouble =
+        prodiList.some((j) => isJenjangD1D2(j)) &&
+        prodiList.some((j) => isJenjangNonD1D2(j));
+
+      if (!ptCanDouble) {
+        // PT biasa: sudah dipilih 1× → disable
+        disabled.add(optIdPT);
+        return;
+      }
+
+      if (countInOtherSlots >= 2) {
+        // PT dengan D1/D2 sudah dipilih 2× → disable
+        disabled.add(optIdPT);
+      }
     });
-  }, [lockedPtValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Reset prodi jika tidak valid ──────────────────────────────
+    return disabled;
+  }, [perguruanTinggiOptions, allPilihan, index, idPt, ptProdiMap]);
+
+  const filteredPtOptions = useMemo(
+    () =>
+      perguruanTinggiOptions.map((opt) => ({
+        ...opt,
+        isDisabled: disabledPtIdSet.has(extractIdPT(opt.value)),
+      })),
+    [perguruanTinggiOptions, disabledPtIdSet],
+  );
+
+  // Mark prodi sudah ter-load
+  useEffect(() => {
+    if (!idPt) {
+      onProdiReady?.(index);
+      return;
+    }
+    if (isFetchingProdi) return; // ← tunggu benar-benar selesai
+
+    isProdiLoadedRef.current = true;
+    onProdiReady?.(index);
+  }, [idPt, isFetchingProdi]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedProdi = useMemo(
+    () =>
+      filteredProdiOptions.find((p) => p.value === selectedProdiValue) ?? null,
+    [filteredProdiOptions, selectedProdiValue],
+  );
+
+  // Reset prodi jika tidak lagi valid setelah filter berubah
   useEffect(() => {
     if (isFetchingProdi) return;
     if (!isProdiLoadedRef.current) return;
     if (isPopulating) return;
     if (!selectedProdiValue) return;
+    if (filteredProdiOptions.length === 0 && !!idPt) return;
 
     const stillValid = filteredProdiOptions.some(
       (opt) => opt.value === selectedProdiValue,
@@ -194,89 +264,97 @@ export const PerguruanTinggiItem: FC<Props> = ({
     setValue,
   ]);
 
-  // ── Reset handler ─────────────────────────────────────────────
-  const handleReset = () => {
+  // BARU: setelah prodi ter-load, cek apakah nilai existing perlu di-restore
+  useEffect(() => {
+    if (!isProdiLoadedRef.current) return;
+    if (isFetchingProdi) return;
+    if (isPopulating) return;
+    if (!selectedProdiValue) return;
+    if (filteredProdiOptions.length === 0) return;
+
+    // Nilai sudah ada di options → tidak perlu apa-apa
+    const alreadyValid = filteredProdiOptions.some(
+      (opt) => opt.value === selectedProdiValue,
+    );
+
+    // Jika tidak valid DAN ada di options dengan id yang sama (format berbeda) → coba exact match by id
+    if (!alreadyValid) {
+      const selectedId = selectedProdiValue.split("#")[0];
+      const match = filteredProdiOptions.find(
+        (opt) => opt.value.split("#")[0] === selectedId,
+      );
+      if (match) {
+        setValue(`pilihan_program_studi.${index}.program_studi`, match.value, {
+          shouldDirty: false,
+        });
+      }
+    }
+  }, [
+    isProdiLoadedRef.current,
+    isFetchingProdi,
+    isPopulating,
+    filteredProdiOptions,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleResetProdi = () => {
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
       shouldDirty: true,
       shouldValidate: true,
     });
   };
 
-  // ── Label slot ────────────────────────────────────────────────
-  const slotLabel =
-    slotType === "d1d2"
-      ? "Pilihan D1/D2"
-      : slotType === "non_d1d2"
-        ? "Pilihan D3/D4/S1"
-        : `Pilihan ${index + 1}`;
+  // ── Label slot dinamis ────────────────────────────────────────
+  const slotLabel = useMemo(() => {
+    if (!idPt) return `Pilihan ${index + 1}`;
+    const hasSibling = allPilihan.some((p, i) => {
+      if (i === index) return false;
+      return extractIdPT(p?.perguruan_tinggi ?? "") === idPt;
+    });
+    if (!hasSibling) return `Pilihan ${index + 1}`;
 
-  const slotBadgeColor =
-    slotType === "d1d2"
-      ? "bg-purple-100 text-purple-700 border-purple-200"
-      : slotType === "non_d1d2"
-        ? "bg-blue-100 text-blue-700 border-blue-200"
-        : "bg-gray-100 text-gray-700 border-gray-200";
+    const currentJenjang = extractJenjangFromProdiValue(
+      selectedProdiValue ?? "",
+    );
+    if (isJenjangD1D2(currentJenjang)) return `Pilihan ${index + 1} (D1/D2)`;
+    if (isJenjangNonD1D2(currentJenjang))
+      return `Pilihan ${index + 1} (D3/D4/S1)`;
+    return `Pilihan ${index + 1} (pasangan)`;
+  }, [idPt, index, allPilihan, selectedProdiValue]);
 
-  // ── Render ────────────────────────────────────────────────────
   return (
-    <Card
-      className={`relative overflow-hidden shadow-none ${
-        slotType === "d1d2"
-          ? "border-purple-200"
-          : slotType === "non_d1d2"
-            ? "border-blue-200"
-            : ""
-      }`}>
+    <Card className="relative overflow-hidden shadow-none">
       <CardContent className="pt-4">
         {/* Header */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <div
-            className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              slotType === "d1d2"
-                ? "bg-purple-100 text-purple-700"
-                : slotType === "non_d1d2"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700"
-            }`}>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700">
             <GraduationCap className="w-4 h-4" />
           </div>
-
-          {/* Nama PT (read-only, sudah fixed dari populate) */}
-          {/* <h3 className="font-semibold text-base">{namaPt}</h3> */}
-
-          {/* Badge slot type */}
-          <span
-            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${slotBadgeColor}`}>
-            <BookOpen className="w-3 h-3" />
+          <span className="text-sm font-medium text-muted-foreground">
             {slotLabel}
           </span>
         </div>
 
-        {/* Badge wajib diisi */}
         {isEmpty && !isPopulating && (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 mb-3">
             <AlertCircle className="w-3 h-3" />
-            Wajib diisi
+            Program studi belum dipilih
           </span>
         )}
 
-        {slotType === "d1d2" && selectedPT && !isPopulating && (
+        {selectedPT && !isPopulating && (
           <button
             type="button"
             onClick={onResetSlot}
-            title="Reset pilihan ini"
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border text-muted-foreground border-muted hover:text-destructive hover:border-destructive hover:bg-destructive/5 transition-colors duration-150 mb-3">
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border text-muted-foreground border-muted hover:text-destructive hover:border-destructive hover:bg-destructive/5 transition-colors duration-150 mb-3 mr-2">
             <RotateCcw className="w-3 h-3" />
             Reset Pilihan
           </button>
         )}
 
-        {/* Tombol reset program studi */}
         {selectedProdiValue && !isPopulating && (
           <button
             type="button"
-            onClick={handleReset}
-            title="Reset program studi"
+            onClick={handleResetProdi}
             className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border text-muted-foreground border-muted hover:text-destructive hover:border-destructive hover:bg-destructive/5 transition-colors duration-150 mb-3">
             <RotateCcw className="w-3 h-3" />
             Reset Program Studi
@@ -284,15 +362,6 @@ export const PerguruanTinggiItem: FC<Props> = ({
         )}
 
         <div className="grid grid-cols-1 gap-4">
-          {/* PT sudah fixed, tampilkan sebagai read-only info */}
-          {/* <div className="p-3 rounded-md bg-muted/40 border text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{namaPt}</span>
-            {slotType !== "all" && (
-              <span className="ml-2 text-xs">
-                · Jenjang: {slotType === "d1d2" ? "D1 / D2" : "D3 / D4 / S1"}
-              </span>
-            )}
-          </div> */}
           <CustSearchableSelect
             name={`pilihan_program_studi.${index}.perguruan_tinggi`}
             control={control}
@@ -300,22 +369,8 @@ export const PerguruanTinggiItem: FC<Props> = ({
             options={filteredPtOptions}
             placeholder="Pilih perguruan tinggi"
             isRequired
-            // Slot non_d1d2 PT-nya otomatis mengikuti pasangan D1/D2 → read-only
-            disabled={slotType === "non_d1d2" && !!lockedPtValue} // ← bukan isDisabled
           />
-          {/* <CustSearchableSelect
-            name={`pilihan_program_studi.${index}.perguruan_tinggi`}
-            control={control}
-            label="Perguruan Tinggi"
-            options={perguruanTinggiOptions.filter((pt) => {
-              if (slotType === "d1d2") return pt.has_d1_d2 === true;
-              if (slotType === "non_d1d2") return true;
-              return true;
-            })}
-            placeholder="Pilih perguruan tinggi"
-            isRequired
-          /> */}
-          {/* Program Studi */}
+
           <div className="space-y-2">
             {(isFetchingProdi || isPopulating) && idPt ? (
               <>
@@ -339,7 +394,7 @@ export const PerguruanTinggiItem: FC<Props> = ({
                 options={filteredProdiOptions}
                 placeholder={
                   filteredProdiOptions.length === 0 && idPt
-                    ? `Tidak ada prodi ${slotType === "d1d2" ? "D1/D2" : slotType === "non_d1d2" ? "D3/D4/S1" : ""} tersedia`
+                    ? "Tidak ada program studi tersedia"
                     : "Pilih program studi"
                 }
                 isRequired
@@ -348,7 +403,6 @@ export const PerguruanTinggiItem: FC<Props> = ({
           </div>
         </div>
 
-        {/* Kuota info */}
         {selectedProdi && !isFetchingProdi && !isPopulating && (
           <p className="text-sm text-muted-foreground mt-2">
             Total kuota:{" "}
@@ -361,3 +415,5 @@ export const PerguruanTinggiItem: FC<Props> = ({
     </Card>
   );
 };
+
+export { PerguruanTinggiItem };

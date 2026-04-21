@@ -146,6 +146,25 @@ const BeasiswaVerifikasiKotaPage = () => {
 
   const totalSiapKirim = countSiapKirimRes?.data?.count ?? 0;
 
+  const { data: refDokumenUmumRes } = useQuery({
+    queryKey: ["ref-dokumen-umum-kabkota"],
+    queryFn: () => beasiswaService.getRefDokumenUmum({ is_kabkota: "Y" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const { data: refDokumenKhususRes } = useQuery({
+    queryKey: ["ref-dokumen-khusus-kabkota"],
+    queryFn: () => beasiswaService.getRefDokumenKhusus({ is_kabkota: "Y" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const refDokumenUmum = refDokumenUmumRes?.data?.result ?? [];
+  const refDokumenKhusus = refDokumenKhususRes?.data?.result ?? [];
+
   useEffect(() => {
     if (isError) {
       toast.error(error.message || "Terjadi kesalahan saat memuat data.");
@@ -164,11 +183,52 @@ const BeasiswaVerifikasiKotaPage = () => {
     if (fileBAInputRef.current) fileBAInputRef.current.value = "";
   };
 
+  // const handleDownloadRekap = async () => {
+  //   try {
+  //     setIsDownloading(true);
+  //     const isSpecialFlow =
+  //       filterIdFlow === "lulus" || filterIdFlow === "tidak_lulus";
+  //     await beasiswaService.downloadVerifikasiKabkota({
+  //       idBeasiswa: beasiswaAktif?.id ?? 0,
+  //       kodeProvinsi,
+  //       kodeKabkota,
+  //       search: debouncedSearch,
+  //       idFlow:
+  //         !isSpecialFlow && filterIdFlow !== "all"
+  //           ? Number(filterIdFlow)
+  //           : undefined,
+  //       idJalur: filterIdJalur !== "all" ? Number(filterIdJalur) : undefined,
+  //       statusLulus:
+  //         filterIdFlow === "lulus"
+  //           ? "Y"
+  //           : filterIdFlow === "tidak_lulus"
+  //             ? "N"
+  //             : undefined,
+  //     });
+  //     toast.success("Rekap berhasil diunduh");
+  //   } catch (err: any) {
+  //     toast.error(err?.message ?? "Gagal mengunduh rekap");
+  //   } finally {
+  //     setIsDownloading(false);
+  //   }
+  // };
+
+  const isRefReady = refDokumenUmum.length > 0;
+  !isLoading && !isLoading;
+
   const handleDownloadRekap = async () => {
+    if (!isRefReady) {
+      console.log(refDokumenKhusus);
+      toast.error("Referensi dokumen belum siap, tunggu sebentar...");
+      return;
+    }
+
     try {
       setIsDownloading(true);
+
       const isSpecialFlow =
         filterIdFlow === "lulus" || filterIdFlow === "tidak_lulus";
+
       await beasiswaService.downloadVerifikasiKabkota({
         idBeasiswa: beasiswaAktif?.id ?? 0,
         kodeProvinsi,
@@ -185,7 +245,18 @@ const BeasiswaVerifikasiKotaPage = () => {
             : filterIdFlow === "tidak_lulus"
               ? "N"
               : undefined,
+
+        // 🔥 WAJIB sesuai service
+        refDokumenUmum: refDokumenUmum.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
+        refDokumenKhusus: refDokumenKhusus.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
       });
+
       toast.success("Rekap berhasil diunduh");
     } catch (err: any) {
       toast.error(err?.message ?? "Gagal mengunduh rekap");
@@ -435,7 +506,7 @@ const BeasiswaVerifikasiKotaPage = () => {
               Upload Dokumen
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Upload SK dan BA untuk{" "}
+              Upload SR dan BA untuk{" "}
               <span className="font-medium text-foreground">
                 {totalSiapKirim} pendaftar
               </span>{" "}
@@ -445,7 +516,7 @@ const BeasiswaVerifikasiKotaPage = () => {
 
           <div className="space-y-3 py-1">
             <FileUploadZone
-              label="Surat Keputusan (SK)"
+              label="Surat Rekomendasi (SR)"
               file={selectedSKFile}
               onFile={setSelectedSKFile}
               inputRef={fileSKInputRef}

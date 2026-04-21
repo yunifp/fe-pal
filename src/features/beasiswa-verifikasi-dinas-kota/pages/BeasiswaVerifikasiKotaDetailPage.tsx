@@ -103,7 +103,7 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
   }, [fullDataBeasiswa, setValue]);
 
   const selectedStatus = watch("selectedStatus");
-  const isReadOnly = fullDataBeasiswa?.data_beasiswa?.id_flow !== 6;
+  const isReadOnly = fullDataBeasiswa?.data_beasiswa?.tag_dinas_kabkot == "Y";
 
   const mutation = useMutation({
     mutationFn: async (data: VerifikasiFormData) => {
@@ -205,28 +205,29 @@ const BeasiswaVerifikasiKotaDetailPage = () => {
               verifikatorMode="dinas"
               isReadOnly={isReadOnly}
             />
-            {fullDataBeasiswa?.data_beasiswa?.id_flow !== undefined && (
-              <div className="rounded-xl border border-border bg-background p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+            {fullDataBeasiswa?.data_beasiswa?.id_flow !== undefined &&
+              isReadOnly && (
+                <div className="rounded-xl border border-border bg-background p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-none">
+                        Status Pendaftaran
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Progres alur verifikasi beasiswa
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold leading-none">
-                      Status Pendaftaran
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Progres alur verifikasi beasiswa
-                    </p>
+                  <div className="border-t border-border/40 pt-4">
+                    <FlowBeasiswaStepper
+                      currentIdFlow={fullDataBeasiswa.data_beasiswa.id_flow!}
+                    />
                   </div>
                 </div>
-                <div className="border-t border-border/40 pt-4">
-                  <FlowBeasiswaStepper
-                    currentIdFlow={fullDataBeasiswa.data_beasiswa.id_flow!}
-                  />
-                </div>
-              </div>
-            )}
+              )}
           </div>
 
           <div className="lg:col-span-1">

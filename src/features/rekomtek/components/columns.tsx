@@ -13,7 +13,7 @@ export const getRekomtekColumns = (
 ): ColumnDef<any>[] => [
   {
     id: "no",
-    header: "No (Ranking)",
+    header: "No",
     cell: ({ row }) => <span className="text-slate-500">{pageIndex * pageSize + row.index + 1}</span>,
   },
   {
@@ -41,18 +41,18 @@ export const getRekomtekColumns = (
     },
   },
   {
-    accessorKey: "jenjang_sekolah",
+    accessorKey: "jenjang_pendidikan_diterima",
     header: "Jenjang Pendidikan",
-    cell: ({ row }) => <span className="text-slate-600">{row.original.jenjang_sekolah || "-"}</span>
+    cell: ({ row }) => <span className="text-slate-600">{row.original.jenjang_pendidikan_diterima || "-"}</span>
   },
   {
     accessorKey: "pt_final",
-    header: "PT Final",
+    header: "Perguruan Tinggi Diterima",
     cell: ({ row }) => <span className="text-slate-700 font-medium">{row.original.pt_final}</span>
   },
   {
     accessorKey: "prodi_final",
-    header: "Prodi Final",
+    header: "Program Studi Diterima",
     cell: ({ row }) => <span className="text-slate-600">{row.original.prodi_final}</span>
   },
   {

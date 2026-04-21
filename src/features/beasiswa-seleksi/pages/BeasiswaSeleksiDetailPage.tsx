@@ -92,7 +92,7 @@ const BeasiswaSeleksiDetailPage = () => {
       data_orang_tua_is_valid: "",
       data_tempat_bekerja_is_valid: "",
       data_pendidikan_is_valid: "",
-      data_program_studi_is_valid: "1",
+      data_program_studi_is_valid: "Y",
       data_persyaratan_umum: [],
       data_persyaratan_khusus: [],
       data_persyaratan_dinas: [
@@ -112,10 +112,8 @@ const BeasiswaSeleksiDetailPage = () => {
     control,
     formState: { errors },
     handleSubmit,
-    reset,
     setValue,
     watch,
-    getValues,
   } = methods;
 
   const errorMessages = extractErrorMessages(errors);
@@ -137,7 +135,7 @@ const BeasiswaSeleksiDetailPage = () => {
 
       return beasiswaService.updateFlowBeasiswa(
         id,
-        selectedStatus!,
+        data.selectedStatus!, // ✅ baca dari data langsung
         data.catatan || "",
         data,
         "ditjenbun",
@@ -166,13 +164,15 @@ const BeasiswaSeleksiDetailPage = () => {
   });
 
   const onSubmit = (data: VerifikasiFormData) => {
-    // Menyalin data agar tidak memanipulasi object aslinya secara langsung
-    const submitData = { ...data };
-
-    // Menghapus field selectedStatus tanpa perlu mendeklarasikan variabel yang tidak dipakai (unused-vars)
-    delete submitData.selectedStatus;
-
-    mutation.mutate(submitData);
+    // Guard flow 4: wajib ada field koreksi
+    if (
+      data.selectedStatus === 4 &&
+      (!data.koreksi_fields || data.koreksi_fields.length === 0)
+    ) {
+      toast.error("Pilih minimal 1 field yang perlu dikoreksi");
+      return;
+    }
+    mutation.mutate(data); // kirim data lengkap, selectedStatus dibaca di mutationFn
   };
 
   return (
@@ -200,6 +200,8 @@ const BeasiswaSeleksiDetailPage = () => {
                 register={register}
                 control={control}
                 errors={errors}
+                showKoreksi={selectedStatus === 4} // ← tambah
+                setValue={setValue}
               />
             </div>
 
@@ -208,11 +210,9 @@ const BeasiswaSeleksiDetailPage = () => {
                 onSubmit={handleSubmit(onSubmit)}
                 register={register}
                 errors={errors}
-                reset={reset}
                 setValue={setValue}
                 watch={watch}
-                getValues={getValues}
-                // 'control' dihapus karena tidak dibutuhkan oleh CardVerifikasiBeasiswaProps yang sudah diperbaiki sebelumnya
+                idTrxBeasiswa={id} // ← tambah
               />
             </div>
           </div>

@@ -1,12 +1,10 @@
 import { CustTextArea } from "@/components/CustTextArea";
 import type { VerifikasiFormData } from "@/types/beasiswa";
 import { AlertCircle, Check, X } from "lucide-react";
-import { useState, type FC } from "react";
+import { useState, useEffect, type FC } from "react";
 import type {
   FieldErrors,
-  UseFormGetValues,
   UseFormRegister,
-  UseFormReset,
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
@@ -16,9 +14,8 @@ interface CardVerifikasiBeasiswaProps {
   register: UseFormRegister<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
   setValue: UseFormSetValue<VerifikasiFormData>;
-  reset: UseFormReset<VerifikasiFormData>;
   watch: UseFormWatch<VerifikasiFormData>;
-  getValues: UseFormGetValues<VerifikasiFormData>;
+  idTrxBeasiswa: number; // ← tambah
 }
 
 const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
@@ -26,16 +23,32 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
   register,
   errors,
   setValue,
-  reset,
   watch,
-  getValues,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
+
+  const VALID_FIELDS: (keyof VerifikasiFormData)[] = [
+    "data_pribadi_is_valid",
+    "data_tempat_tinggal_bekerja_is_valid",
+    "data_orang_tua_is_valid",
+    "data_tempat_bekerja_is_valid",
+    "data_pendidikan_is_valid",
+  ];
+
+  // const hasAnyInvalid = VALID_FIELDS.some((field) => watch(field) === "N");
+  const watchUmum = watch("data_persyaratan_umum") ?? [];
+  const watchKhusus = watch("data_persyaratan_khusus") ?? [];
+
+  const hasAnyInvalid =
+    VALID_FIELDS.some((field) => watch(field) === "N") ||
+    watchUmum.some((d) => d?.is_valid === "N") ||
+    watchKhusus.some((d) => d?.is_valid === "N");
 
   const statusOptions = [
     {
       value: 13,
       label: "Lulus Administrasi",
+      disabled: hasAnyInvalid,
       icon: Check,
       color: "emerald",
       bgColor: "bg-emerald-50",
@@ -68,19 +81,24 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
     },
   ];
 
+  // State untuk field koreksi yang dipilih
+  const [koreksiFields, setKoreksiFields] = useState<
+    { field: string; label: string; catatan: string }[]
+  >([]);
+
+  // Sync ke form setiap kali koreksiFields berubah
+  useEffect(() => {
+    setValue("koreksi_fields", koreksiFields);
+  }, [koreksiFields, setValue]);
+
   const handleStatusChange = (value: number) => {
+    if (value !== 4) {
+      setKoreksiFields([]);
+    }
     setSelectedStatus(value);
     setValue("selectedStatus", value);
-
-    if (value !== 1000) {
-      reset({
-        ...getValues(),
-        catatan: watch("catatan"),
-        selectedStatus: value,
-        kode_dinas_provinsi: "",
-        kode_dinas_kabkota: "",
-      });
-    }
+    setValue("kode_dinas_provinsi", "");
+    setValue("kode_dinas_kabkota", "");
   };
 
   return (
@@ -108,21 +126,26 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
             {statusOptions.map((option) => {
               const Icon = option.icon;
               const isSelected = selectedStatus === option.value;
+              const isDisabled = option.disabled;
 
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => handleStatusChange(option.value)}
+                  onClick={() =>
+                    !isDisabled && handleStatusChange(option.value)
+                  }
                   className={`
-                    w-full flex items-center gap-3 p-4 rounded-xl border-2 
-                    transition-all duration-200 text-left
-                    ${
-                      isSelected
-                        ? `${option.activeColor} border-transparent shadow-md scale-[1.02]`
-                        : `${option.bgColor} ${option.borderColor} ${option.hoverColor}`
-                    }
-                  `}>
+      w-full flex items-center gap-3 p-4 rounded-xl border-2 
+      transition-all duration-200 text-left
+      ${
+        isDisabled
+          ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200"
+          : isSelected
+            ? `${option.activeColor} border-transparent shadow-md scale-[1.02]`
+            : `${option.bgColor} ${option.borderColor} ${option.hoverColor}`
+      }
+    `}>
                   <div
                     className={`
                     flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
@@ -145,7 +168,12 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
               );
             })}
           </div>
-
+          {hasAnyInvalid && (
+            <p className="text-xs text-amber-600 flex items-center gap-1.5 -mt-1">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              Ada seksi yang ditandai "Perlu Diperbaiki"
+            </p>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 block">
               Catatan Verifikasi

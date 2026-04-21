@@ -140,7 +140,8 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
 
       const beasiswa = row.original;
       const navigate = useNavigate();
-      const isVerifikasi = beasiswa.id_flow === 6;
+      const isVerifikasi =
+        beasiswa.tag_dinas_kabkot === "N" && beasiswa.id_flow == 6;
 
       return (
         <Button

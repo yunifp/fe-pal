@@ -1,13 +1,24 @@
 import axiosInstanceBeasiswa from "@/lib/axiosInstanceBeasiswa";
 
 export const rekomtekService = {
-  getListRekomtek: async (page: number = 1, limit: number = 10, search: string = "") => {
-    const response = await axiosInstanceBeasiswa.get(`/rekomtek/list`, { params: { page, limit, search } });
+  getListRekomtek: async (
+    page: number = 1,
+    limit: number = 10,
+    search: string = "",
+    jenjang?: string,
+    perguruan_tinggi?: string
+  ) => {
+    const response = await axiosInstanceBeasiswa.get(`/rekomtek/list`, {
+      params: { page, limit, search, jenjang, perguruan_tinggi },
+    });
     return response.data;
   },
 
-  downloadDataRekomtek: async () => {
-    const response = await axiosInstanceBeasiswa.get(`/rekomtek/download`, { responseType: "blob" });
+  downloadDataRekomtek: async (jenjang?: string, perguruan_tinggi?: string) => {
+    const response = await axiosInstanceBeasiswa.get(`/rekomtek/download`, {
+      params: { jenjang, perguruan_tinggi },
+      responseType: "blob",
+    });
     return response.data;
   },
 
@@ -17,9 +28,13 @@ export const rekomtekService = {
   },
 
   uploadDokumen: async (formData: FormData) => {
-    const response = await axiosInstanceBeasiswa.post(`/rekomtek/upload-dokumen`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await axiosInstanceBeasiswa.post(
+      `/rekomtek/upload-dokumen`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
     return response.data;
   },
 
@@ -29,16 +44,21 @@ export const rekomtekService = {
   },
 
   setMengundurkanDiri: async (id: number) => {
-    const response = await axiosInstanceBeasiswa.put(`/rekomtek/mengundurkan-diri/${id}`);
+    const response = await axiosInstanceBeasiswa.put(
+      `/rekomtek/mengundurkan-diri/${id}`
+    );
     return response.data;
   },
+
   getSummaryKuota: async () => {
     const response = await axiosInstanceBeasiswa.get(`/rekomtek/summary-kuota`);
     return response.data;
   },
 
   batalMengundurkanDiri: async (id: number) => {
-    const response = await axiosInstanceBeasiswa.put(`/rekomtek/batal-mengundurkan-diri/${id}`);
+    const response = await axiosInstanceBeasiswa.put(
+      `/rekomtek/batal-mengundurkan-diri/${id}`
+    );
     return response.data;
-  }
+  },
 };

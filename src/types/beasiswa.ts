@@ -331,6 +331,7 @@ export interface ITrxBeasiswa {
   kode_dinas_kabkota?: string | null;
   nama_dinas_provinsi?: string | null;
   nama_dinas_kabkota?: string | null;
+  tag_dinas_kabkot?: string | null;
 
   // =====================
   // Relasi
@@ -1021,43 +1022,62 @@ export interface CatatanDataSection {
   created_by: string | null;
 }
 
-const persyaratanSchema = z
-  .object({
-    id: z.string(),
-    kategori: z.enum(["Umum", "Khusus", "Dinas"]),
-    is_valid: z.enum(["Y", "N"], {
-      required_error: "Kesesuaian wajib dipilih",
-    }),
-    catatan: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.is_valid === "N" && !data.catatan?.trim()) {
-      ctx.addIssue({
-        path: ["catatan"],
-        message: "Catatan wajib diisi jika persyaratan tidak sesuai",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-  });
+// const persyaratanSchema = z
+//   .object({
+//     id: z.string(),
+//     kategori: z.enum(["Umum", "Khusus", "Dinas"]),
+//     is_valid: z.enum(["Y", "N"], {
+//       required_error: "Kesesuaian wajib dipilih",
+//     }),
+//     catatan: z.string().optional(),
+//   })
+//   .superRefine((data, ctx) => {
+//     if (data.is_valid === "N" && !data.catatan?.trim()) {
+//       ctx.addIssue({
+//         path: ["catatan"],
+//         message: "Catatan wajib diisi jika persyaratan tidak sesuai",
+//         code: z.ZodIssueCode.custom,
+//       });
+//     }
+//   });
 
-const persyaratanDinasSchema = z
-  .object({
-    id: z.string().optional(),
-    kategori: z.enum(["Umum", "Khusus", "Dinas"]).optional(),
-    is_valid: z.enum(["Y", "N"], {
-      required_error: "Kesesuaian wajib dipilih",
-    }),
-    catatan: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.is_valid === "N" && !data.catatan?.trim()) {
-      ctx.addIssue({
-        path: ["catatan"],
-        message: "Catatan wajib diisi jika persyaratan tidak sesuai",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-  });
+const persyaratanSchema = z.object({
+  id: z.string(),
+  kategori: z.enum(["Umum", "Khusus", "Dinas"]),
+  is_valid: z.enum(["Y", "N"], {
+    required_error: "Kesesuaian wajib dipilih",
+  }),
+  catatan: z.string().optional(),
+});
+
+// const persyaratanDinasSchema = z
+//   .object({
+//     id: z.string().optional(),
+//     kategori: z.enum(["Umum", "Khusus", "Dinas"]).optional(),
+//     is_valid: z.enum(["Y", "N"], {
+//       required_error: "Kesesuaian wajib dipilih",
+//     }),
+//     catatan: z.string().optional(),
+//   })
+//   .superRefine((data, ctx) => {
+//     if (data.is_valid === "N" && !data.catatan?.trim()) {
+//       ctx.addIssue({
+//         path: ["catatan"],
+//         message: "Catatan wajib diisi jika persyaratan tidak sesuai",
+//         code: z.ZodIssueCode.custom,
+//       });
+//     }
+//   });
+
+// SESUDAH
+const persyaratanDinasSchema = z.object({
+  id: z.string().optional(),
+  kategori: z.enum(["Umum", "Khusus", "Dinas"]).optional(),
+  is_valid: z.enum(["Y", "N"], {
+    required_error: "Kesesuaian wajib dipilih",
+  }),
+  catatan: z.string().optional(),
+});
 
 export const verifikasiSchema = z
   .object({
@@ -1107,6 +1127,16 @@ export const verifikasiSchema = z
     data_persyaratan_khusus: z.array(persyaratanSchema),
     data_persyaratan_dinas: z.array(persyaratanDinasSchema),
     fileSuratKeputusan: z.string().optional(),
+    // tambahkan ini:
+    koreksi_fields: z
+      .array(
+        z.object({
+          field: z.string(),
+          label: z.string(),
+          catatan: z.string(),
+        }),
+      )
+      .optional(),
   })
   .superRefine((data, ctx) => {
     // if (data.selectedStatus === 6) {
@@ -1125,6 +1155,17 @@ export const verifikasiSchema = z
     //     });
     //   }
     // }
+
+    if (
+      data.selectedStatus === 4 &&
+      (!data.koreksi_fields || data.koreksi_fields.length === 0)
+    ) {
+      ctx.addIssue({
+        path: ["koreksi_fields"],
+        message: "Pilih minimal 1 field yang perlu dikoreksi",
+        code: z.ZodIssueCode.custom,
+      });
+    }
 
     const rules = [
       {

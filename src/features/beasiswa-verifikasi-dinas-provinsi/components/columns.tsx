@@ -133,6 +133,44 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
     },
   },
   {
+    id: "hasil_dinas_kabkota",
+    header: "Hasil Verifikasi Kabupaten/Kota",
+    cell: ({ row }) => {
+      if (isLoading) return <Skeleton className="h-6 w-32 rounded-md" />;
+
+      const value = row.original.hasil_dinas_kabkot;
+      const config = {
+        "1": {
+          label: "Rekomendasi",
+          dot: "bg-green-500",
+          cls: "bg-green-50 text-green-700 border-green-200",
+        },
+        "2": {
+          label: "Tidak Rekomendasi",
+          dot: "bg-red-500",
+          cls: "bg-red-50 text-red-700 border-red-200",
+        },
+        "0": {
+          label: "Belum Diverifikasi",
+          dot: "bg-yellow-500",
+          cls: "bg-yellow-50 text-yellow-700 border-yellow-200",
+        },
+      } as const;
+
+      const item = config[value as keyof typeof config];
+      if (!item)
+        return <span className="text-xs text-muted-foreground">—</span>;
+
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${item.cls}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+          {item.label}
+        </span>
+      );
+    },
+  },
+  {
     id: "aksi",
     header: "",
     cell: ({ row }) => {
@@ -140,7 +178,7 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
 
       const beasiswa = row.original;
       const navigate = useNavigate();
-      const isVerifikasi = beasiswa.id_flow === 7;
+      const isVerifikasi = beasiswa.id_flow === 6;
 
       return (
         <Button

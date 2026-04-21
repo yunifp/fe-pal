@@ -131,7 +131,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   if (isLoading) return <LoadingSkeleton />;
   if (!data) return null;
 
-  const { data_beasiswa, persyaratan_umum } = data.data!!;
+  const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data!!;
 
   const fotoSisi = [
     { label: "Depan", src: data_beasiswa.foto_depan },
@@ -675,6 +675,32 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors}
                   fieldName="data_persyaratan_umum"
+                  verifikatorMode={verifikatorMode}
+                  isReadOnly={isReadOnly}
+                />
+              ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* ── Persyaratan Khusus ── */}
+      {persyaratan_khusus && persyaratan_khusus.length > 0 && (
+        <CollapsibleSection
+          title="Persyaratan Khusus"
+          icon={FileText}
+          defaultOpen={false}>
+          <div className="space-y-3">
+            {persyaratan_khusus
+              // .filter((dokumen) => dokumen.is_kabkota === "Y")
+              .map((dokumen, index) => (
+                <KesesuaianDokumen
+                  key={dokumen.id}
+                  dokumen={dokumen}
+                  index={index}
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  fieldName="data_persyaratan_khusus"
                   verifikatorMode={verifikatorMode}
                   isReadOnly={isReadOnly}
                 />

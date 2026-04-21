@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import { API_BASE_URL } from "@/constants/api";
+// import { API_BASE_URL } from "@/constants/api";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/features/Auth/services/authService";
-import { logService } from "@/services/logService";
-import qs from "qs";
+// import { logService } from "@/services/logService";
+// import qs from "qs";
 
 const axiosInstanceJson = axios.create({
-  baseURL: API_BASE_URL,
+  // baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -45,25 +45,25 @@ axiosInstanceJson.interceptors.request.use((config) => {
 // Response interceptor
 axiosInstanceJson.interceptors.response.use(
   (response) => {
-    const user = useAuthStore.getState().user;
+    // const user = useAuthStore.getState().user;
 
-    // 🔹 Serialize query params menggunakan qs
-    const params = response.config.params
-      ? "?" + qs.stringify(response.config.params, { arrayFormat: "brackets" })
-      : "";
+    // // 🔹 Serialize query params menggunakan qs
+    // const params = response.config.params
+    //   ? "?" + qs.stringify(response.config.params, { arrayFormat: "brackets" })
+    //   : "";
 
-    void logService
-      .logActivity({
-        actor: user?.nama || "system",
-        user_id: user?.id || null,
-        http_method: response.config.method?.toUpperCase(),
-        api_endpoint: `${response.config.url}${params}`, // backend endpoint lengkap
-        frontend_url: window.location.pathname,
-        status: "SUCCESS",
-        ip_address: "0.0.0.0",
-        user_agent: navigator.userAgent,
-      })
-      .catch((err) => console.error("Log gagal:", err));
+    // void logService
+    //   .logActivity({
+    //     actor: user?.nama || "system",
+    //     user_id: user?.id || null,
+    //     http_method: response.config.method?.toUpperCase(),
+    //     api_endpoint: `${response.config.url}${params}`, // backend endpoint lengkap
+    //     frontend_url: window.location.pathname,
+    //     status: "SUCCESS",
+    //     ip_address: "0.0.0.0",
+    //     user_agent: navigator.userAgent,
+    //   })
+    //   .catch((err) => console.error("Log gagal:", err));
 
     return response;
   },
@@ -71,25 +71,25 @@ axiosInstanceJson.interceptors.response.use(
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
     };
-    const user = useAuthStore.getState().user;
+    // const user = useAuthStore.getState().user;
 
-    // 🔹 Serialize query params untuk error juga
-    const params = originalRequest.params
-      ? "?" + qs.stringify(originalRequest.params, { arrayFormat: "brackets" })
-      : "";
+    // // 🔹 Serialize query params untuk error juga
+    // const params = originalRequest.params
+    //   ? "?" + qs.stringify(originalRequest.params, { arrayFormat: "brackets" })
+    //   : "";
 
-    void logService
-      .logActivity({
-        actor: user?.nama || "system",
-        user_id: user?.id || null,
-        http_method: originalRequest?.method?.toUpperCase(),
-        api_endpoint: `${originalRequest?.url}${params}`,
-        frontend_url: window.location.pathname,
-        status: "FAILED",
-        ip_address: "0.0.0.0",
-        user_agent: navigator.userAgent,
-      })
-      .catch((err) => console.error("Log gagal:", err));
+    // void logService
+    //   .logActivity({
+    //     actor: user?.nama || "system",
+    //     user_id: user?.id || null,
+    //     http_method: originalRequest?.method?.toUpperCase(),
+    //     api_endpoint: `${originalRequest?.url}${params}`,
+    //     frontend_url: window.location.pathname,
+    //     status: "FAILED",
+    //     ip_address: "0.0.0.0",
+    //     user_agent: navigator.userAgent,
+    //   })
+    //   .catch((err) => console.error("Log gagal:", err));
 
     // ===== handling refresh token =====
     if (error.response?.status === 401 && !originalRequest._retry) {

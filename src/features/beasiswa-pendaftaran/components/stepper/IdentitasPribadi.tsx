@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
 import DropAndCropRectangle from "@/components/DropAndCropRectangle";
@@ -12,6 +13,10 @@ import {
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
 import FotoTambahanSection from "./Fototambahansection"; // ← import komponen baru
+// Tambah import
+import { useWatch } from "react-hook-form";
+import { useEffect, useMemo } from "react"; // jika belum ada
+import { AlertCircle } from "lucide-react";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -31,6 +36,10 @@ interface Step1IdentitasPribadiProps {
   sectionCatatan: SectionCatatan;
   agamaOptions: RefOption[];
   sukuOptions: RefOption[];
+  onUmurChange?: (melebihi: boolean) => void;
+  isFieldDisabled?: (fieldName: string) => boolean;
+  isFieldKoreksi?: (fieldName: string) => boolean;
+  getFieldCatatan?: (fieldName: string) => string | null;
 }
 
 interface RefOption {
@@ -39,11 +48,11 @@ interface RefOption {
 }
 
 const onlyNumbers = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
-    if (!/[0-9]/.test(e.key) && !allowed.includes(e.key)) {
-      e.preventDefault();
-    }
-  };
+  const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
+  if (!/[0-9]/.test(e.key) && !allowed.includes(e.key)) {
+    e.preventDefault();
+  }
+};
 
 const jenisKelaminOptions = [
   { value: "L", label: "Laki-laki" },
@@ -63,10 +72,34 @@ const IdentitasPribadi = ({
   sectionCatatan,
   agamaOptions,
   sukuOptions,
+  onUmurChange,
+  isFieldDisabled = () => false,
+  isFieldKoreksi = () => false,
+  getFieldCatatan = () => null,
 }: Step1IdentitasPribadiProps) => {
   const onFotoChange = (file: File | null) => {
     setValue("foto", file ?? undefined, { shouldValidate: true });
   };
+
+  const tanggalLahir = useWatch({ control, name: "tanggal_lahir" });
+
+  const umurMelebihi = useMemo(() => {
+    if (!tanggalLahir) return false;
+    const lahir = new Date(tanggalLahir);
+    const today = new Date();
+    let umur = today.getFullYear() - lahir.getFullYear();
+    const bulanBelum =
+      today.getMonth() < lahir.getMonth() ||
+      (today.getMonth() === lahir.getMonth() &&
+        today.getDate() < lahir.getDate());
+    if (bulanBelum) umur--;
+    return umur > 23;
+  }, [tanggalLahir]);
+
+  // Teruskan ke parent setiap kali berubah
+  useEffect(() => {
+    onUmurChange?.(umurMelebihi);
+  }, [umurMelebihi]);
 
   return (
     <div className="space-y-6">
@@ -113,220 +146,339 @@ const IdentitasPribadi = ({
         />
 
         {/* ── Field data diri ── */}
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            label="Nama Lengkap"
-            id="nama_lengkap"
-            placeholder="Masukkan nama lengkap"
-            isRequired={true}
-            error={!!errors.nama_lengkap}
-            errorMessage={errors.nama_lengkap?.message}
-            {...register("nama_lengkap", {
-              onChange: (e) => {
-                e.target.value = e.target.value.replace(/[a-z]/g, (c: string) =>
-                  c.toUpperCase(),
-                );
-              },
-            })}
-          />
-          <CustInput
-            label="NIK / No. KTP"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={16}
-            id="nik"
-            placeholder="Masukkan NIK / No. KTP"
-            isRequired={true}
-            showCount={true} // ← tambah
-            error={!!errors.nik}
-            errorMessage={errors.nik?.message}
-            onKeyDown={(e) => {
-              const allowed = [
-                "Backspace",
-                "Delete",
-                "ArrowLeft",
-                "ArrowRight",
-                "Tab",
-                "Enter",
-              ];
-              if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                e.preventDefault();
-            }}
-            {...register("nik")}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              label="Nama Lengkap"
+              id="nama_lengkap"
+              placeholder="Masukkan nama lengkap"
+              isRequired={true}
+              error={!!errors.nama_lengkap}
+              disabled={isFieldDisabled("nama_lengkap")}
+              errorMessage={errors.nama_lengkap?.message}
+              {...register("nama_lengkap", {
+                onChange: (e) => {
+                  e.target.value = e.target.value.replace(
+                    /[a-z]/g,
+                    (c: string) => c.toUpperCase(),
+                  );
+                },
+              })}
+            />
+            {/* Tampilkan catatan koreksi jika ada */}
+            {isFieldKoreksi("nama_lengkap") &&
+              getFieldCatatan("nama_lengkap") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("nama_lengkap")}
+                </p>
+              )}
+          </div>
+          <div>
+            <CustInput
+              label="NIK / No. KTP"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={16}
+              id="nik"
+              placeholder="Masukkan NIK / No. KTP"
+              isRequired={true}
+              showCount={true} // ← tambah
+              error={!!errors.nik}
+              errorMessage={errors.nik?.message}
+              disabled={isFieldDisabled("nik")} // ← tambah
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
+              }}
+              {...register("nik")}
+            />
+            {isFieldKoreksi("nik") && getFieldCatatan("nik") && (
+              <p className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getFieldCatatan("nik")}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            label="No. Kartu Keluarga (NKK)"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={16}
-            id="no_nkk"
-            placeholder="Masukkan No. Kartu Keluarga (NKK)"
-            isRequired={true}
-            showCount={true} // ← tambah
-            error={!!errors.nkk}
-            errorMessage={errors.nkk?.message}
-            onKeyDown={(e) => {
-              const allowed = [
-                "Backspace",
-                "Delete",
-                "ArrowLeft",
-                "ArrowRight",
-                "Tab",
-                "Enter",
-              ];
-              if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                e.preventDefault();
-            }}
-            {...register("nkk")}
-          />
-          <CustSelect
-            name="jenis_kelamin"
-            control={control}
-            label="Jenis Kelamin"
-            options={jenisKelaminOptions}
-            placeholder="Pilih jenis kelamin"
-            isRequired={true}
-            error={errors.jenis_kelamin}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              label="No. Kartu Keluarga (NKK)"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={16}
+              id="no_nkk"
+              placeholder="Masukkan No. Kartu Keluarga (NKK)"
+              isRequired={true}
+              showCount={true} // ← tambah
+              error={!!errors.nkk}
+              errorMessage={errors.nkk?.message}
+              disabled={isFieldDisabled("nkk")} // ← tambah
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
+              }}
+              {...register("nkk")}
+            />
+            {isFieldKoreksi("nkk") && getFieldCatatan("nkk") && (
+              <p className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getFieldCatatan("nkk")}
+              </p>
+            )}
+          </div>
+          <div>
+            <CustSelect
+              name="jenis_kelamin"
+              control={control}
+              label="Jenis Kelamin"
+              options={jenisKelaminOptions}
+              placeholder="Pilih jenis kelamin"
+              isRequired={true}
+              error={errors.jenis_kelamin}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            label="No. Telepon"
-            type="number"
-            id="no_hp"
-            placeholder="Cth: 08123456789"
-            isRequired={true}
-            error={!!errors.no_hp}
-            errorMessage={errors.no_hp?.message}
-            onKeyDown={onlyNumbers}
-            {...register("no_hp")}
-          />
-          <CustInput
-            label="Alamat E-mail"
-            id="email"
-            placeholder="Cth: contoh_email@gmail.com"
-            isRequired={true}
-            error={!!errors.email}
-            errorMessage={errors.email?.message}
-            {...register("email")}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              label="No. Telepon"
+              type="number"
+              id="no_hp"
+              placeholder="Cth: 08123456789"
+              isRequired={true}
+              error={!!errors.no_hp}
+              errorMessage={errors.no_hp?.message}
+              onKeyDown={onlyNumbers}
+              {...register("no_hp")}
+              disabled={isFieldDisabled("no_hp")} // ← tambah
+            />
+            {isFieldKoreksi("no_hp") && getFieldCatatan("no_hp") && (
+              <p className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getFieldCatatan("no_hp")}
+              </p>
+            )}
+          </div>
+          <div>
+            <CustInput
+              label="Alamat E-mail"
+              id="email"
+              placeholder="Cth: contoh_email@gmail.com"
+              isRequired={true}
+              error={!!errors.email}
+              errorMessage={errors.email?.message}
+              {...register("email")}
+              disabled={isFieldDisabled("email")} // ← tambah
+            />
+            {isFieldKoreksi("email") && getFieldCatatan("email") && (
+              <p className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getFieldCatatan("email")}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            type="date"
-            label="Tanggal Lahir"
-            id="tanggal_lahir"
-            placeholder="Masukkan tanggal lahir"
-            isRequired={true}
-            error={!!errors.tanggal_lahir}
-            errorMessage={errors.tanggal_lahir?.message}
-            {...register("tanggal_lahir")}
-          />
-          <CustInput
-            label="Tempat Lahir"
-            id="tempat_lahir"
-            placeholder="Masukkan tempat lahir"
-            isRequired={true}
-            error={!!errors.tempat_lahir}
-            errorMessage={errors.tempat_lahir?.message}
-            {...register("tempat_lahir")}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              type="date"
+              label="Tanggal Lahir"
+              id="tanggal_lahir"
+              placeholder="Masukkan tanggal lahir"
+              isRequired={true}
+              error={!!errors.tanggal_lahir}
+              errorMessage={errors.tanggal_lahir?.message}
+              {...register("tanggal_lahir")}
+              disabled={isFieldDisabled("tanggal_lahir")} // ← tambah
+            />
+            {isFieldKoreksi("tanggal_lahir") &&
+              getFieldCatatan("tanggal_lahir") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("tanggal_lahir")}
+                </p>
+              )}
+          </div>
+          <div>
+            <CustInput
+              label="Tempat Lahir"
+              id="tempat_lahir"
+              placeholder="Masukkan tempat lahir"
+              isRequired={true}
+              error={!!errors.tempat_lahir}
+              errorMessage={errors.tempat_lahir?.message}
+              {...register("tempat_lahir")}
+              disabled={isFieldDisabled("tempat_lahir")} // ← tambah
+            />
+            {isFieldKoreksi("tempat_lahir") &&
+              getFieldCatatan("tempat_lahir") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("tempat_lahir")}
+                </p>
+              )}
+          </div>
+        </div>
+        {umurMelebihi && (
+          <div className="flex items-center gap-2 rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Umur Anda melebihi batas ketentuan (maksimal 23 tahun). Anda tidak
+            dapat melanjutkan pendaftaran.
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustSelect
+              name="agama"
+              control={control}
+              label="Agama"
+              options={agamaOptions}
+              placeholder="Pilih agama"
+              isRequired={true}
+              error={errors.agama}
+            />
+          </div>
+          <div>
+            <CustSelect
+              name="suku"
+              control={control}
+              label="Suku"
+              options={sukuOptions}
+              placeholder="Pilih suku"
+              isRequired={true}
+              error={errors.suku}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <CustSelect
-            name="agama"
-            control={control}
-            label="Agama"
-            options={agamaOptions}
-            placeholder="Pilih agama"
-            isRequired={true}
-            error={errors.agama}
-          />
-          <CustSelect
-            name="suku"
-            control={control}
-            label="Suku"
-            options={sukuOptions}
-            placeholder="Pilih suku"
-            isRequired={true}
-            error={errors.suku}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              label="Pekerjaan"
+              id="pekerjaan"
+              placeholder="Masukkan pekerjaan"
+              error={!!errors.pekerjaan}
+              errorMessage={errors.pekerjaan?.message}
+              {...register("pekerjaan")}
+              disabled={isFieldDisabled("pekerjaan")} // ← tambah
+            />
+            {isFieldKoreksi("pekerjaan") && getFieldCatatan("pekerjaan") && (
+              <p className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getFieldCatatan("pekerjaan")}
+              </p>
+            )}
+          </div>
+          <div>
+            <CustInput
+              label="Instansi Pekerjaan"
+              id="instansi_pekerjaan"
+              placeholder="Masukkan instansi pekerjaan"
+              error={!!errors.instansi_pekerjaan}
+              errorMessage={errors.instansi_pekerjaan?.message}
+              {...register("instansi_pekerjaan")}
+              disabled={isFieldDisabled("instansi_pekerjaan")} // ← tambah
+            />
+            {isFieldKoreksi("instansi_pekerjaan") &&
+              getFieldCatatan("instansi_pekerjaan") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("instansi_pekerjaan")}
+                </p>
+              )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            label="Pekerjaan"
-            id="pekerjaan"
-            placeholder="Masukkan pekerjaan"
-            error={!!errors.pekerjaan}
-            errorMessage={errors.pekerjaan?.message}
-            {...register("pekerjaan")}
-          />
-          <CustInput
-            label="Instansi Pekerjaan"
-            id="instansi_pekerjaan"
-            placeholder="Masukkan instansi pekerjaan"
-            error={!!errors.instansi_pekerjaan}
-            errorMessage={errors.instansi_pekerjaan?.message}
-            {...register("instansi_pekerjaan")}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <CustInput
-            label="Berat Badan (kg)"
-            type="numeric"
-            id="berat_badan"
-            placeholder="Cth: 60"
-            isRequired={true}
-            maxLength={3}
-            error={!!errors.berat_badan}
-            errorMessage={errors.berat_badan?.message}
-            onKeyDown={(e) => {
-              const allowed = [
-                "Backspace",
-                "Delete",
-                "ArrowLeft",
-                "ArrowRight",
-                "Tab",
-                "Enter",
-              ];
-              if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                e.preventDefault();
-            }}
-            {...register("berat_badan")}
-          />
-          <CustInput
-            label="Tinggi Badan (cm)"
-            type="numeric"
-            id="tinggi_badan"
-            placeholder="Cth: 170"
-            maxLength={3}
-            isRequired={true}
-            error={!!errors.tinggi_badan}
-            errorMessage={errors.tinggi_badan?.message}
-            onKeyDown={(e) => {
-              const allowed = [
-                "Backspace",
-                "Delete",
-                "ArrowLeft",
-                "ArrowRight",
-                "Tab",
-                "Enter",
-              ];
-              if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                e.preventDefault();
-            }}
-            {...register("tinggi_badan")}
-          />
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div>
+            <CustInput
+              label="Berat Badan (kg)"
+              type="numeric"
+              id="berat_badan"
+              placeholder="Cth: 60"
+              isRequired={true}
+              maxLength={3}
+              error={!!errors.berat_badan}
+              errorMessage={errors.berat_badan?.message}
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
+              }}
+              {...register("berat_badan")}
+              disabled={isFieldDisabled("berat_badan")} // ← tambah
+            />
+            {isFieldKoreksi("berat_badan") &&
+              getFieldCatatan("berat_badan") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("berat_badan")}
+                </p>
+              )}
+          </div>
+          <div>
+            <CustInput
+              label="Tinggi Badan (cm)"
+              type="numeric"
+              id="tinggi_badan"
+              placeholder="Cth: 170"
+              maxLength={3}
+              isRequired={true}
+              error={!!errors.tinggi_badan}
+              errorMessage={errors.tinggi_badan?.message}
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
+              }}
+              {...register("tinggi_badan")}
+              disabled={isFieldDisabled("tinggi_badan")} // ← tambah
+            />
+            {isFieldKoreksi("tinggi_badan") &&
+              getFieldCatatan("tinggi_badan") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {getFieldCatatan("tinggi_badan")}
+                </p>
+              )}
+          </div>
         </div>
       </div>
     </div>

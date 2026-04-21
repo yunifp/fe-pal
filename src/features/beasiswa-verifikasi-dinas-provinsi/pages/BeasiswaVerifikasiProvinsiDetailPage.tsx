@@ -103,7 +103,7 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
   }, [fullDataBeasiswa, setValue]);
 
   const selectedStatus = watch("selectedStatus");
-  const isReadOnly = fullDataBeasiswa?.data_beasiswa?.id_flow !== 7;
+  const isReadOnly = fullDataBeasiswa?.data_beasiswa?.id_flow !== 6;
 
   const mutation = useMutation({
     mutationFn: async (data: VerifikasiFormData) => {

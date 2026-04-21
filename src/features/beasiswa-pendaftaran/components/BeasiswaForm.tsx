@@ -1,3 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-empty */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState, useRef, type FC } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +16,7 @@ import {
   BookOpen,
   FolderOpen,
   Users,
+  Loader2,
 } from "lucide-react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { useQuery } from "@tanstack/react-query";
@@ -46,6 +53,10 @@ import DataOrtu from "./stepper/DataOrtu";
 import PreviewDataBeasiswa from "./PreviewDataBeasiswa";
 import { useAuthStore } from "@/stores/authStore";
 import type { NilaiRaporForm } from "./stepper/NilaiRapor";
+import { validatePilihan } from "./stepper/PilihanJurusan";
+import type { UploadPersyaratanKhususRef } from "./UploadPersyaratanKhusus";
+import KoreksiPendaftarAlert from "@/components/beasiswa/KoreksiPendaftarAlert";
+import { useKoreksiFields } from "@/hooks/useKoreksiFields";
 
 interface BeasiswaFormProps {
   existBeasiswa: ITrxBeasiswa;
@@ -63,6 +74,15 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [previewData, setPreviewData] = useState<BeasiswaFormData | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isNextLoading, setIsNextLoading] = useState(false);
+  const [isPrevLoading, setIsPrevLoading] = useState(false);
+  const [umurMelebihi, setUmurMelebihi] = useState(false);
+  const [prevJalurId, setPrevJalurId] = useState<string | null>(null);
+  const [pendingJalurValue, setPendingJalurValue] = useState<string | null>(
+    null,
+  );
+  const [showGantiJalurDialog, setShowGantiJalurDialog] = useState(false);
+  const [isResettingJalur, setIsResettingJalur] = useState(false);
 
   const nilaiRaporRef = useRef<NilaiRaporForm>({
     nilai_semester_1: "",
@@ -72,10 +92,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     nilai_semester_5: "",
   });
 
-  // ✅ PERBAIKAN 1: stepFields lengkap — termasuk semua field wajib per step
-  // Step 1 (Alamat) sekarang include kerja_* fields
-  // Step 4 (Pilihan Jurusan) validasi dilakukan secara custom agar tidak
-  //   terblokir oleh nilai kosong di useFieldArray sebelum data terload
+  const uploadKhususRef = useRef<UploadPersyaratanKhususRef>(null);
+
   const stepFields: Record<number, (keyof BeasiswaFormData)[]> = {
     0: [
       "nama_lengkap",
@@ -90,10 +108,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       "suku",
       "berat_badan",
       "tinggi_badan",
-      "foto_depan", // ← tambahkan
-      "foto_samping_kiri", // ← tambahkan
-      "foto_samping_kanan", // ← tambahkan
-      "foto_belakang", // ← tambahkan
+      "foto_depan",
+      "foto_samping_kiri",
+      "foto_samping_kanan",
+      "foto_belakang",
     ],
     1: [
       "tinggal_provinsi",
@@ -328,10 +346,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           (existBeasiswa.sekolah_kode_kab ?? "") +
           "#" +
           (existBeasiswa.sekolah_kab_kota ?? ""),
-        // jenjang_sekolah:
-        //   (existBeasiswa.id_jenjang_sekolah ?? "") +
-        //   "#" +
-        //   (existBeasiswa.jenjang_sekolah ?? ""),
         jenjang_sekolah:
           existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
             ? existBeasiswa.id_jenjang_sekolah +
@@ -359,6 +373,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         jalur:
           (existBeasiswa.id_jalur ?? "") + "#" + (existBeasiswa.jalur ?? ""),
       });
+      const initialJalurId = existBeasiswa.id_jalur
+        ? String(existBeasiswa.id_jalur)
+        : null;
+      setPrevJalurId(initialJalurId);
     }
   }, [existBeasiswa, agamaOptions, sukuOptions, reset, user]);
 
@@ -472,21 +490,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
 
   const saveDraftSilent = async (data: BeasiswaFormData) => {
     try {
-      // ─────────────────────────────────────────────────────
-      // Tentukan data pilihan yang akan disimpan.
-      //
-      // ATURAN:
-      //   - Jika ada row dengan PT terisi tapi prodi KOSONG
-      //     → form state belum lengkap (child masih fetch prodi)
-      //     → fallback ke data yang sudah tersimpan di API
-      //     → JANGAN overwrite dengan data tidak lengkap
-      //
-      //   - Jika semua row yang terisi PT juga punya prodi
-      //     → aman untuk disimpan langsung dari form state
-      //
-      //   - Jika tidak ada satupun PT terisi
-      //     → fallback ke API juga
-      // ─────────────────────────────────────────────────────
       const currentPilihan = data.pilihan_program_studi ?? [];
 
       const adaYangTidakLengkap = currentPilihan.some(
@@ -516,7 +519,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         "id_trx_beasiswa",
         existBeasiswa.id_trx_beasiswa.toString(),
       );
-
       if (data.foto instanceof File) formData.append("foto", data.foto);
       if (data.foto_depan instanceof File)
         formData.append("foto_depan", data.foto_depan);
@@ -649,219 +651,388 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     }
   };
 
-  // ✅ PERBAIKAN 3: handleNext dengan custom validation untuk step 4
   const handleNext = async () => {
     if (currentStep >= steps.length - 1) return;
+    setIsNextLoading(true);
+    try {
+      const fieldsToValidate = stepFields[currentStep] ?? [];
+      if (currentStep >= steps.length - 1) return;
 
-    const fieldsToValidate = stepFields[currentStep] ?? [];
+      const isValid =
+        fieldsToValidate.length > 0
+          ? await trigger(fieldsToValidate as any)
+          : true;
 
-    // Trigger validasi field biasa
-    const isValid =
-      fieldsToValidate.length > 0
-        ? await trigger(fieldsToValidate as any)
-        : true;
+      if (!isValid) {
+        setShowErrorDialog(true);
+        return;
+      }
 
-    if (!isValid) {
-      setShowErrorDialog(true);
-      return;
-    }
+      // ── PENGECEKAN NIK (hanya di step 0) ─────────────────────────────────
+      if (currentStep === 0) {
+        const nikValue = getValues("nik");
 
-    if (currentStep === 5) {
-      try {
-        const res = await beasiswaService.getUploadedPersyaratan(
-          "umum",
-          existBeasiswa.id_trx_beasiswa,
-        );
-        const uploaded = (res.data ?? []) as Array<{
-          id_ref_dokumen: number | null;
-        }>;
-        const uploadedIds = new Set(
-          uploaded
-            .filter(
-              (u): u is { id_ref_dokumen: number } => u.id_ref_dokumen !== null,
-            )
-            .map((u) => u.id_ref_dokumen),
-        );
-
-        // ✅ Hanya filter dokumen yang wajib
-        const belumUpload = persyaratanUmum.filter(
-          (item) => item.is_required === "Y" && !uploadedIds.has(item.id),
-        );
-
-        if (belumUpload.length > 0) {
-          belumUpload.forEach((doc) => {
-            toast.error(`Dokumen wajib belum diunggah: ${doc.persyaratan}`);
-          });
+        if (!nikValue || nikValue.length !== 16) {
+          toast.error("NIK harus terdiri dari 16 digit.");
           return;
         }
-      } catch {
-        toast.error("Gagal memverifikasi dokumen. Coba lagi.");
-        return;
-      }
-    }
 
-    // if (currentStep === 4) {
-    //   const currentPilihan = getValues("pilihan_program_studi");
-
-    //   // Ada PT terisi tapi prodi masih kosong → child mungkin belum selesai fetch
-    //   const adaYangTidakLengkap = currentPilihan?.some(
-    //     (p) => p.perguruan_tinggi !== "" && p.program_studi === "",
-    //   );
-
-    //   if (adaYangTidakLengkap) {
-    //     toast.error(
-    //       "Masih ada program studi yang belum dipilih. Mohon tunggu hingga semua pilihan termuat, lalu lengkapi pilihan Anda.",
-    //     );
-    //     return;
-    //   }
-
-    //   // Minimal 1 pilihan lengkap
-    //   const adaYangLengkap = currentPilihan?.some(
-    //     (p) => p.perguruan_tinggi !== "" && p.program_studi !== "",
-    //   );
-
-    //   if (!adaYangLengkap) {
-    //     try {
-    //       const existing = await beasiswaService.getPilihanProgramStudiForForm(
-    //         existBeasiswa.id_trx_beasiswa,
-    //       );
-    //       const pilihanDariApi = existing?.data ?? [];
-
-    //       const apiAdaYangTidakLengkap = pilihanDariApi.some(
-    //         (p: any) => p.perguruan_tinggi !== "" && p.program_studi === "",
-    //       );
-    //       const apiAdaYangLengkap = pilihanDariApi.some(
-    //         (p: any) => p.perguruan_tinggi !== "" && p.program_studi !== "",
-    //       );
-
-    //       if (apiAdaYangTidakLengkap || !apiAdaYangLengkap) {
-    //         toast.error(
-    //           "Mohon isi minimal satu pilihan perguruan tinggi dan program studi.",
-    //         );
-    //         return;
-    //       }
-    //     } catch {
-    //       toast.error(
-    //         "Mohon isi minimal satu pilihan perguruan tinggi dan program studi.",
-    //       );
-    //       return;
-    //     }
-    //   }
-    // }
-
-    if (currentStep === 4) {
-      const currentPilihan = getValues("pilihan_program_studi") ?? [];
-
-      // Ada PT terisi tapi prodi masih kosong → child mungkin belum selesai fetch
-      const adaYangFetchingProdi = currentPilihan.some(
-        (p) =>
-          (p?.perguruan_tinggi ?? "") !== "" && (p?.program_studi ?? "") === "",
-      );
-
-      if (adaYangFetchingProdi) {
-        toast.error(
-          "Masih ada program studi yang belum dipilih. Mohon tunggu hingga semua pilihan termuat, lalu lengkapi pilihan Anda.",
-        );
-        return;
-      }
-
-      // Semua row wajib diisi lengkap (PT + prodi)
-      const adaRowKosong = currentPilihan.some(
-        (p) => !p?.perguruan_tinggi || !p?.program_studi,
-      );
-
-      if (adaRowKosong) {
-        toast.error(
-          "Semua pilihan perguruan tinggi dan program studi wajib diisi.",
-        );
-        return;
-      }
-
-      // Fallback ke API jika form state kosong semua (tidak ada PT yang terisi)
-      const adaYangLengkap = currentPilihan.some(
-        (p) =>
-          (p?.perguruan_tinggi ?? "") !== "" && (p?.program_studi ?? "") !== "",
-      );
-
-      if (!adaYangLengkap) {
-        try {
-          const existing = await beasiswaService.getPilihanProgramStudiForForm(
+        const [cekalResult, duplikatResult] = await Promise.allSettled([
+          masterService.checkNikCekal(nikValue),
+          beasiswaService.checkNikDuplikat(
+            nikValue,
             existBeasiswa.id_trx_beasiswa,
-          );
-          const pilihanDariApi = existing?.data ?? [];
+          ),
+        ]);
+        console.log(cekalResult);
 
-          const apiAdaRowKosong = pilihanDariApi.some(
-            (p: any) => !p.perguruan_tinggi || !p.program_studi,
-          );
-
-          if (apiAdaRowKosong || pilihanDariApi.length === 0) {
+        if (cekalResult.status === "fulfilled") {
+          if (cekalResult.value?.data?.is_cekal) {
             toast.error(
-              "Semua pilihan perguruan tinggi dan program studi wajib diisi.",
+              "NIK Anda tidak dapat digunakan untuk mendaftar. Silakan hubungi panitia.",
+              { duration: 6000 },
             );
             return;
           }
+        } else {
+          toast.error("Gagal memverifikasi NIK. Silakan coba lagi.");
+          return;
+        }
+
+        if (duplikatResult.status === "fulfilled") {
+          if (duplikatResult.value?.data?.is_duplikat) {
+            toast.error(
+              "NIK ini sudah terdaftar pada pendaftaran lain. Setiap NIK hanya dapat digunakan satu kali.",
+              { duration: 6000 },
+            );
+            return;
+          }
+        } else {
+          toast.error("Gagal memverifikasi NIK. Silakan coba lagi.");
+          return;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      if (currentStep === 5) {
+        try {
+          const res = await beasiswaService.getUploadedPersyaratan(
+            "umum",
+            existBeasiswa.id_trx_beasiswa,
+          );
+          const uploaded = (res.data ?? []) as Array<{
+            id_ref_dokumen: number | null;
+          }>;
+          const uploadedIds = new Set(
+            uploaded
+              .filter(
+                (u): u is { id_ref_dokumen: number } =>
+                  u.id_ref_dokumen !== null,
+              )
+              .map((u) => u.id_ref_dokumen),
+          );
+
+          const belumUpload = persyaratanUmum.filter(
+            (item) => item.is_required === "Y" && !uploadedIds.has(item.id),
+          );
+
+          if (belumUpload.length > 0) {
+            belumUpload.forEach((doc) => {
+              toast.error(`Dokumen wajib belum diunggah: ${doc.persyaratan}`);
+            });
+            return;
+          }
         } catch {
+          toast.error("Gagal memverifikasi dokumen. Coba lagi.");
+          return;
+        }
+      }
+
+      if (currentStep === 4) {
+        const currentPilihan = (getValues("pilihan_program_studi") ??
+          []) as Array<{
+          perguruan_tinggi?: string;
+          program_studi?: string;
+        }>;
+
+        const adaYangMasihFetching = currentPilihan.some(
+          (p) =>
+            (p?.perguruan_tinggi ?? "") !== "" &&
+            (p?.program_studi ?? "") === "",
+        );
+
+        if (adaYangMasihFetching) {
           toast.error(
-            "Mohon isi minimal satu pilihan perguruan tinggi dan program studi.",
+            "Masih ada program studi yang sedang dimuat. Mohon tunggu sebentar, lalu lengkapi pilihan Anda.",
+          );
+          return;
+        }
+
+        const adaPTTerisi = currentPilihan.some(
+          (p) => (p?.perguruan_tinggi ?? "") !== "",
+        );
+
+        let pilihanUntukValidasi = currentPilihan;
+
+        if (!adaPTTerisi) {
+          try {
+            const existing =
+              await beasiswaService.getPilihanProgramStudiForForm(
+                existBeasiswa.id_trx_beasiswa,
+              );
+            pilihanUntukValidasi = existing?.data ?? [];
+          } catch {
+            toast.error(
+              "Gagal memuat pilihan program studi. Silakan coba lagi.",
+            );
+            return;
+          }
+        }
+        let ptHasD1D2Map = new Map<string, boolean>();
+        try {
+          const jurusanSekolahRaw = getValues("jurusan_sekolah") as string;
+          const idJurusanSekolah = jurusanSekolahRaw?.split("#")[0];
+          if (idJurusanSekolah) {
+            const resPT =
+              await masterService.getPerguruanTinggiByJurusanSekolah(
+                idJurusanSekolah,
+              );
+            (resPT?.data ?? []).forEach(
+              (pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
+                const raw = pt.has_d1_d2;
+                const s = raw != null ? String(raw).trim().toUpperCase() : "";
+                ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
+              },
+            );
+          }
+        } catch {}
+        const ptProdiMap = new Map<string, string[]>();
+
+        const validationErrors = validatePilihan(
+          pilihanUntukValidasi,
+          ptProdiMap, // <-- ini
+        );
+
+        if (validationErrors.length > 0) {
+          validationErrors.forEach((msg) => toast.error(msg));
+          return;
+        }
+      }
+      if (currentStep === 3) {
+        const getKode = (val: string | undefined) =>
+          (val ?? "").split("#")[0].trim();
+
+        const asalSekolahChecks: { label: string; valid: boolean }[] = [
+          {
+            label: "Provinsi sekolah",
+            valid: getKode(getValues("sekolah_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota sekolah",
+            valid: getKode(getValues("sekolah_kabkot")) !== "",
+          },
+          {
+            label: "Jenjang sekolah",
+
+            valid: (() => {
+              const v = getValues("jenjang_sekolah") ?? "";
+              const kode = v.split("#")[0].trim();
+              return kode !== "" && kode !== "0";
+            })(),
+          },
+          {
+            label: "NPSN / Nama sekolah",
+            valid: (() => {
+              const v = (getValues("sekolah") ?? "").trim();
+              if (v.includes("#NPSN:")) {
+                const [nama, npsn] = v.split("#NPSN:");
+                return nama.trim() !== "" && (npsn ?? "").trim() !== "";
+              }
+
+              return v !== "";
+            })(),
+          },
+          {
+            label: "Jenis sekolah / jurusan",
+
+            valid: (() => {
+              const v = getValues("jurusan_sekolah") ?? "";
+              const kode = v.split("#")[0].trim();
+              return kode !== "" && kode !== "0";
+            })(),
+          },
+          {
+            label: "Tahun lulus",
+            valid: (getValues("tahun_lulus") ?? "").trim() !== "",
+          },
+        ];
+
+        const isSmk = (getValues("jenjang_sekolah") ?? "")
+          .toLowerCase()
+          .includes("smk");
+        if (isSmk) {
+          asalSekolahChecks.push({
+            label: "Nama jurusan sekolah",
+            valid: (getValues("nama_jurusan_sekolah") ?? "").trim() !== "",
+          });
+        }
+
+        const invalidFields = asalSekolahChecks.filter((c) => !c.valid);
+        if (invalidFields.length > 0) {
+          invalidFields.forEach(({ label }) =>
+            toast.error(`${label} wajib diisi / dipilih.`),
+          );
+          return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        const nilaiRapor = nilaiRaporRef.current;
+        const nilaiKosong = [
+          { key: "nilai_semester_1", label: "Nilai Semester 1" },
+          { key: "nilai_semester_2", label: "Nilai Semester 2" },
+          { key: "nilai_semester_3", label: "Nilai Semester 3" },
+          { key: "nilai_semester_4", label: "Nilai Semester 4" },
+          { key: "nilai_semester_5", label: "Nilai Semester 5" },
+        ].filter(
+          ({ key }) =>
+            !nilaiRapor[key as keyof NilaiRaporForm] ||
+            nilaiRapor[key as keyof NilaiRaporForm].trim() === "",
+        );
+
+        if (nilaiKosong.length > 0) {
+          nilaiKosong.forEach(({ label }) => {
+            toast.error(`${label} wajib diisi`);
+          });
+          return;
+        }
+
+        try {
+          await beasiswaService.saveNilaiRapor(existBeasiswa.id_trx_beasiswa, {
+            id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
+            ...nilaiRaporRef.current,
+          });
+        } catch {}
+      }
+
+      if (currentStep === 1) {
+        const getKode = (val: string | undefined) =>
+          (val ?? "").split("#")[0].trim();
+
+        const alamatChecks: { label: string; valid: boolean }[] = [
+          {
+            label: "Provinsi tempat tinggal",
+            valid: getKode(getValues("tinggal_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota tempat tinggal",
+            valid: getKode(getValues("tinggal_kabkot")) !== "",
+          },
+          {
+            label: "Kecamatan tempat tinggal",
+            valid: getKode(getValues("tinggal_kecamatan")) !== "",
+          },
+          {
+            label: "Kelurahan tempat tinggal",
+            valid: getKode(getValues("tinggal_kelurahan")) !== "",
+          },
+          {
+            label: "Dusun tempat tinggal",
+            valid: (getValues("tinggal_dusun") ?? "").trim() !== "",
+          },
+          {
+            label: "Kode pos tempat tinggal",
+            valid: (getValues("tinggal_kode_pos") ?? "").trim() !== "",
+          },
+          {
+            label: "RT tempat tinggal",
+            valid: (getValues("tinggal_rt") ?? "").trim() !== "",
+          },
+          {
+            label: "RW tempat tinggal",
+            valid: (getValues("tinggal_rw") ?? "").trim() !== "",
+          },
+          {
+            label: "Alamat lengkap tempat tinggal",
+            valid: (getValues("tinggal_alamat") ?? "").trim() !== "",
+          },
+          {
+            label: "Provinsi tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kabkot")) !== "",
+          },
+          {
+            label: "Kecamatan tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kecamatan")) !== "",
+          },
+          {
+            label: "Kelurahan tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kelurahan")) !== "",
+          },
+          {
+            label: "Dusun tempat bekerja / kebun",
+            valid: (getValues("kerja_dusun") ?? "").trim() !== "",
+          },
+          {
+            label: "Kode pos tempat bekerja / kebun",
+            valid: (getValues("kerja_kode_pos") ?? "").trim() !== "",
+          },
+          {
+            label: "RT tempat bekerja / kebun",
+            valid: (getValues("kerja_rt") ?? "").trim() !== "",
+          },
+          {
+            label: "RW tempat bekerja / kebun",
+            valid: (getValues("kerja_rw") ?? "").trim() !== "",
+          },
+          {
+            label: "Alamat lengkap tempat bekerja / kebun",
+            valid: (getValues("kerja_alamat") ?? "").trim() !== "",
+          },
+        ];
+
+        const invalidFields = alamatChecks.filter((c) => !c.valid);
+        if (invalidFields.length > 0) {
+          invalidFields.forEach(({ label }) =>
+            toast.error(`${label} wajib diisi / dipilih.`),
           );
           return;
         }
       }
+
+      const currentData = getValues();
+      await saveDraftSilent(currentData);
+      setCurrentStep(currentStep + 1);
+    } finally {
+      setIsNextLoading(false);
     }
-
-    if (currentStep === 3) {
-      // ✅ Validasi: semua nilai rapor wajib diisi
-      const nilaiRapor = nilaiRaporRef.current;
-      const nilaiKosong = [
-        { key: "nilai_semester_1", label: "Nilai Semester 1" },
-        { key: "nilai_semester_2", label: "Nilai Semester 2" },
-        { key: "nilai_semester_3", label: "Nilai Semester 3" },
-        { key: "nilai_semester_4", label: "Nilai Semester 4" },
-        { key: "nilai_semester_5", label: "Nilai Semester 5" },
-      ].filter(
-        ({ key }) =>
-          !nilaiRapor[key as keyof NilaiRaporForm] ||
-          nilaiRapor[key as keyof NilaiRaporForm].trim() === "",
-      );
-
-      if (nilaiKosong.length > 0) {
-        nilaiKosong.forEach(({ label }) => {
-          toast.error(`${label} wajib diisi`);
-        });
-        return;
-      }
-
-      try {
-        await beasiswaService.saveNilaiRapor(existBeasiswa.id_trx_beasiswa, {
-          id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
-          ...nilaiRaporRef.current,
-        });
-      } catch {
-        // silent — tidak blokir navigasi
-      }
-    }
-
-    // ============================================================
-    // TIDAK ADA perubahan lain di BeasiswaForm.tsx
-    // ============================================================
-
-    // const currentData = watch();
-    // saveDraftSilent(currentData);
-    // setCurrentStep(currentStep + 1);
-
-    const currentData = getValues(); // ← lebih reliable dari watch()
-    await saveDraftSilent(currentData); // ← await agar tidak race condition
-    setCurrentStep(currentStep + 1);
   };
-
-  const handlePrev = () => {
+  const handlePrev = async () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setIsPrevLoading(true);
+      try {
+        const currentData = getValues();
+        await saveDraftSilent(currentData);
+        setCurrentStep(currentStep - 1);
+      } finally {
+        setIsPrevLoading(false);
+      }
     }
   };
 
   const onSubmit = async (data: BeasiswaFormData) => {
-    // ✅ Validasi dokumen khusus wajib
+    if (uploadKhususRef.current?.hasPendingFiles()) {
+      try {
+        await uploadKhususRef.current.uploadAllPending();
+      } catch {
+        toast.error(
+          "Gagal mengunggah beberapa dokumen khusus. Silakan coba lagi.",
+        );
+        return;
+      }
+    }
     if (persyaratanKhusus.length > 0) {
       try {
         const res = await beasiswaService.getUploadedPersyaratan(
@@ -949,43 +1120,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
 
       if (data.foto_belakang instanceof File)
         formData.append("foto_belakang", data.foto_belakang);
-
-      // let idVerifikator: number | null = null;
-
-      // if (existBeasiswa.id_verifikator) {
-      //   idVerifikator = existBeasiswa.id_verifikator;
-      // } else {
-      //   try {
-      //     const [resVerifikator, resBeban] = await Promise.all([
-      //       beasiswaService.getVerifikatorIds(),
-      //       beasiswaService.getBebanVerifikator(),
-      //     ]);
-
-      //     const verifikatorIds: number[] = resVerifikator?.data ?? [];
-      //     const bebanList: { id_verifikator: number; total_beban: string }[] =
-      //       resBeban?.data ?? [];
-
-      //     const bebanMap: Record<number, number> = {};
-      //     verifikatorIds.forEach((id) => (bebanMap[id] = 0));
-      //     bebanList.forEach((item) => {
-      //       if (bebanMap[item.id_verifikator] !== undefined) {
-      //         bebanMap[item.id_verifikator] = parseInt(item.total_beban);
-      //       }
-      //     });
-
-      //     idVerifikator = verifikatorIds.reduce((leastId, currentId) =>
-      //       bebanMap[currentId] < bebanMap[leastId] ? currentId : leastId,
-      //     );
-      //   } catch (err) {
-      //     console.error("Gagal hitung verifikator:", err);
-      //   }
-      // }
-
-      // if (idVerifikator !== null) {
-      //   formData.append("id_verifikator", idVerifikator.toString());
-      // }
-
-      // formData.append("id_verifikator", null);
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
       formData.append("nkk", data.nkk ?? "");
@@ -1119,6 +1253,14 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   };
 
   const onDraft = async (data: BeasiswaFormData) => {
+    if (uploadKhususRef.current?.hasPendingFiles()) {
+      try {
+        await uploadKhususRef.current.uploadAllPending();
+      } catch {
+        toast.error("Gagal mengunggah beberapa dokumen khusus.");
+        return;
+      }
+    }
     try {
       const formData = new FormData();
       formData.append("is_draft", "true");
@@ -1283,11 +1425,83 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   useEffect(() => {
     console.log("Full existBeasiswa:", JSON.stringify(existBeasiswa, null, 2));
   }, [existBeasiswa]);
+
+  const handleKonfirmasiGantiJalur = async () => {
+    if (!pendingJalurValue) return;
+    setIsResettingJalur(true);
+    try {
+      await beasiswaService.deletePersyaratanKhususByTrx(
+        existBeasiswa.id_trx_beasiswa,
+      );
+      uploadKhususRef.current?.resetAll();
+      isSettingJalurFromConfirm.current = true; // ← tandai agar useEffect skip
+      setValue("jalur", pendingJalurValue);
+      setPrevJalurId(pendingJalurValue.split("#")[0]);
+      setPendingJalurValue(null);
+      setShowGantiJalurDialog(false);
+      toast.success(
+        "Jalur berhasil diganti, dokumen khusus sebelumnya dihapus.",
+      );
+    } catch {
+      toast.error("Gagal menghapus dokumen khusus. Coba lagi.");
+    } finally {
+      setIsResettingJalur(false);
+    }
+  };
+
+  const handleBatalGantiJalur = () => {
+    setPendingJalurValue(null);
+    setShowGantiJalurDialog(false);
+  };
+
+  // Tambah ref untuk skip trigger saat jalur di-set ulang dari konfirmasi
+  const isSettingJalurFromConfirm = useRef(false);
+
+  useEffect(() => {
+    if (isSettingJalurFromConfirm.current) {
+      isSettingJalurFromConfirm.current = false;
+      return;
+    }
+
+    if (!selectedJalur) return;
+
+    const newJalurId = selectedJalur.split("#")[0];
+
+    if (!prevJalurId || prevJalurId === newJalurId) return;
+
+    // Jalur berbeda dan ada jalur sebelumnya → tahan & tampilkan konfirmasi
+    setPendingJalurValue(selectedJalur);
+    // Kembalikan sementara ke jalur lama di form
+    const jalurLama = jalurOptions.find(
+      (opt) => opt.value.split("#")[0] === prevJalurId,
+    );
+    if (jalurLama) {
+      setValue("jalur", jalurLama.value, { shouldDirty: false });
+    }
+    setShowGantiJalurDialog(true);
+  }, [selectedJalur]);
+
+  // 2. Gunakan hook — hanya aktif jika flow = 4
+  const { needsKoreksi, isDisabled, getCatatan } = useKoreksiFields(
+    existBeasiswa.id_trx_beasiswa,
+    existBeasiswa.id_flow === 4,
+  );
+
   return (
     <>
       {!isPreviewOpen && (
         <div className="flex flex-col md:flex-row gap-2 items-start">
-          <VerticalStepper steps={steps} currentStep={currentStep} />
+          {existBeasiswa.id_flow === 4 ? (
+            <KoreksiPendaftarAlert
+              idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
+              onGoToStep={(step) => setCurrentStep(step)}
+            />
+          ) : (
+            <VerticalStepper steps={steps} currentStep={currentStep} />
+          )}
+
+          <div className="flex flex-col md:flex-row gap-2 items-start"></div>
+          {/* <VerticalStepper steps={steps} currentStep={currentStep} /> */}
 
           <Card className="shadow-none flex-1">
             <CardContent>
@@ -1313,6 +1527,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                     errors={errors}
                     agamaOptions={agamaOptions}
                     sukuOptions={sukuOptions}
+                    onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
+                    isFieldDisabled={isDisabled}
+                    isFieldKoreksi={needsKoreksi}
+                    getFieldCatatan={getCatatan}
                   />
                 )}
 
@@ -1339,6 +1557,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                     errors={errors}
                     provinsiOptions={provinsiOptions}
                     setValue={setValue}
+                    isFieldDisabled={isDisabled}
+                    isFieldKoreksi={needsKoreksi}
+                    getFieldCatatan={getCatatan}
                   />
                 )}
 
@@ -1355,6 +1576,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                     register={register}
                     control={control}
                     errors={errors}
+                    isFieldDisabled={isDisabled}
+                    isFieldKoreksi={needsKoreksi}
+                    getFieldCatatan={getCatatan}
                   />
                 )}
 
@@ -1372,11 +1596,15 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                     control={control}
                     errors={errors}
                     provinsiOptions={provinsiOptions}
-                    idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} // ← tambah
-                    idRefBeasiswa={existBeasiswa.id_ref_beasiswa} // ← tambah
+                    setValue={setValue}
+                    idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
+                    idRefBeasiswa={existBeasiswa.id_ref_beasiswa}
                     onNilaiRaporChange={(values) => {
                       nilaiRaporRef.current = values;
                     }}
+                    isFieldDisabled={isDisabled}
+                    isFieldKoreksi={needsKoreksi}
+                    getFieldCatatan={getCatatan}
                   />
                 )}
 
@@ -1406,7 +1634,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                       placeholder="Pilih jalur penerima beasiswa"
                       error={errors.jalur}
                     />
+
                     <UploadPersyaratanKhusus
+                      ref={uploadKhususRef} // ← tambah ini
                       key={jalurId ?? "no-jalur"}
                       idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                       persyaratanKhusus={persyaratanKhusus}
@@ -1420,8 +1650,17 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                 <Button
                   variant="outline"
                   onClick={handlePrev}
-                  disabled={currentStep === 0}>
-                  Sebelumnya
+                  disabled={
+                    currentStep === 0 || isPrevLoading || isNextLoading
+                  }>
+                  {isPrevLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    "Sebelumnya"
+                  )}
                 </Button>
 
                 <div className="flex gap-2">
@@ -1446,8 +1685,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                       </Button>
                     </>
                   ) : (
-                    <Button type="button" onClick={handleNext}>
-                      Selanjutnya
+                    <Button
+                      type="button"
+                      onClick={handleNext}
+                      disabled={
+                        isNextLoading || (currentStep === 0 && umurMelebihi)
+                      }>
+                      {isNextLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Memproses...
+                        </>
+                      ) : (
+                        "Selanjutnya"
+                      )}
                     </Button>
                   )}
                 </div>
@@ -1498,6 +1749,46 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                 </li>
               ))}
             </ul>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Dialog Konfirmasi Ganti Jalur */}
+      <Dialog
+        open={showGantiJalurDialog}
+        onOpenChange={(open) => {
+          if (!open) handleBatalGantiJalur();
+        }}>
+        <DialogContent className="sm:max-w-md font-inter">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              Konfirmasi Ganti Jalur
+            </DialogTitle>
+            <DialogDescription>
+              Mengganti jalur akan menghapus semua dokumen khusus yang sudah
+              diunggah sebelumnya. Apakah Anda yakin ingin melanjutkan?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={handleBatalGantiJalur}
+              disabled={isResettingJalur}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleKonfirmasiGantiJalur}
+              disabled={isResettingJalur}>
+              {isResettingJalur ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Ya, Ganti Jalur"
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

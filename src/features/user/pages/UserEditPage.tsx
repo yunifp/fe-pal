@@ -19,6 +19,13 @@ import { roleService } from "@/features/role/services/roleService";
 import MultiSelect from "@/components/MultiSelect";
 import DropAndCropCircle from "@/components/DropAndCropCircle";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const UserEditPage = () => {
   useRedirectIfHasNotAccess("U");
@@ -28,12 +35,13 @@ const UserEditPage = () => {
   const navigate = useNavigate();
   const userId = parseInt(id ?? "");
 
-  // Validasi form
   const {
     register,
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<UserEditFormData>({
     resolver: zodResolver(userEditSchema),
@@ -42,10 +50,11 @@ const UserEditPage = () => {
       username: "",
       is_active: 0,
       id_role: [],
+      id_lembaga_pendidikan: "",
+      lembaga_pendidikan: "",
     },
   });
 
-  // Ambil detail user
   const {
     data: userData,
     isLoading: isUserLoading,
@@ -60,7 +69,6 @@ const UserEditPage = () => {
     staleTime: STALE_TIME,
   });
 
-  // Ambil daftar role
   const { data: rolesData } = useQuery({
     queryKey: ["roles"],
     queryFn: () => roleService.getAll(),
@@ -69,7 +77,6 @@ const UserEditPage = () => {
     staleTime: STALE_TIME,
   });
 
-  // Konversi ke options
   const roleOptions = useMemo(() => {
     return (
       rolesData?.data?.map((role) => ({
@@ -79,7 +86,23 @@ const UserEditPage = () => {
     );
   }, [rolesData]);
 
-  // Mengatur nilai default form ketika data berhasil diambil
+  const selectedRoles = watch("id_role");
+
+  const isLembagaPendidikan = useMemo(() => {
+    if (!selectedRoles || !rolesData?.data) return false;
+    const roleTarget = rolesData.data.find(
+      (r: any) => r.nama === "Lembaga Pendidikan"
+    );
+    return roleTarget ? selectedRoles.includes(roleTarget.id) : false;
+  }, [selectedRoles, rolesData]);
+
+  const { data: ptData } = useQuery({
+    queryKey: ["perguruan-tinggi"],
+    queryFn: () => userService.getPerguruanTinggi(),
+    enabled: isLembagaPendidikan,
+    staleTime: STALE_TIME,
+  });
+
   useEffect(() => {
     if (userData?.data) {
       reset({
@@ -87,11 +110,14 @@ const UserEditPage = () => {
         username: userData.data?.user_id ?? "",
         is_active: userData.data?.is_active ?? 0,
         id_role: userData.data?.role.map((role) => role.id) ?? [],
+        id_lembaga_pendidikan: userData.data?.id_lembaga_pendidikan
+          ? String(userData.data.id_lembaga_pendidikan)
+          : "",
+        lembaga_pendidikan: userData.data?.lembaga_pendidikan ?? "",
       });
     }
   }, [userData?.data, reset]);
 
-  // Mengirim data ke API dan refresh cache
   const mutation = useMutation({
     mutationFn: (data: UserEditFormData) =>
       userService.updateById(userId, data),
@@ -116,6 +142,10 @@ const UserEditPage = () => {
   });
 
   const onSubmit = (data: UserEditFormData) => {
+    if (!isLembagaPendidikan) {
+      data.id_lembaga_pendidikan = null;
+      data.lembaga_pendidikan = null;
+    }
     mutation.mutate(data);
   };
 
@@ -206,6 +236,48 @@ const UserEditPage = () => {
                   />
                 )}
               />
+
+              {isLembagaPendidikan && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Perguruan Tinggi</label>
+                  <Controller
+                    control={control}
+                    name="id_lembaga_pendidikan"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const selectedPt = ptData?.data?.find(
+                            (pt: any) => String(pt.id_pt) === val
+                          );
+                          if (selectedPt) {
+                            setValue("lembaga_pendidikan", selectedPt.nama_pt);
+                          } else {
+                            setValue("lembaga_pendidikan", "");
+                          }
+                        }}
+                        value={field.value || ""}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih Perguruan Tinggi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ptData?.data?.map((pt: any) => (
+                            <SelectItem key={pt.id_pt} value={String(pt.id_pt)}>
+                              {pt.nama_pt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.id_lembaga_pendidikan && (
+                    <span className="text-red-500 text-xs">
+                      {errors.id_lembaga_pendidikan.message}
+                    </span>
+                  )}
+                </div>
+              )}
 
               <Controller
                 control={control}

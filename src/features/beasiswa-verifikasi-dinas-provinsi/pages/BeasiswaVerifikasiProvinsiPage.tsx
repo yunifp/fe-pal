@@ -23,6 +23,7 @@ import {
   FileText,
   // FolderOpen,
   // ChevronRight,
+  AlertCircle,
   ChevronLeft,
   Users,
   Download,
@@ -43,6 +44,15 @@ import {
   SelectValue,
   SelectSeparator,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ViewState =
   | { mode: "kabkota-list" }
@@ -55,6 +65,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   const kodeProvinsi = authUser?.kode_prov || "";
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingRekap, setIsDownloadingRekap] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -82,7 +93,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   //   nama: string;
   // } | null>(null);
 
-  const baseFileUrl = import.meta.env.VITE_BEASISWA_SERVICE_URL;
+  // const baseFileUrl = import.meta.env.VITE_BEASISWA_SERVICE_URL;
 
   // ─── Beasiswa aktif ───────────────────────────────────────────────────────
   const { data: responseBeasiswaAktif } = useQuery({
@@ -206,6 +217,36 @@ const BeasiswaVerifikasiProvinsiPage = () => {
 
   const totalSiapKirim = countSiapKirimRes?.data?.count ?? 0;
 
+  const { data: refDokumenUmumRes } = useQuery({
+    queryKey: ["ref-dokumen-umum-kabkota"],
+    queryFn: () => beasiswaService.getRefDokumenUmum({ is_prov: "Y" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const { data: refDokumenUmumKabkotaRes } = useQuery({
+    queryKey: ["ref-dokumen-umum-kabkota-only"],
+    queryFn: () => beasiswaService.getRefDokumenUmum({ is_kabkota: "Y" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const { data: refDokumenKhususRes } = useQuery({
+    queryKey: ["ref-dokumen-khusus-kabkota"],
+    queryFn: () => beasiswaService.getRefDokumenKhusus({ is_prov: "Y" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  const refDokumenUmum = refDokumenUmumRes?.data?.result ?? [];
+  const refDokumenUmumKota = refDokumenUmumKabkotaRes?.data?.result ?? [];
+  console.log(refDokumenUmumKota);
+
+  const refDokumenKhusus = refDokumenKhususRes?.data?.result ?? [];
+
   // ─── Fetch semua SK sekaligus untuk tabel kabkota ─────────────────────────
   const { data: allSkRes } = useQuery({
     queryKey: ["sk-kabkota-all", beasiswaAktif?.id],
@@ -224,6 +265,42 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  const { data: statusVerifikasiRes } = useQuery({
+    queryKey: ["status-verifikasi-kabkota", beasiswaAktif?.id],
+    queryFn: () =>
+      beasiswaService.getStatusVerifikasiKabkota(beasiswaAktif?.id ?? 0),
+    enabled: !!beasiswaAktif?.id,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const statusVerifikasiMap = useMemo(() => {
+    return (statusVerifikasiRes?.data ?? []).reduce(
+      (acc, item) => {
+        acc[item.kode_dinas_kabkota] = item;
+        return acc;
+      },
+      {} as Record<
+        string,
+        { total: number; sudah_tag: number; selesai: boolean }
+      >,
+    );
+  }, [statusVerifikasiRes]);
+
+  // true jika SEMUA kabkota di provinsi ini sudah selesai
+  const semuaKabkotaSelesai = useMemo(() => {
+    const list = statusVerifikasiRes?.data ?? [];
+    if (list.length === 0) return false;
+    return list.every((item) => item.selesai);
+  }, [statusVerifikasiRes]);
+
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const kabkotaBelumSelesai = useMemo(() => {
+    return (statusVerifikasiRes?.data ?? [])
+      .filter((item) => !item.selesai)
+      .map((item) => item.kode_dinas_kabkota);
+  }, [statusVerifikasiRes]);
 
   // ─── Effects ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -422,16 +499,28 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   //   [skMap, baseFileUrl, countMap],
   // );
 
+  // const kabkotaColumns = useMemo(
+  //   () =>
+  //     getKabkotaColumns(
+  //       handleSelectKabkota,
+  //       skMap,
+  //       // baseFileUrl,
+  //       countMap,
+  //       baMap,
+  //     ),
+  //   [skMap, baseFileUrl, countMap, baMap],
+  // );
+
   const kabkotaColumns = useMemo(
     () =>
       getKabkotaColumns(
         handleSelectKabkota,
         skMap,
-        // baseFileUrl,
         countMap,
         baMap,
+        statusVerifikasiMap, // ← tambahkan ini
       ),
-    [skMap, baseFileUrl, countMap, baMap],
+    [skMap, countMap, baMap, statusVerifikasiMap],
   );
 
   const pendaftarColumns = useMemo(() => getColumns(), []);
@@ -448,13 +537,22 @@ const BeasiswaVerifikasiProvinsiPage = () => {
           { name: view.nama },
         ];
 
+  // Tambah guard — sama seperti kabkota
+  const isRefReady = refDokumenUmum.length > 0;
+
   const handleDownloadCSV = async () => {
+    if (!isRefReady) {
+      console.log(refDokumenUmum);
+
+      toast.error("Referensi dokumen belum siap, tunggu sebentar...");
+      return;
+    }
+
     setIsDownloading(true);
     try {
       await beasiswaService.downloadVerifikasiProvinsi({
         idBeasiswa: beasiswaAktif?.id ?? 0,
         kodeProvinsi,
-        // kodeKabkota: kodeKabkotaSelected,
         search: debouncedSearch,
         ...(filterIdFlow !== "all" &&
           filterIdFlow !== "lulus" &&
@@ -462,6 +560,15 @@ const BeasiswaVerifikasiProvinsiPage = () => {
         ...(filterIdJalur !== "all" && { idJalur: Number(filterIdJalur) }),
         ...(filterIdFlow === "lulus" && { statusLulus: "Y" }),
         ...(filterIdFlow === "tidak_lulus" && { statusLulus: "N" }),
+        // ✅ tambah ini
+        refDokumenUmum: refDokumenUmum.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
+        refDokumenKhusus: refDokumenKhusus.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
       });
       toast.success("File berhasil diunduh");
     } catch {
@@ -471,6 +578,75 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     }
   };
 
+  // const handleDownloadRekap = async () => {
+  //   setIsDownloadingRekap(true);
+  //   try {
+  //     await beasiswaService.downloadRekapProvinsi({
+  //       idBeasiswa: beasiswaAktif?.id ?? 0,
+  //       kodeProvinsi,
+  //     });
+  //     toast.success("Rekap berhasil diunduh");
+  //   } catch {
+  //     toast.error("Gagal mengunduh rekap");
+  //   } finally {
+  //     setIsDownloadingRekap(false);
+  //   }
+  // };
+  // const kodeKabkota = authUser?.kode_kab || "";
+
+  const handleDownloadRekap = async () => {
+    if (!isRefReady) {
+      toast.error("Referensi dokumen belum siap, tunggu sebentar...");
+      return;
+    }
+
+    // Ambil kode kabkota dari view state, bukan dari authUser
+    const kodeKabkotaForDownload =
+      view.mode === "pendaftar-list" ? view.kode : "";
+
+    if (!kodeKabkotaForDownload) {
+      toast.error("Kabupaten/kota tidak ditemukan");
+      return;
+    }
+
+    try {
+      setIsDownloadingRekap(true);
+      const isSpecialFlow =
+        filterIdFlow === "lulus" || filterIdFlow === "tidak_lulus";
+
+      await beasiswaService.downloadVerifikasiKabkota({
+        idBeasiswa: beasiswaAktif?.id ?? 0,
+        kodeProvinsi,
+        kodeKabkota: kodeKabkotaForDownload, // ✅ pakai ini
+        search: debouncedSearch,
+        idFlow:
+          !isSpecialFlow && filterIdFlow !== "all"
+            ? Number(filterIdFlow)
+            : undefined,
+        idJalur: filterIdJalur !== "all" ? Number(filterIdJalur) : undefined,
+        statusLulus:
+          filterIdFlow === "lulus"
+            ? "Y"
+            : filterIdFlow === "tidak_lulus"
+              ? "N"
+              : undefined,
+        refDokumenUmum: refDokumenUmumKota.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
+        refDokumenKhusus: refDokumenKhusus.map((d: any) => ({
+          id: d.id,
+          persyaratan: d.persyaratan,
+        })),
+      });
+
+      toast.success("Rekap berhasil diunduh");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal mengunduh rekap");
+    } finally {
+      setIsDownloadingRekap(false);
+    }
+  };
   // ─── Filter node (dipakai di DataTable pendaftar) ─────────────────────────
   const filterContent = (
     <>
@@ -507,7 +683,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
 
       <button
         type="button"
-        onClick={handleDownloadCSV}
+        onClick={handleDownloadRekap}
         disabled={filteredData.length === 0 || isDownloading}
         className={`
         flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
@@ -544,17 +720,15 @@ const BeasiswaVerifikasiProvinsiPage = () => {
             <p className="text-xl font-semibold">Verifikasi Administratif</p>
 
             <div className="flex items-center gap-3">
-              {/* <button
-                type="button"
-                onClick={() => setShowSkDialog(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                <FolderOpen className="w-4 h-4" />
-                SK Kabupaten/Kota
-              </button> */}
-
               <button
                 type="button"
-                onClick={() => setShowUploadDialog(true)}
+                onClick={() => {
+                  if (!semuaKabkotaSelesai) {
+                    setShowBlockedDialog(true);
+                    return;
+                  }
+                  setShowUploadDialog(true);
+                }}
                 disabled={totalSiapKirim === 0}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                   ${
@@ -569,6 +743,25 @@ const BeasiswaVerifikasiProvinsiPage = () => {
                     {totalSiapKirim}
                   </span>
                 )}
+              </button>
+              {/* Tombol Download Rekap — letakkan sebelum tombol Kirim */}
+              <button
+                type="button"
+                onClick={handleDownloadCSV}
+                disabled={isDownloadingRekap || kabkotaList.length === 0}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+    transition-all duration-200
+    ${
+      kabkotaList.length > 0 && !isDownloadingRekap
+        ? "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm"
+        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+    }`}>
+                {isDownloadingRekap ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                Download Rekap Provinsi
               </button>
             </div>
           </div>
@@ -631,8 +824,9 @@ const BeasiswaVerifikasiProvinsiPage = () => {
               Upload Dokumen & Kirim ke Ditjenbun
             </DialogTitle>
             <DialogDescription>
-              Upload SK dan BA untuk <strong>{totalSiapKirim} pendaftar</strong>{" "}
-              yang akan dikirim ke Ditjenbun.
+              Upload Surat Rekomendasi dan BA untuk{" "}
+              <strong>{totalSiapKirim} pendaftar</strong> yang akan dikirim ke
+              Ditjenbun.
             </DialogDescription>
           </DialogHeader>
 
@@ -816,6 +1010,54 @@ const BeasiswaVerifikasiProvinsiPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog}>
+        <AlertDialogContent className="sm:max-w-md font-inter">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="w-5 h-5" />
+              Kabupaten/Kota Belum Selesai Verifikasi
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  Pengiriman ke Ditjenbun tidak dapat dilakukan karena masih ada{" "}
+                  <strong>{kabkotaBelumSelesai.length} kabupaten/kota</strong>{" "}
+                  yang belum menyelesaikan verifikasi seluruh pendaftarnya.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+                  <p className="text-xs font-semibold text-amber-700 mb-1.5">
+                    Kabupaten/Kota yang belum selesai:
+                  </p>
+                  <ul className="space-y-1">
+                    {kabkotaBelumSelesai.map((kode) => {
+                      const kabkota = kabkotaList.find(
+                        (k: any) => String(k.kode_kab) === kode,
+                      );
+                      const status = statusVerifikasiMap[kode];
+                      return (
+                        <li
+                          key={kode}
+                          className="text-xs text-amber-800 flex items-center justify-between">
+                          <span>• {kabkota?.nama_wilayah ?? kode}</span>
+                          <span className="text-amber-600 font-medium">
+                            {status?.sudah_tag ?? 0}/{status?.total ?? 0}{" "}
+                            diverifikasi
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowBlockedDialog(false)}>
+              Mengerti
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

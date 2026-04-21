@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { IBeasiswa } from "@/types/beasiswa";
@@ -98,8 +99,7 @@ const BeasiswaAktifAksi = ({
             {isLongText && (
               <span
                 className="text-primary px-0 hover:cursor-pointer font-medium hover:underline"
-                onClick={() => setShowMore(!showMore)}
-              >
+                onClick={() => setShowMore(!showMore)}>
                 {" "}
                 {showMore ? "Sembunyikan" : "Lihat Selengkapnya"}
               </span>
@@ -128,8 +128,7 @@ const BeasiswaAktifAksi = ({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowConfirm(false)}
-                    className="text-amber-900 border-amber-300 hover:bg-amber-100"
-                  >
+                    className="text-amber-900 border-amber-300 hover:bg-amber-100">
                     Batal
                   </Button>
                   <Button
@@ -137,8 +136,7 @@ const BeasiswaAktifAksi = ({
                     size="sm"
                     onClick={handleConfirmTutup}
                     disabled={isLoading}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
+                    className="bg-red-600 hover:bg-red-700">
                     {isLoading ? "Menutup..." : "Ya, Tutup Pendaftaran"}
                   </Button>
                 </div>
@@ -156,8 +154,7 @@ const BeasiswaAktifAksi = ({
                 size="default"
                 onClick={handleTutupClick}
                 disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 shadow-md"
-              >
+                className="bg-red-600 hover:bg-red-700 shadow-md">
                 <Lock className="h-4 w-4 mr-2" />
                 Tutup Pendaftaran
               </Button>

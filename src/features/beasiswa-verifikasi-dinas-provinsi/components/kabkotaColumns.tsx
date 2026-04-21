@@ -1,5 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { MapPin, ArrowRight, FileText, Users } from "lucide-react";
+import {
+  MapPin,
+  ArrowRight,
+  FileText,
+  Users,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -35,6 +42,10 @@ export const getKabkotaColumns = (
   // baseFileUrl: string,
   countMap: Record<string, number>,
   baMap: Record<string, IBaKabkota[]> = {},
+  statusVerifikasiMap: Record<
+    string,
+    { total: number; sudah_tag: number; selesai: boolean }
+  > = {}, // ← tambah
 ): ColumnDef<IKabkotaRow>[] => [
   {
     id: "no",
@@ -71,8 +82,41 @@ export const getKabkotaColumns = (
     },
   },
   {
+    id: "status_verifikasi",
+    header: "Status Verifikasi",
+    cell: ({ row }) => {
+      const kode = String(row.original.kode_kab);
+      const status = statusVerifikasiMap[kode];
+
+      if (!status || status.total === 0) {
+        return <span className="text-gray-300 text-xs">—</span>;
+      }
+
+      // const persen = Math.round((status.sudah_tag / status.total) * 100);
+
+      return (
+        <div className="flex items-center gap-2 min-w-[140px]">
+          {status.selesai ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+              <CheckCircle2 className="w-3 h-3" />
+              Selesai
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+              <Clock className="w-3 h-3" />
+              Belum Selesai
+            </span>
+          )}
+          <span className="text-xs text-gray-500">
+            {status.sudah_tag}/{status.total}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
     id: "sk",
-    header: "SK",
+    header: "Surat Rekomendasi",
     cell: ({ row }) => {
       const kode = String(row.original.kode_kab);
       const skList = skMap[kode] ?? [];

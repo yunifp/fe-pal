@@ -3,8 +3,8 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/features/Auth/services/authService";
-import { logService } from "@/services/logService";
-import qs from "qs";
+// import { logService } from "@/services/logService";
+// import qs from "qs";
 
 const baseUrl = BEASISWA_SERVICE_BASE_URL.replace(/\/beasiswa$/, "");
 const axiosInstanceBeasiswa = axios.create({
@@ -46,25 +46,25 @@ axiosInstanceBeasiswa.interceptors.request.use((config) => {
 // Response interceptor
 axiosInstanceBeasiswa.interceptors.response.use(
   (response) => {
-    const user = useAuthStore.getState().user;
+    // const user = useAuthStore.getState().user;
 
-    // 🔹 Serialize query params menggunakan qs
-    const params = response.config.params
-      ? "?" + qs.stringify(response.config.params, { arrayFormat: "brackets" })
-      : "";
+    // // 🔹 Serialize query params menggunakan qs
+    // const params = response.config.params
+    //   ? "?" + qs.stringify(response.config.params, { arrayFormat: "brackets" })
+    //   : "";
 
-    void logService
-      .logActivity({
-        actor: user?.nama || "system",
-        user_id: user?.id || null,
-        http_method: response.config.method?.toUpperCase(),
-        api_endpoint: `${response.config.url}${params}`, // backend endpoint lengkap
-        frontend_url: window.location.pathname,
-        status: "SUCCESS",
-        ip_address: "0.0.0.0",
-        user_agent: navigator.userAgent,
-      })
-      .catch((err) => console.error("Log gagal:", err));
+    // void logService
+    //   .logActivity({
+    //     actor: user?.nama || "system",
+    //     user_id: user?.id || null,
+    //     http_method: response.config.method?.toUpperCase(),
+    //     api_endpoint: `${response.config.url}${params}`, // backend endpoint lengkap
+    //     frontend_url: window.location.pathname,
+    //     status: "SUCCESS",
+    //     ip_address: "0.0.0.0",
+    //     user_agent: navigator.userAgent,
+    //   })
+    //   .catch((err) => console.error("Log gagal:", err));
 
     return response;
   },
@@ -72,25 +72,25 @@ axiosInstanceBeasiswa.interceptors.response.use(
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
     };
-    const user = useAuthStore.getState().user;
+    // const user = useAuthStore.getState().user;
 
-    // 🔹 Serialize query params untuk error juga
-    const params = originalRequest.params
-      ? "?" + qs.stringify(originalRequest.params, { arrayFormat: "brackets" })
-      : "";
+    // // 🔹 Serialize query params untuk error juga
+    // const params = originalRequest.params
+    //   ? "?" + qs.stringify(originalRequest.params, { arrayFormat: "brackets" })
+    //   : "";
 
-    void logService
-      .logActivity({
-        actor: user?.nama || "system",
-        user_id: user?.id || null,
-        http_method: originalRequest?.method?.toUpperCase(),
-        api_endpoint: `${originalRequest?.url}${params}`,
-        frontend_url: window.location.pathname,
-        status: "FAILED",
-        ip_address: "0.0.0.0",
-        user_agent: navigator.userAgent,
-      })
-      .catch((err) => console.error("Log gagal:", err));
+    // void logService
+    //   .logActivity({
+    //     actor: user?.nama || "system",
+    //     user_id: user?.id || null,
+    //     http_method: originalRequest?.method?.toUpperCase(),
+    //     api_endpoint: `${originalRequest?.url}${params}`,
+    //     frontend_url: window.location.pathname,
+    //     status: "FAILED",
+    //     ip_address: "0.0.0.0",
+    //     user_agent: navigator.userAgent,
+    //   })
+    //   .catch((err) => console.error("Log gagal:", err));
 
     // ===== handling refresh token =====
     if (error.response?.status === 401 && !originalRequest._retry) {

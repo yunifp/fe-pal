@@ -77,7 +77,7 @@ export const masterService = {
     );
     return response.data;
   },
- // ORKESTRASI: update master tanpa data operator
+  // ORKESTRASI: update master tanpa data operator
   updatePerguruanTinggiById: async (
     id: number,
     data: PerguruanTinggiEditFormData,
@@ -865,6 +865,24 @@ export const masterService = {
   ): Promise<Response<{ is_active: number }>> => {
     const response = await axiosInstanceJson.patch(
       `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}/toggle-active`,
+    );
+    return response.data;
+  },
+  checkNikCekal: async (
+    nik: string,
+  ): Promise<
+    Response<{
+      is_cekal: boolean;
+      data: {
+        id: number;
+        nik: string;
+        nama: string | null;
+        keterangan: string | null;
+      } | null;
+    }>
+  > => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/check-nik-cekal/${nik}`,
     );
     return response.data;
   },

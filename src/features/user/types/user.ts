@@ -26,7 +26,6 @@ export type IUser = {
   jenjang: string | null;
 };
 
-// Schema validasi form
 export const userCreateSchema = z
   .object({
     nama: z.string().min(1, "Nama wajib diisi"),
@@ -45,6 +44,8 @@ export const userCreateSchema = z
       .string()
       .min(6, "Konfirmasi password minimal 6 karakter"),
     department_id: z.string().optional(),
+    id_lembaga_pendidikan: z.string().optional().nullable(),
+    lembaga_pendidikan: z.string().optional().nullable(),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "Password dan konfirmasi password harus sama",
@@ -63,14 +64,13 @@ export const userEditSchema = z.object({
     .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
       message: "Ukuran maksimal 5MB",
     }),
+  id_lembaga_pendidikan: z.string().optional().nullable(),
+  lembaga_pendidikan: z.string().optional().nullable(),
 });
 
-// Tipe data form
 export type UserCreateFormData = z.infer<typeof userCreateSchema>;
-
 export type UserEditFormData = z.infer<typeof userEditSchema>;
 
-// Untuk kirim data HTTP
 export interface UserRequest {
   nama: string;
   username: string;

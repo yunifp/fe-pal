@@ -11,7 +11,8 @@ import { Fragment } from "react/jsx-runtime";
 import { Link } from "react-router-dom"; // Import Link dari react-router-dom
 
 type BreadcrumbItemType = {
-  name: string;
+  name?: string;
+  path?: string;
   url?: string;
 };
 

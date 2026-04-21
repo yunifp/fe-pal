@@ -1,4 +1,5 @@
-import { AUTH_SERVICE_BASE_URL } from "@/constants/api";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { AUTH_SERVICE_BASE_URL, MASTER_SERVICE_BASE_URL } from "@/constants/api";
 import type {
   IUser,
   PaginatedUserResponse,
@@ -13,7 +14,7 @@ export const userService = {
   getByPagination: async (
     page: number = 1,
     search: string = "",
-    role: string = "" // <--- Tambahan parameter role
+    role: string = ""
   ): Promise<Response<PaginatedUserResponse>> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users`,
@@ -21,12 +22,20 @@ export const userService = {
         params: {
           page,
           search,
-          role, 
+          role,
         },
       }
     );
     return response.data;
   },
+
+  getPerguruanTinggi: async (): Promise<Response<any>> => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL || AUTH_SERVICE_BASE_URL.replace("auth", "master")}/perguruan-tinggi/all`
+    );
+    return response.data;
+  },
+
   create: async (data: UserCreateFormData): Promise<Response<null>> => {
     const formData = new FormData();
     formData.append("nama", data.nama);
@@ -34,6 +43,13 @@ export const userService = {
     formData.append("is_active", data.is_active ? "1" : "0");
     formData.append("password", data.password);
     formData.append("department_id", data.department_id ?? "");
+
+    if (data.id_lembaga_pendidikan) {
+      formData.append("id_lembaga_pendidikan", data.id_lembaga_pendidikan);
+    }
+    if (data.lembaga_pendidikan) {
+      formData.append("lembaga_pendidikan", data.lembaga_pendidikan);
+    }
 
     data.id_role.forEach((roleId) => {
       formData.append("id_role[]", roleId.toString());
@@ -50,12 +66,14 @@ export const userService = {
 
     return response.data;
   },
+
   getById: async (id: number): Promise<Response<IUser>> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users/${id}`
     );
     return response.data;
   },
+
   updateById: async (
     id: number,
     data: UserEditFormData
@@ -64,6 +82,13 @@ export const userService = {
     formData.append("nama", data.nama);
     formData.append("username", data.username);
     formData.append("is_active", data.is_active ? "1" : "0");
+
+    if (data.id_lembaga_pendidikan) {
+      formData.append("id_lembaga_pendidikan", data.id_lembaga_pendidikan);
+    }
+    if (data.lembaga_pendidikan) {
+      formData.append("lembaga_pendidikan", data.lembaga_pendidikan);
+    }
 
     data.id_role.forEach((roleId) => {
       formData.append("id_role[]", roleId.toString());
@@ -87,6 +112,7 @@ export const userService = {
     );
     return response.data;
   },
+
   exportExcel: async (): Promise<Blob> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users/export-excel`,
@@ -94,7 +120,7 @@ export const userService = {
     );
     return response.data;
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   getOperatorPT: async (id_pt: number): Promise<Response<any>> => {
     const response = await axiosInstanceJson.get(
       `${AUTH_SERVICE_BASE_URL}/users/op-pt/${id_pt}`
@@ -102,7 +128,6 @@ export const userService = {
     return response.data;
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createOperatorPT: async (payload: any): Promise<Response<any>> => {
     const response = await axiosInstanceJson.post(
       `${AUTH_SERVICE_BASE_URL}/users/pt-accounts`,
@@ -111,7 +136,6 @@ export const userService = {
     return response.data;
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateOperatorPT: async (id_pt: number, payload: any): Promise<Response<any>> => {
     const response = await axiosInstanceJson.put(
       `${AUTH_SERVICE_BASE_URL}/users/pt-accounts/${id_pt}`,

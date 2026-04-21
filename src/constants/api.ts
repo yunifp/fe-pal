@@ -1,7 +1,9 @@
-export const API_BASE_URL = "http://localhost:4000/api";
-export const AUTH_SERVICE_BASE_URL = "http://localhost:3001/api/auth";
-export const MASTER_SERVICE_BASE_URL = "http://localhost:3002/api/master";
-export const BEASISWA_SERVICE_BASE_URL = "http://localhost:3003/api/beasiswa";
-export const MAHASISWA_PKS_SERVICE_BASE_URL =
-  "http://localhost:3004/api/mahasiswa_pks";
-export const LOG_SERVICE_BASE_URL = "http://localhost:3005/api/log";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const AUTH_SERVICE_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_BASE_URL;
+export const MASTER_SERVICE_BASE_URL = import.meta.env
+  .VITE_MASTER_SERVICE_BASE_URL;
+export const BEASISWA_SERVICE_BASE_URL = import.meta.env
+  .VITE_BEASISWA_SERVICE_BASE_URL;
+export const MAHASISWA_PKS_SERVICE_BASE_URL = import.meta.env
+  .VITE_MAHASISWA_PKS_SERVICE_BASE_URL;
+export const LOG_SERVICE_BASE_URL = import.meta.env.VITE_LOG_SERVICE_BASE_URL;

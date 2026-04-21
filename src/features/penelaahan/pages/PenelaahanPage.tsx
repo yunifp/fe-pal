@@ -225,7 +225,7 @@ const PenelaahanPage = () => {
               className="h-11 px-5 flex items-center gap-2 whitespace-nowrap border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm"
             >
               <RefreshCw className="h-4 w-4" />
-              Reset Ranking
+              Reset
             </Button>
 
             <Button
@@ -251,14 +251,14 @@ const PenelaahanPage = () => {
               value="hasil" 
               className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-xl py-2.5 px-6 font-semibold text-slate-500 data-[state=active]:text-emerald-700 w-full sm:w-auto transition-all"
             >
-              Tabel Hasil Perankingan
+              Tabel Hasil 
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pendaftar" className="m-0 focus-visible:outline-none">
             <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white">
               <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-8">
-                <CardTitle className="text-xl font-bold text-slate-800">Daftar Pendaftar (Belum Diranking)</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-800">Daftar Pendaftar </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="p-6 sm:p-8">
