@@ -96,6 +96,7 @@ import JalurPendaftaran from "./features/cms-landing/pages/JalurPendaftaranPage"
 import CmsKontakPage from "./features/cms-landing/pages/CmsKontakPage";
 import CmsTentangPage from "./features/cms-landing/pages/CmsTentangPage";
 import MappingProdiByPtPage from "./features/setting-jurusan-prodi/pages/MappingProdiByPtPage";
+import NikCekalPage from "./features/nik-cekal/pages/NikCekalPage";
 
 const queryClient = new QueryClient();
 
@@ -377,6 +378,7 @@ function App() {
               <Route path="master-npsn" element={<MasterNpsn />} />
               <Route path="master-npsn/create" element={<MasterNpsnCreate />} />
               <Route path="master-npsn/:id" element={<MasterNpsnEdit />} />
+              <Route path="master/nik-cekal" element={<NikCekalPage />} />
               <Route
                 path="dokumen-pendaftar/"
                 element={<DokumenPendaftaran />}

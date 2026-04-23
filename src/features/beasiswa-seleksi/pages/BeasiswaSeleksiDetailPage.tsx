@@ -18,6 +18,7 @@ import { AlertCircle } from "lucide-react";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
+import { masterService } from "@/services/masterService";
 import { toast } from "sonner";
 import { STALE_TIME } from "@/constants/reactQuery";
 
@@ -132,6 +133,19 @@ const BeasiswaSeleksiDetailPage = () => {
         catatan_verifikasi_verifikator: data.catatan ?? undefined,
         verifikator: "ditjenbun",
       });
+
+      if (data.selectedStatus === 3) {
+        const nik = fullData?.data?.data_beasiswa?.nik;
+        const nama = fullData?.data?.data_beasiswa?.nama_lengkap;
+
+        if (nik) {
+          await masterService.submitCekal({
+            nik,
+            nama: nama ?? undefined,
+            keterangan: data.catatan || "Ditolak pada seleksi administratif",
+          });
+        }
+      }
 
       return beasiswaService.updateFlowBeasiswa(
         id,

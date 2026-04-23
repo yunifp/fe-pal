@@ -46,6 +46,7 @@ const DokumenKhususPage: React.FC = () => {
     is_required: "Y",
     is_kabkota: "N",
     is_prov: "N",
+    size: "", // Tambahan kolom size
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -122,6 +123,7 @@ const DokumenKhususPage: React.FC = () => {
       is_required: "Y",
       is_kabkota: "N",
       is_prov: "N",
+      size: "", // Reset field size
     });
     setIsModalOpen(true);
   };
@@ -137,6 +139,7 @@ const DokumenKhususPage: React.FC = () => {
       is_required: data.is_required,
       is_kabkota: data.is_kabkota || "N",
       is_prov: data.is_prov || "N",
+      size: data.size || "", // Set field size jika ada
     });
     setIsModalOpen(true);
   };
@@ -227,7 +230,7 @@ const DokumenKhususPage: React.FC = () => {
                 Lengkapi informasi persyaratan dokumen khusus per-jalur di bawah ini.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
               
               <div className="space-y-2">
                 <Label htmlFor="id_jalur" className="text-sm font-bold text-slate-700 ml-1">Pilih Jalur Pendaftaran</Label>
@@ -319,15 +322,29 @@ const DokumenKhususPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="valid_type" className="text-sm font-bold text-slate-700 ml-1">Format File (Extension)</Label>
-                <Input
-                  id="valid_type"
-                  placeholder="Contoh: pdf, jpg, png"
-                  className="h-11 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  value={formData.valid_type}
-                  onChange={(e) => setFormData({ ...formData, valid_type: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valid_type" className="text-sm font-bold text-slate-700 ml-1">Format (Extension)</Label>
+                  <Input
+                    id="valid_type"
+                    placeholder="Cth: pdf, jpg, png"
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    value={formData.valid_type}
+                    onChange={(e) => setFormData({ ...formData, valid_type: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="size" className="text-sm font-bold text-slate-700 ml-1">Max Size (MB)</Label>
+                  <Input
+                    id="size"
+                    type="number"
+                    placeholder="Contoh: 2"
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    value={formData.size}
+                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="pt-4 flex gap-3">

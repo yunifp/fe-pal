@@ -84,6 +84,15 @@ export const getColumns = (
     ),
   },
   {
+    accessorKey: "size",
+    header: "Max Size",
+    cell: ({ row }) => (
+      <span className="text-sm font-medium text-slate-700">
+        {row.original.size ? `${row.original.size} MB` : "-"}
+      </span>
+    ),
+  },
+  {
     id: "aksi",
     header: "Aksi",
     cell: ({ row }) => {

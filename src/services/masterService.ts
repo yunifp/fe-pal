@@ -886,4 +886,15 @@ export const masterService = {
     );
     return response.data;
   },
+  submitCekal: async (data: {
+    nik: string;
+    nama?: string;
+    keterangan?: string;
+  }): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.post(
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/submit-cekal`,
+      data,
+    );
+    return response.data;
+  },
 };

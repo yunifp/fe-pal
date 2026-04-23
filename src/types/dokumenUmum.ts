@@ -4,8 +4,9 @@ export interface IDokumenUmum {
   status_aktif: "Y" | "N";
   valid_type: string;
   is_required: "Y" | "N";
-  is_kabkota: "Y" | "N"; // <-- Tambahan
-  is_prov: "Y" | "N";    // <-- Tambahan
+  is_kabkota: "Y" | "N"; 
+  is_prov: "Y" | "N";    
+  size?: string | number;
   created_at?: string;
   updated_at?: string;
 }

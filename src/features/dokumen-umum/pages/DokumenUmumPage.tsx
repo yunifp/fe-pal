@@ -43,6 +43,7 @@ const DokumenUmumPage: React.FC = () => {
     is_required: "Y",
     is_kabkota: "N",
     is_prov: "N",
+    size: "",
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -111,6 +112,7 @@ const DokumenUmumPage: React.FC = () => {
       is_required: "Y",
       is_kabkota: "N",
       is_prov: "N",
+      size: "",
     });
     setIsModalOpen(true);
   };
@@ -125,6 +127,7 @@ const DokumenUmumPage: React.FC = () => {
       is_required: data.is_required,
       is_kabkota: data.is_kabkota || "N",
       is_prov: data.is_prov || "N",
+      size: data.size || "",
     });
     setIsModalOpen(true);
   };
@@ -160,6 +163,7 @@ const DokumenUmumPage: React.FC = () => {
       is_required: "Y",
       is_kabkota: "N",
       is_prov: "N",
+      size: "",
     });
   };
 
@@ -226,7 +230,7 @@ const DokumenUmumPage: React.FC = () => {
                 Lengkapi informasi detail persyaratan dokumen di bawah ini.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
                 <Label htmlFor="persyaratan" className="text-sm font-bold text-slate-700 ml-1">Nama / Deskripsi Dokumen</Label>
                 <Textarea
@@ -296,16 +300,29 @@ const DokumenUmumPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="valid_type" className="text-sm font-bold text-slate-700 ml-1">Format File Terizinkan</Label>
-                <Input
-                  id="valid_type"
-                  placeholder="Contoh: pdf, jpg, png"
-                  className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={formData.valid_type}
-                  onChange={(e) => setFormData({ ...formData, valid_type: e.target.value })}
-                />
-                <p className="text-[10px] text-slate-400 ml-1">Pisahkan dengan koma jika lebih dari satu.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valid_type" className="text-sm font-bold text-slate-700 ml-1">Format File Terizinkan</Label>
+                  <Input
+                    id="valid_type"
+                    placeholder="Contoh: pdf, jpg, png"
+                    className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    value={formData.valid_type}
+                    onChange={(e) => setFormData({ ...formData, valid_type: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="size" className="text-sm font-bold text-slate-700 ml-1">Max Size (MB)</Label>
+                  <Input
+                    id="size"
+                    type="number"
+                    placeholder="Contoh: 2"
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    value={formData.size}
+                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="pt-4 flex gap-3">
