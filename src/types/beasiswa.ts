@@ -33,6 +33,7 @@ export interface IPersyaratanUmumBeasiswa {
   persyaratan: string;
   status_aktif: string;
   valid_type: string;
+  size: string;
   is_required: "Y" | "N";
 }
 

@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { DataTable } from "@/components/DataTable";
-import { columnsRekap } from "../components/columns_rekap";
+import { getColumnsRekap } from "../components/columns_rekap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, UserCheck, Download, Send, Globe } from "lucide-react";
+import { Users, UserCheck, Download, Send, Globe, FileText, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -39,6 +40,12 @@ const RekapProvinsiPage: React.FC = () => {
   
   const [loading, setLoading] = useState<boolean>(false);
   const [openKirimDialog, setOpenKirimDialog] = useState<boolean>(false);
+
+  // State untuk Dialog Dokumen
+  const [openDokumenDialog, setOpenDokumenDialog] = useState<boolean>(false);
+  const [dokumenLoading, setDokumenLoading] = useState<boolean>(false);
+  const [selectedProvinsiName, setSelectedProvinsiName] = useState<string>("");
+  const [dokumenList, setDokumenList] = useState<{ ba: any[], sk: any[] }>({ ba: [], sk: [] });
 
   useEffect(() => {
     fetchData();
@@ -102,6 +109,30 @@ const RekapProvinsiPage: React.FC = () => {
       toast.error(error?.response?.data?.message || "Gagal mengeksport data.");
     }
   };
+
+  const handleViewDokumen = async (kodeProv: string, namaProv: string) => {
+    setSelectedProvinsiName(namaProv);
+    setOpenDokumenDialog(true);
+    setDokumenLoading(true);
+    
+    setDokumenList({ ba: [], sk: [] });
+
+    try {
+      const res = await beasiswaService.getDokumenProvinsiV2(kodeProv);
+      if (res?.data) {
+        setDokumenList({
+          ba: res.data?.berita_acara || [],
+          sk: res.data?.surat_keputusan || []
+        });
+      }
+    } catch (error) {
+      toast.error("Gagal menarik data dokumen.");
+    } finally {
+      setDokumenLoading(false);
+    }
+  };
+
+  const columns = useMemo(() => getColumnsRekap(handleViewDokumen), []);
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-10">
@@ -213,7 +244,7 @@ const RekapProvinsiPage: React.FC = () => {
             ) : (
               <div className="p-6 sm:p-8">
                 <DataTable
-                  columns={columnsRekap}
+                  columns={columns}
                   data={data}
                   pageCount={1}
                   pageIndex={0}
@@ -253,6 +284,122 @@ const RekapProvinsiPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* DIALOG UNTUK MENAMPILKAN DOKUMEN PROVINSI */}
+      <AlertDialog open={openDokumenDialog} onOpenChange={setOpenDokumenDialog}>
+        <AlertDialogContent className="rounded-3xl border-0 shadow-2xl p-8 w-full max-w-lg overflow-hidden">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-teal-100 rounded-2xl text-teal-600">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div className="min-w-0"> {/* ✅ FIX: Mencegah text panjang menembus box flex */}
+                <AlertDialogTitle className="text-xl font-bold text-slate-900 truncate">Dokumen Pengesahan</AlertDialogTitle>
+                <p className="text-sm text-slate-500 font-medium truncate">{selectedProvinsiName}</p>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          
+          <div className="py-4 space-y-5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"> {/* ✅ FIX: Scrollbar vertikal jika dokumen banyak */}
+            {dokumenLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="w-8 h-8 border-4 border-slate-100 border-t-teal-600 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <>
+                {/* Bagian Berita Acara */}
+                <div className="w-full">
+                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    Berita Acara (BA)
+                  </h4>
+                  {(!dokumenList.ba || dokumenList.ba.length === 0) ? (
+                    <p className="text-sm text-slate-400 italic pl-6">Belum ada Berita Acara yang diunggah.</p>
+                  ) : (
+                    <div className="space-y-2 pl-6 w-full">
+                      {dokumenList.ba.map((item, idx) => {
+                        const safeName = item.filename ? item.filename.split('/').pop() : "Dokumen BA";
+                        return (
+                          <Button 
+                            key={`ba-${idx}`}
+                            variant="outline" 
+                            onClick={() => window.open(item.file_url, "_blank")}
+                            // ✅ FIX: "overflow-hidden" dan "max-w-full" agar button tidak offsite
+                            className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />
+                            {/* ✅ FIX: "min-w-0" sangat penting pada flex-child agar text truncate bekerja! */}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold truncate block w-full">{safeName}</p>
+                              <p className="text-xs text-slate-400 mt-0.5 truncate block w-full">Oleh: {item.uploaded_by || "Admin"}</p>
+                            </div>
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Bagian Surat Keputusan */}
+                <div className="w-full">
+                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    Surat Keputusan (SK)
+                  </h4>
+                  {(!dokumenList.sk || dokumenList.sk.length === 0) ? (
+                    <p className="text-sm text-slate-400 italic pl-6">Belum ada SK yang diunggah.</p>
+                  ) : (
+                    <div className="space-y-2 pl-6 w-full">
+                      {dokumenList.sk.map((item, idx) => {
+                        const safeName = item.filename ? item.filename.split('/').pop() : "Dokumen SK";
+                        return (
+                          <Button 
+                            key={`sk-${idx}`}
+                            variant="outline" 
+                            onClick={() => window.open(item.file_url, "_blank")}
+                            // ✅ FIX: Sama seperti di atas
+                            className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold truncate block w-full">{safeName}</p>
+                              <p className="text-xs text-slate-400 mt-0.5 truncate block w-full">Oleh: {item.uploaded_by || "Admin"}</p>
+                            </div>
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <AlertDialogFooter className="mt-4 pt-4 border-t border-slate-100 w-full">
+            <AlertDialogCancel className="w-full rounded-xl h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-bold m-0">
+              Tutup
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ✅ CSS Tambahan (Opsional) untuk merapikan scrollbar di modal */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}} />
     </div>
   );
 };

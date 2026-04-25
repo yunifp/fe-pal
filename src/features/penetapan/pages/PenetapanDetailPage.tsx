@@ -9,19 +9,7 @@ import { DataTable } from "@/components/DataTable";
 import { getPenetapanColumns } from "../components/columns"; 
 import { penetapanService } from "../../../services/penetapanService";
 import { ArrowLeft, Eye, Users, Download } from "lucide-react"; 
-import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api"; 
 import { toast } from "sonner"; 
-
-const getUploadUrl = () => {
-  try {
-    const origin = new URL(BEASISWA_SERVICE_BASE_URL).origin;
-    return `${origin}/uploads`;
-  } catch (error) {
-    return "/uploads";
-  }
-};
-
-const BACKEND_PUBLIC_URL = getUploadUrl(); 
 
 const PenetapanDetailPage = () => {
   const { id } = useParams();
@@ -46,6 +34,8 @@ const PenetapanDetailPage = () => {
   const rawData = response?.data?.result || [];
   const totalPages = response?.data?.total_pages || 1;
   const totalData = response?.data?.total || 0;
+  
+  // ✅ uploadedFilename sudah berisi URL NEO S3 murni
   const uploadedFilename = docResponse?.data?.filename;
 
   const columns = useMemo(() => getPenetapanColumns(pageIndex, pageSize), [pageIndex, pageSize]);
@@ -101,7 +91,8 @@ const PenetapanDetailPage = () => {
 
             {uploadedFilename && (
               <Button 
-                onClick={() => window.open(`${BACKEND_PUBLIC_URL}/${uploadedFilename}`, "_blank")} 
+                // ✅ SUDAH BERSIH: Langsung buka URL tanpa "/uploads/"
+                onClick={() => window.open(uploadedFilename, "_blank")} 
                 className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl h-11 px-5 shadow-md transition-all font-semibold"
               >
                 <Eye className="h-4 w-4 mr-2" /> Lihat Dokumen SK

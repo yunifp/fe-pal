@@ -8,7 +8,7 @@ import { authService } from "@/features/Auth/services/authService";
 
 const axiosInstanceJson = axios.create({
   // baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 0, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 0 (Tanpa batas waktu)
   headers: {
     "Content-Type": "application/json",
   },

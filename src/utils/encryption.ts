@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // utils/encryption.ts
 import CryptoJS from "crypto-js";
 

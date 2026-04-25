@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "../../../components/DataTable";
@@ -423,7 +425,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
         skFormData,
       );
       if (!skRes.success) throw new Error(skRes.message);
-      const skFilename = skRes.data?.filename;
+      const skFilename = skRes.data?.file;
       if (!skFilename) throw new Error("Gagal mendapatkan nama file SK");
 
       // Upload BA Provinsi

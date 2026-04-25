@@ -36,6 +36,19 @@ export interface IBaKabkota {
   kode_dinas_kabkota: string;
 }
 
+// ✅ Helper function cerdas untuk memperbaiki dan merapikan URL Dokumen S3
+const getDocUrl = (filename: string) => {
+  if (!filename) return "#";
+  
+  // Jika backend sudah mengirim full URL (diawali http/https), langsung gunakan
+  if (filename.startsWith("http")) {
+    return filename;
+  }
+  
+  // Jika backend hanya mengirim path S3 (contoh: 2026/ADMIN_...), gabungkan dengan Bucket URL S3 Anda
+  return `https://nos.wjv-1.neo.id/palma-upload-bucket-testing/${filename}`;
+};
+
 export const getKabkotaColumns = (
   onSelect: (kode: string, nama: string) => void,
   skMap: Record<string, ISkKabkota[]>,
@@ -45,7 +58,7 @@ export const getKabkotaColumns = (
   statusVerifikasiMap: Record<
     string,
     { total: number; sudah_tag: number; selesai: boolean }
-  > = {}, // ← tambah
+  > = {}, 
 ): ColumnDef<IKabkotaRow>[] => [
   {
     id: "no",
@@ -92,8 +105,6 @@ export const getKabkotaColumns = (
         return <span className="text-gray-300 text-xs">—</span>;
       }
 
-      // const persen = Math.round((status.sudah_tag / status.total) * 100);
-
       return (
         <div className="flex items-center gap-2 min-w-[140px]">
           {status.selesai ? (
@@ -132,8 +143,9 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
+                {/* ✅ SUDAH DIPERBAIKI: Menggunakan helper getDocUrl */}
                 <a
-                  href={`svc-beasiswa/uploads/surat_keputusan/${latest.filename}`}
+                  href={getDocUrl(latest.filename)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
@@ -172,8 +184,9 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
+                {/* ✅ SUDAH DIPERBAIKI: Menggunakan helper getDocUrl */}
                 <a
-                  href={`svc-beasiswa/uploads/berita_acara/${latest.filename}`}
+                  href={getDocUrl(latest.filename)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"

@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { IPersyaratanUmumBeasiswa } from "@/types/beasiswa";
 import { beasiswaService } from "@/services/beasiswaService";
 import { isValidByDocType, parseValidTypes } from "@/utils/fileFormatter";
 import { validTypeToAccept } from "@/utils/stringFormatter";
+import { compressIfImage } from "@/utils/fileCompressor";
 
 interface UploadPersyaratanUmumProps {
   idTrxBeasiswa: number;
@@ -18,6 +21,7 @@ const UploadPersyaratanUmum = ({
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(
     {},
   );
+  const [compressingId, setCompressingId] = useState<number | null>(null);
   // ✅ State baru untuk menyimpan catatan per dokumen
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
 
@@ -67,13 +71,20 @@ const UploadPersyaratanUmum = ({
     }
 
     try {
+      setCompressingId(item.id);
+
+      // ✅ Kompres jika gambar, skip jika PDF
+      const processedFile = await compressIfImage(file, item.size);
+
       setUploadingId(item.id);
 
       const formData = new FormData();
       formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
-      formData.append("file", file);
+      // formData.append("file", file);
+      formData.append("file", processedFile); 
       formData.append("id_ref_dokumen", item.id.toString());
       formData.append("nama_dokumen_persyaratan", item.persyaratan);
+      formData.append("max_size", item.size ?? "2 mb"); // item.size dari API ref master
 
       const response = await beasiswaService.uploadPersyaratan(
         "umum",
@@ -95,6 +106,7 @@ const UploadPersyaratanUmum = ({
     } catch (error: any) {
       toast.error(error.response?.data?.message ?? "Gagal upload");
     } finally {
+        setCompressingId(null); 
       setUploadingId(null);
     }
   };
@@ -206,27 +218,29 @@ const UploadPersyaratanUmum = ({
               </div>
             )}
 
-            {isUploading && (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Mengunggah...
-              </span>
-            )}
+            {(isUploading || compressingId === item.id) && (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  {compressingId === item.id
+                    ? "Mengompres..."
+                    : "Mengunggah..."}
+                </span>
+              )}
 
             {!isUploading && (
               <div className="flex items-center gap-3">
@@ -256,7 +270,7 @@ const UploadPersyaratanUmum = ({
                         handleFileChange(item, e.target.files?.[0] ?? null);
                         e.target.value = ""; // supaya bisa upload file yang sama lagi
                       }}
-                      disabled={isUploading}
+                      disabled={isUploading || compressingId === item.id}
                     />
 
                     {/* Icon */}

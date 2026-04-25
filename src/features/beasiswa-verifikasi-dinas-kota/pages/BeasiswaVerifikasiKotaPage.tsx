@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "../../../components/DataTable";
@@ -96,6 +98,8 @@ const BeasiswaVerifikasiKotaPage = () => {
       debouncedSearch,
       kodeProvinsi,
       kodeKabkota,
+      filterIdFlow,
+      filterIdJalur
     ],
     retry: false,
     enabled: !!beasiswaAktif?.id,
@@ -108,32 +112,14 @@ const BeasiswaVerifikasiKotaPage = () => {
         kodeProvinsi,
         kodeKabkota,
         "kabkota",
+        filterIdFlow,
+        filterIdJalur
       ),
     staleTime: STALE_TIME,
   });
 
   const allData: ITrxBeasiswa[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.total_pages ?? 0;
-
-  const filteredData = useMemo(() => {
-    const ADMIN_LULUS = [6, 7, 9, 10, 11, 12, 13, 17];
-    return allData.filter((row) => {
-      const flowMatch = (() => {
-        if (filterIdFlow === "all") return true;
-        if (filterIdFlow === "lulus")
-          return ADMIN_LULUS.includes(row.id_flow ?? 0);
-        if (filterIdFlow === "tidak_lulus")
-          return !ADMIN_LULUS.includes(row.id_flow ?? 0);
-        return (
-          row.id_flow === Number(filterIdFlow) ||
-          ADMIN_LULUS.includes(row.id_flow ?? 0)
-        );
-      })();
-      const jalurMatch =
-        filterIdJalur === "all" ? true : row.id_jalur === Number(filterIdJalur);
-      return flowMatch && jalurMatch;
-    });
-  }, [allData, filterIdFlow, filterIdJalur]);
 
   const { data: countSiapKirimRes } = useQuery({
     queryKey: ["count-tag-kabkota", beasiswaAktif?.id],
@@ -183,42 +169,11 @@ const BeasiswaVerifikasiKotaPage = () => {
     if (fileBAInputRef.current) fileBAInputRef.current.value = "";
   };
 
-  // const handleDownloadRekap = async () => {
-  //   try {
-  //     setIsDownloading(true);
-  //     const isSpecialFlow =
-  //       filterIdFlow === "lulus" || filterIdFlow === "tidak_lulus";
-  //     await beasiswaService.downloadVerifikasiKabkota({
-  //       idBeasiswa: beasiswaAktif?.id ?? 0,
-  //       kodeProvinsi,
-  //       kodeKabkota,
-  //       search: debouncedSearch,
-  //       idFlow:
-  //         !isSpecialFlow && filterIdFlow !== "all"
-  //           ? Number(filterIdFlow)
-  //           : undefined,
-  //       idJalur: filterIdJalur !== "all" ? Number(filterIdJalur) : undefined,
-  //       statusLulus:
-  //         filterIdFlow === "lulus"
-  //           ? "Y"
-  //           : filterIdFlow === "tidak_lulus"
-  //             ? "N"
-  //             : undefined,
-  //     });
-  //     toast.success("Rekap berhasil diunduh");
-  //   } catch (err: any) {
-  //     toast.error(err?.message ?? "Gagal mengunduh rekap");
-  //   } finally {
-  //     setIsDownloading(false);
-  //   }
-  // };
-
   const isRefReady = refDokumenUmum.length > 0;
   !isLoading && !isLoading;
 
   const handleDownloadRekap = async () => {
     if (!isRefReady) {
-      console.log(refDokumenKhusus);
       toast.error("Referensi dokumen belum siap, tunggu sebentar...");
       return;
     }
@@ -246,7 +201,6 @@ const BeasiswaVerifikasiKotaPage = () => {
               ? "N"
               : undefined,
 
-        // 🔥 WAJIB sesuai service
         refDokumenUmum: refDokumenUmum.map((d: any) => ({
           id: d.id,
           persyaratan: d.persyaratan,
@@ -274,7 +228,7 @@ const BeasiswaVerifikasiKotaPage = () => {
         skFormData,
       );
       if (!skRes.success) throw new Error(skRes.message);
-      const skFilename = skRes.data?.filename;
+      const skFilename = skRes.data?.file;
       if (!skFilename) throw new Error("Gagal mendapatkan nama file SK");
 
       const baFormData = new FormData();
@@ -323,7 +277,6 @@ const BeasiswaVerifikasiKotaPage = () => {
     setter(file);
   };
 
-  // ── Reusable file upload zone ─────────────────────────────────────────────
   const FileUploadZone = ({
     label,
     file,
@@ -444,7 +397,6 @@ const BeasiswaVerifikasiKotaPage = () => {
 
         {beasiswaAktif && (
           <div className="flex items-center gap-2">
-            {/* Download Rekap */}
             <button
               type="button"
               onClick={handleDownloadRekap}
@@ -463,7 +415,6 @@ const BeasiswaVerifikasiKotaPage = () => {
               )}
             </button>
 
-            {/* Kirim ke Provinsi */}
             <button
               type="button"
               onClick={() => setShowUploadDialog(true)}
@@ -481,21 +432,20 @@ const BeasiswaVerifikasiKotaPage = () => {
         )}
       </div>
 
-      {beasiswaAktif && (
-        <DataTable
-          isLoading={isLoading}
-          columns={columns}
-          data={filteredData}
-          pageCount={totalPages}
-          pageIndex={page - 1}
-          onPageChange={(newPage) => setPage(newPage + 1)}
-          searchValue={search}
-          onSearchChange={(value) => setSearch(value)}
-          leftHeaderContent={filterContent}
-        />
-      )}
+        {beasiswaAktif && (
+          <DataTable
+            isLoading={isLoading}
+            columns={columns}
+            data={allData}
+            pageCount={totalPages}
+            pageIndex={page - 1}
+            onPageChange={(newPage) => setPage(newPage + 1)}
+            searchValue={search}
+            onSearchChange={(value) => setSearch(value)}
+            leftHeaderContent={filterContent}
+          />
+        )}
 
-      {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -528,7 +478,6 @@ const BeasiswaVerifikasiKotaPage = () => {
               inputRef={fileBAInputRef}
             />
 
-            {/* Progress indicator */}
             {(selectedSKFile || selectedBAFile) && (
               <div className="flex items-center gap-3 pt-1 animate-in fade-in duration-200">
                 <div className="flex gap-1.5">
@@ -550,7 +499,6 @@ const BeasiswaVerifikasiKotaPage = () => {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-2 pt-2">
               <button
                 type="button"

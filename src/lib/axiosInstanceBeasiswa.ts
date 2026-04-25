@@ -9,7 +9,7 @@ import { authService } from "@/features/Auth/services/authService";
 const baseUrl = BEASISWA_SERVICE_BASE_URL.replace(/\/beasiswa$/, "");
 const axiosInstanceBeasiswa = axios.create({
   baseURL: baseUrl,
-  timeout: 10000,
+  timeout: 0, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 0 (Tanpa batas waktu)
   headers: {
     "Content-Type": "application/json",
   },

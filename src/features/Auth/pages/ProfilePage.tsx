@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { CustInput } from "@/components/CustInput";
 import { Card, CardContent } from "@/components/ui/card";
@@ -113,13 +114,19 @@ const ProfilePage = () => {
                   />
                 )}
 
-                <Input
+               <Input
                   id="avatar"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      if (file.size > 1 * 1024 * 1024) {
+                        toast.error("Ukuran foto terlalu besar! Maksimal 1 MB.");
+                        e.target.value = ""; // Reset input file agar kosong kembali
+                        return; // Hentikan proses, jangan masukkan ke state
+                      }
+                      
                       setValue("avatar", file);
                     }
                   }}

@@ -99,16 +99,21 @@ export const beasiswaService = {
     provinsi?: string,
     kabkota?: string,
     dinas?: string,
+    idFlow?: string, // ✅ Tambahkan ini
+    idJalur?: string, // ✅ Tambahkan ini
   ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/trx-seleksi-administrasi-daerah/${idBeasiswa}`,
       {
         params: {
           page,
+          limit: 10,
           ...(search && { search }),
           ...(provinsi && { kodeProvinsi: provinsi }),
           ...(kabkota && { kodeKabkota: kabkota }),
           ...(dinas && { Dinas: dinas }),
+          ...(idFlow && { idFlow }), // ✅ Kirim filter Flow
+          ...(idJalur && { idJalur }), // ✅ Kirim filter Jalur
         },
       },
     );
@@ -200,8 +205,6 @@ export const beasiswaService = {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/full/${idTrxBeasiswa}`,
     );
-    console.log(response.data);
-
     return response.data;
   },
   updateCatatanPersyaratan: async (
@@ -621,7 +624,7 @@ export const beasiswaService = {
           limit: params.limit ?? 10,
           search: params.search ?? "",
           filter: params.filter ?? "all",
-          id_verifikator: params.id_verifikator, // ✅ tambah ini
+          id_verifikator: params.id_verifikator, 
           status_filter: params.status_filter,
         },
       },
@@ -696,7 +699,6 @@ export const beasiswaService = {
     );
     return response.data;
   },
-  // Ganti dua method di bagian bawah beasiswaService.ts
 
   updateKluster: async (
     idTrxBeasiswa: number,
@@ -734,6 +736,13 @@ export const beasiswaService = {
     const response = await axiosInstanceBeasiswa.get(
       `/verifikasi-nasional-v2/rekap-provinsi`,
       { params },
+    );
+    return response.data;
+  },
+  // ✅ TAMBAHAN: Fungsi untuk get dokumen S3 Provinsi
+  getDokumenProvinsiV2: async (kode_prov: string): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/dokumen-provinsi/${kode_prov}`
     );
     return response.data;
   },
@@ -806,7 +815,6 @@ export const beasiswaService = {
   getDetailPenetapan: async (
     idTrxBeasiswa: number,
   ): Promise<Response<FullDataBeasiswa>> => {
-    // FullDataBeasiswa sudah cocok strukturnya
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/detail-penetapan/${idTrxBeasiswa}`,
     );
@@ -862,8 +870,8 @@ export const beasiswaService = {
         idFlow: params.idFlow,
         idJalur: params.idJalur,
         statusLulus: params.statusLulus,
-        refDokumenUmum: params.refDokumenUmum, // 🔥 penting
-        refDokumenKhusus: params.refDokumenKhusus, // 🔥 penting
+        refDokumenUmum: params.refDokumenUmum,
+        refDokumenKhusus: params.refDokumenKhusus, 
       },
       {
         responseType: "blob",
@@ -890,11 +898,10 @@ export const beasiswaService = {
     idFlow?: number;
     idJalur?: number;
     statusLulus?: "Y" | "N";
-    refDokumenUmum: { id: number; persyaratan: string }[]; // ← tambah
-    refDokumenKhusus: { id: number; persyaratan: string }[]; // ← tambah
+    refDokumenUmum: { id: number; persyaratan: string }[]; 
+    refDokumenKhusus: { id: number; persyaratan: string }[];
   }): Promise<void> => {
     const response = await axiosInstanceJson.post(
-      // ✅ GET → POST
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-verifikasi-provinsi`,
       {
         idBeasiswa: params.idBeasiswa,
@@ -904,8 +911,8 @@ export const beasiswaService = {
         idFlow: params.idFlow,
         idJalur: params.idJalur,
         statusLulus: params.statusLulus,
-        refDokumenUmum: params.refDokumenUmum, // ← tambah
-        refDokumenKhusus: params.refDokumenKhusus, // ← tambah
+        refDokumenUmum: params.refDokumenUmum, 
+        refDokumenKhusus: params.refDokumenKhusus, 
       },
       { responseType: "blob" },
     );

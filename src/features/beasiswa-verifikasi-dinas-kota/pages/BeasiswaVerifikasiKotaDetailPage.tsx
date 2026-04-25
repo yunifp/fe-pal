@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import CardVerifikasiBeasiswa from "../components/CardVerifikasiBeasiswa";

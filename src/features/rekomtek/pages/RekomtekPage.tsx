@@ -29,22 +29,11 @@ import {
   AlertDialogCancel,
   AlertDialogContent
 } from "@/components/ui/alert-dialog";
-import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api"; 
 import useHasAccess from "@/hooks/useHasAccess"; 
 import { useAuthRole } from "@/hooks/useAuthRole";
 import { useAuthStore } from "@/stores/authStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const getUploadUrl = () => {
-  try {
-    const origin = new URL(BEASISWA_SERVICE_BASE_URL).origin;
-    return `${origin}/uploads`;
-  } catch (error) {
-    return "/uploads";
-  }
-};
-
-const BACKEND_PUBLIC_URL = getUploadUrl(); 
 
 const RekomtekPage = () => {
   const queryClient = useQueryClient();
@@ -115,6 +104,7 @@ const RekomtekPage = () => {
   const totalData = response?.data?.total || 0;
   const summaryKuotaData = kuotaResponse?.data || [];
   
+  // ✅ uploadedFilename sudah berisi URL NEO S3 murni
   const uploadedFilename = docResponse?.data?.filename;
 
   const handleResignClick = (id: number, nama: string) => {
@@ -170,9 +160,10 @@ const RekomtekPage = () => {
     }
   };
 
+  // ✅ SUDAH BERSIH: Langsung buka URL tanpa imbuhan "/uploads/"
   const handleViewDokumen = () => {
     if (uploadedFilename) {
-      window.open(`${BACKEND_PUBLIC_URL}/${uploadedFilename}`, "_blank");
+      window.open(uploadedFilename, "_blank");
     }
   };
 
@@ -259,7 +250,6 @@ const RekomtekPage = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 shrink-0">
-              {/* Tombol Download Data dikeluarkan dari kondisi agar muncul untuk semua */}
               <Button 
                 onClick={handleDownload} 
                 disabled={isActionDisabled || !canRead} 
@@ -270,7 +260,6 @@ const RekomtekPage = () => {
                 Download Data
               </Button>
 
-              {/* Tiga Tombol ini disembunyikan untuk Lembaga Pendidikan */}
               {!isLembagaPendidikan && (
                 <>
                   {canCreate && (
@@ -539,4 +528,4 @@ const RekomtekPage = () => {
   );
 };
 
-export default RekomtekPage;
+export default RekomtekPage;  
