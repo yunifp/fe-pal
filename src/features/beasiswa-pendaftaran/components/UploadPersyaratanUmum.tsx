@@ -6,7 +6,8 @@ import type { IPersyaratanUmumBeasiswa } from "@/types/beasiswa";
 import { beasiswaService } from "@/services/beasiswaService";
 import { isValidByDocType, parseValidTypes } from "@/utils/fileFormatter";
 import { validTypeToAccept } from "@/utils/stringFormatter";
-import { compressIfImage } from "@/utils/fileCompressor";
+// ✅ IMPORT parseSizeToBytes DITAMBAHKAN
+import { compressIfImage, parseSizeToBytes } from "@/utils/fileCompressor";
 
 interface UploadPersyaratanUmumProps {
   idTrxBeasiswa: number;
@@ -22,10 +23,8 @@ const UploadPersyaratanUmum = ({
     {},
   );
   const [compressingId, setCompressingId] = useState<number | null>(null);
-  // ✅ State baru untuk menyimpan catatan per dokumen
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
 
-  // 🧠 Ambil data file yang sudah pernah diunggah
   useEffect(() => {
     const fetchUploadedFiles = async () => {
       try {
@@ -40,7 +39,6 @@ const UploadPersyaratanUmum = ({
 
         uploaded.forEach((item: any) => {
           fileMap[item.id_ref_dokumen] = item.file;
-          // ✅ Simpan catatan jika ada
           if (item.verifikator_catatan) {
             catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
           }
@@ -56,7 +54,6 @@ const UploadPersyaratanUmum = ({
     fetchUploadedFiles();
   }, [idTrxBeasiswa]);
 
-  // ketika user memilih file
   const handleFileChange = async (
     item: IPersyaratanUmumBeasiswa,
     file: File | null,
@@ -73,18 +70,27 @@ const UploadPersyaratanUmum = ({
     try {
       setCompressingId(item.id);
 
-      // ✅ Kompres jika gambar, skip jika PDF
+      // 1. Kompres jika file berupa Gambar (PDF akan diabaikan)
       const processedFile = await compressIfImage(file, item.size);
+
+      // ✅ 2. VALIDASI HARD-BLOCK UNTUK SEMUA FILE (Termasuk PDF)
+      const maxSizeBytes = parseSizeToBytes(item.size);
+      
+      if (processedFile.size > maxSizeBytes) {
+        toast.error(
+          `Ukuran file terlalu besar! Maksimal ${item.size || "2"} Mb. Silakan kompres file Anda terlebih dahulu.`
+        );
+        return; // MENTAL! Proses dihentikan
+      }
 
       setUploadingId(item.id);
 
       const formData = new FormData();
       formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
-      // formData.append("file", file);
       formData.append("file", processedFile); 
       formData.append("id_ref_dokumen", item.id.toString());
       formData.append("nama_dokumen_persyaratan", item.persyaratan);
-      formData.append("max_size", item.size ?? "2 mb"); // item.size dari API ref master
+      formData.append("max_size", item.size ?? "2 mb"); 
 
       const response = await beasiswaService.uploadPersyaratan(
         "umum",
@@ -106,7 +112,7 @@ const UploadPersyaratanUmum = ({
     } catch (error: any) {
       toast.error(error.response?.data?.message ?? "Gagal upload");
     } finally {
-        setCompressingId(null); 
+      setCompressingId(null); 
       setUploadingId(null);
     }
   };
@@ -117,7 +123,7 @@ const UploadPersyaratanUmum = ({
         const isUploaded = !!uploadedFiles[item.id];
         const isUploading = uploadingId === item.id;
         const fileName = uploadedFiles[item.id];
-        const catatan = catatanMap[item.id]; // ✅ Ambil catatan
+        const catatan = catatanMap[item.id]; 
         const hasCatatan = !!catatan;
 
         return (
@@ -152,7 +158,7 @@ const UploadPersyaratanUmum = ({
               </div>
             )}
 
-            {/* ✅ Badge untuk dokumen dengan catatan */}
+            {/* Badge untuk dokumen dengan catatan */}
             {hasCatatan && (
               <div className="absolute top-3 right-3">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
@@ -173,12 +179,6 @@ const UploadPersyaratanUmum = ({
               </div>
             )}
 
-            {/* Label */}
-            {/* <label className="block text-sm font-medium text-gray-700 mb-3">
-              {item.persyaratan}
-              <span className="text-red-500 ml-1">*</span>
-            </label> */}
-
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
               {item.persyaratan}
               {item.is_required === "Y" ? (
@@ -192,7 +192,7 @@ const UploadPersyaratanUmum = ({
               )}
             </label>
 
-            {/* ✅ Tampilkan Catatan Verifikator */}
+            {/* Tampilkan Catatan Verifikator */}
             {hasCatatan && (
               <div className="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
                 <div className="flex items-start gap-2">
@@ -237,7 +237,7 @@ const UploadPersyaratanUmum = ({
                     />
                   </svg>
                   {compressingId === item.id
-                    ? "Mengompres..."
+                    ? "Memproses file..."
                     : "Mengunggah..."}
                 </span>
               )}
@@ -347,9 +347,20 @@ const UploadPersyaratanUmum = ({
                           <p className="text-sm font-medium text-gray-700">
                             Pilih file
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
                             Ekstensi yang diterima:{" "}
-                            {validTypeToAccept(item.valid_type)}. Maksimal 10MB
+                            {validTypeToAccept(item.valid_type)}.
+                            <br />
+                            Maksimal {item.size || "2 MB"}. Jika PDF kebesaran, silakan kompres melalui{" "}
+                            <a
+                              href="https://www.ilovepdf.com/compress_pdf"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-700 underline font-medium relative z-10"
+                              onClick={(e) => e.stopPropagation()} // ✅ Mencegah popup file explorer terbuka saat klik link
+                            >
+                              iLovePDF
+                            </a>
                           </p>
                           <p className="text-[11px] text-red-500 mt-1">
                             File akan otomatis diunggah setelah dipilih

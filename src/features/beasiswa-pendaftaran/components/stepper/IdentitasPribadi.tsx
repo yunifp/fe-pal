@@ -12,11 +12,14 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
-import FotoTambahanSection from "./Fototambahansection"; // ← import komponen baru
-// Tambah import
+import FotoTambahanSection from "./Fototambahansection";
 import { useWatch } from "react-hook-form";
-import { useEffect, useMemo } from "react"; // jika belum ada
+import { useEffect, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
+
+// ✅ IMPORT COMPRESSOR & TOAST DITAMBAHKAN
+import { compressIfImage } from "@/utils/fileCompressor";
+import { toast } from "sonner";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -77,8 +80,22 @@ const IdentitasPribadi = ({
   isFieldKoreksi = () => false,
   getFieldCatatan = () => null,
 }: Step1IdentitasPribadiProps) => {
-  const onFotoChange = (file: File | null) => {
-    setValue("foto", file ?? undefined, { shouldValidate: true });
+  
+  // ✅ PERUBAHAN: Fungsi onFotoChange menjadi async dan menggunakan compressIfImage
+  const onFotoChange = async (file: File | null) => {
+    if (!file) {
+      setValue("foto", undefined, { shouldValidate: true });
+      return;
+    }
+
+    try {
+      // Kompres hasil crop agar ukurannya dijamin maksimal 1 MB
+      const compressedFile = await compressIfImage(file);
+      setValue("foto", compressedFile, { shouldValidate: true });
+    } catch (error) {
+      console.error("Gagal mengompres foto:", error);
+      toast.error("Gagal memproses foto profil");
+    }
   };
 
   const tanggalLahir = useWatch({ control, name: "tanggal_lahir" });
@@ -135,7 +152,7 @@ const IdentitasPribadi = ({
           </div>
         </div>
 
-        {/* ── 4 Foto Full Body — komponen baru ── */}
+        {/* ── 4 Foto Full Body ── */}
         <FotoTambahanSection
           existFotoDepan={existFotoDepan}
           existFotoSampingKiri={existFotoSampingKiri}
@@ -184,10 +201,10 @@ const IdentitasPribadi = ({
               id="nik"
               placeholder="Masukkan NIK / No. KTP"
               isRequired={true}
-              showCount={true} // ← tambah
+              showCount={true}
               error={!!errors.nik}
               errorMessage={errors.nik?.message}
-              disabled={isFieldDisabled("nik")} // ← tambah
+              disabled={isFieldDisabled("nik")}
               onKeyDown={(e) => {
                 const allowed = [
                   "Backspace",
@@ -222,10 +239,10 @@ const IdentitasPribadi = ({
               id="no_nkk"
               placeholder="Masukkan No. Kartu Keluarga (NKK)"
               isRequired={true}
-              showCount={true} // ← tambah
+              showCount={true}
               error={!!errors.nkk}
               errorMessage={errors.nkk?.message}
-              disabled={isFieldDisabled("nkk")} // ← tambah
+              disabled={isFieldDisabled("nkk")}
               onKeyDown={(e) => {
                 const allowed = [
                   "Backspace",
@@ -272,7 +289,7 @@ const IdentitasPribadi = ({
               errorMessage={errors.no_hp?.message}
               onKeyDown={onlyNumbers}
               {...register("no_hp")}
-              disabled={isFieldDisabled("no_hp")} // ← tambah
+              disabled={isFieldDisabled("no_hp")}
             />
             {isFieldKoreksi("no_hp") && getFieldCatatan("no_hp") && (
               <p className="text-xs text-amber-600 flex items-center gap-1">
@@ -290,7 +307,7 @@ const IdentitasPribadi = ({
               error={!!errors.email}
               errorMessage={errors.email?.message}
               {...register("email")}
-              disabled={isFieldDisabled("email")} // ← tambah
+              disabled={isFieldDisabled("email")}
             />
             {isFieldKoreksi("email") && getFieldCatatan("email") && (
               <p className="text-xs text-amber-600 flex items-center gap-1">
@@ -312,7 +329,7 @@ const IdentitasPribadi = ({
               error={!!errors.tanggal_lahir}
               errorMessage={errors.tanggal_lahir?.message}
               {...register("tanggal_lahir")}
-              disabled={isFieldDisabled("tanggal_lahir")} // ← tambah
+              disabled={isFieldDisabled("tanggal_lahir")}
             />
             {isFieldKoreksi("tanggal_lahir") &&
               getFieldCatatan("tanggal_lahir") && (
@@ -331,7 +348,7 @@ const IdentitasPribadi = ({
               error={!!errors.tempat_lahir}
               errorMessage={errors.tempat_lahir?.message}
               {...register("tempat_lahir")}
-              disabled={isFieldDisabled("tempat_lahir")} // ← tambah
+              disabled={isFieldDisabled("tempat_lahir")}
             />
             {isFieldKoreksi("tempat_lahir") &&
               getFieldCatatan("tempat_lahir") && (
@@ -383,7 +400,7 @@ const IdentitasPribadi = ({
               error={!!errors.pekerjaan}
               errorMessage={errors.pekerjaan?.message}
               {...register("pekerjaan")}
-              disabled={isFieldDisabled("pekerjaan")} // ← tambah
+              disabled={isFieldDisabled("pekerjaan")}
             />
             {isFieldKoreksi("pekerjaan") && getFieldCatatan("pekerjaan") && (
               <p className="text-xs text-amber-600 flex items-center gap-1">
@@ -400,7 +417,7 @@ const IdentitasPribadi = ({
               error={!!errors.instansi_pekerjaan}
               errorMessage={errors.instansi_pekerjaan?.message}
               {...register("instansi_pekerjaan")}
-              disabled={isFieldDisabled("instansi_pekerjaan")} // ← tambah
+              disabled={isFieldDisabled("instansi_pekerjaan")}
             />
             {isFieldKoreksi("instansi_pekerjaan") &&
               getFieldCatatan("instansi_pekerjaan") && (
@@ -436,7 +453,7 @@ const IdentitasPribadi = ({
                   e.preventDefault();
               }}
               {...register("berat_badan")}
-              disabled={isFieldDisabled("berat_badan")} // ← tambah
+              disabled={isFieldDisabled("berat_badan")}
             />
             {isFieldKoreksi("berat_badan") &&
               getFieldCatatan("berat_badan") && (
@@ -469,7 +486,7 @@ const IdentitasPribadi = ({
                   e.preventDefault();
               }}
               {...register("tinggi_badan")}
-              disabled={isFieldDisabled("tinggi_badan")} // ← tambah
+              disabled={isFieldDisabled("tinggi_badan")}
             />
             {isFieldKoreksi("tinggi_badan") &&
               getFieldCatatan("tinggi_badan") && (
