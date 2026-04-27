@@ -71,7 +71,7 @@ export const extractJenjangFromProdiValue = (value: string): string => {
  * Hitung total slot yang harus ditampilkan.
  *
  * Total = jumlah PT yang punya prodi
- *       + jumlah PT yang punya prodi D1/D2 (slot ekstra)
+ * + jumlah PT yang punya prodi D1/D2 (slot ekstra)
  *
  * "Punya prodi" artinya ada di ptProdiMap (sudah di-fetch dan tidak kosong).
  * PT yang tidak punya prodi sama sekali → tidak ditampilkan, tidak diberi slot.
@@ -109,12 +109,12 @@ export const buildSlotCount = (
  * Validasi semua pilihan sebelum lanjut ke step berikutnya.
  *
  * Aturan:
- *  1. Setiap slot wajib diisi (PT + prodi).
- *  2. Jika PT yang sama dipilih di 2 slot:
- *       a. PT tersebut wajib memiliki prodi D1/D2 dan non-D1/D2 di ptProdiMap.
- *       b. Satu slot harus prodi D1/D2, satu slot harus prodi non-D1/D2.
- *  3. PT tanpa D1/D2 tidak boleh dipilih lebih dari 1×.
- *  4. Tidak ada PT yang dipilih lebih dari 2×.
+ * 1. Setiap slot wajib diisi (PT + prodi).
+ * 2. Jika PT yang sama dipilih di 2 slot:
+ * a. PT tersebut wajib memiliki prodi D1/D2 dan non-D1/D2 di ptProdiMap.
+ * b. Satu slot harus prodi D1/D2, satu slot harus prodi non-D1/D2.
+ * 3. PT tanpa D1/D2 tidak boleh dipilih lebih dari 1×.
+ * 4. Tidak ada PT yang dipilih lebih dari 2×.
  */
 export const validatePilihan = (
   pilihan: Array<{
@@ -210,10 +210,10 @@ const PilihanJurusan = ({
    * Map idPT → array jenjang prodi yang tersedia untuk jurusan sekolah ini.
    * Diisi dari batch-fetch prodi semua PT setelah daftar PT ter-load.
    * Digunakan untuk:
-   *   1. Menentukan totalSlot (PT tanpa prodi → tidak masuk slot)
-   *   2. Menentukan apakah PT layak mendapat slot ekstra (harus punya D1/D2 + non-D1/D2)
-   *   3. Validasi saat handleNext
-   *   4. Filter PT yang ditampilkan ke user (hanya PT dengan prodi)
+   * 1. Menentukan totalSlot (PT tanpa prodi → tidak masuk slot)
+   * 2. Menentukan apakah PT layak mendapat slot ekstra (harus punya D1/D2 + non-D1/D2)
+   * 3. Validasi saat handleNext
+   * 4. Filter PT yang ditampilkan ke user (hanya PT dengan prodi)
    */
   const [ptProdiMap, setPtProdiMap] = useState<Map<string, string[]>>(
     new Map(),
@@ -286,8 +286,8 @@ const PilihanJurusan = ({
    * Hasil disimpan di ptProdiMap sebagai Map<idPT, jenjang[]>.
    *
    * Re-fetch dilakukan ketika:
-   *   - jurusan sekolah berubah
-   *   - daftar PT berubah (responsePerguruanTinggi berubah)
+   * - jurusan sekolah berubah
+   * - daftar PT berubah (responsePerguruanTinggi berubah)
    */
   useEffect(() => {
     if (!responsePerguruanTinggi?.data?.length) return;
@@ -423,6 +423,7 @@ const PilihanJurusan = ({
     isLoadingExisting,
     totalSlot,
   ]);
+  
   // ── BARU: track slot mana yang prodinya sudah siap ──────────
   const [readySet, setReadySet] = useState<Set<number>>(new Set());
 
@@ -436,13 +437,23 @@ const PilihanJurusan = ({
   }, []);
 
   const allProdiReady = fields.length === 0 || readySet.size >= fields.length;
-  // Reset flag saat jurusan / buta warna berubah
+  
+  // ── FIX BUG: Pemisahan reset flag saat jurusan / buta warna berubah ──────────
+  
+  // 1. Reset SEMUA (termasuk cache prodi) HANYA ketika Jurusan Sekolah berubah
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
     setPtProdiMap(new Map());
-    setReadySet(new Set()); // ← tambahkan ini
-  }, [selectedIdJurusanSekolah, selectedKondisiButaWarna]);
+    setReadySet(new Set()); 
+  }, [selectedIdJurusanSekolah]);
+
+  // 2. Reset flag populasi saja ketika Kondisi Buta Warna berubah (TIDAK menghapus data prodi)
+  useEffect(() => {
+    hasPopulatedRef.current = false;
+    lastTotalSlotRef.current = 0;
+    setReadySet(new Set()); 
+  }, [selectedKondisiButaWarna]);
 
   // ── Reset satu slot ──────────────────────────────────────────
   const handleResetSlot = (index: number) => {
