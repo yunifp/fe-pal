@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import CardVerifikasiBeasiswa from "../components/CardVerifikasiBeasiswa";
@@ -46,7 +49,6 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
 
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
-  // ✅ Gunakan methods object agar bisa di-spread ke FormProvider
   const methods = useForm<VerifikasiFormData>({
     resolver: zodResolver(verifikasiSchema),
     defaultValues: {
@@ -112,7 +114,6 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
         verifikator: "dinas_provinsi",
       });
 
-      // 2. Simpan is_valid per dokumen umum
       await beasiswaService.updateDokumenVerifikasiDinas(id, {
         data_persyaratan_umum: data.data_persyaratan_umum,
       });
@@ -124,7 +125,8 @@ const BeasiswaVerifikasiProvinsiDetailPage = () => {
       if (res.success) {
         toast.success(res.message);
         queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
-        navigate("/beasiswa_verifikasi_dinas_provinsi");
+        // ✅ PERBAIKAN: Gunakan navigate(-1) untuk kembali ke riwayat List dengan State nya.
+        navigate(-1);
       } else {
         toast.error(res.message);
       }

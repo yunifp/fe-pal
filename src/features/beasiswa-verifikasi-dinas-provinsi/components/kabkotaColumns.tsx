@@ -83,7 +83,10 @@ export const getKabkotaColumns = (
     header: "Jumlah Pendaftar",
     cell: ({ row }) => {
       const kode = String(row.original.kode_kab);
-      const count = countMap[kode] ?? 0;
+      
+      // ✅ PERBAIKAN 1: Menggunakan statusVerifikasiMap.total sebagai fallback yang akurat 
+      // jika countMap tidak terisi dari backend
+      const count = countMap[kode] || statusVerifikasiMap[kode]?.total || 0;
 
       return (
         <div className="flex items-center gap-1.5">
@@ -136,6 +139,7 @@ export const getKabkotaColumns = (
         return <span className="text-gray-300 text-xs">—</span>;
       }
 
+      // Mengambil file urutan paling pertama (terbaru)
       const latest = skList[0];
 
       return (
@@ -143,7 +147,6 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* ✅ SUDAH DIPERBAIKI: Menggunakan helper getDocUrl */}
                 <a
                   href={getDocUrl(latest.filename)}
                   target="_blank"
@@ -159,9 +162,7 @@ export const getKabkotaColumns = (
             </Tooltip>
           </TooltipProvider>
 
-          {skList.length > 1 && (
-            <span className="text-xs text-gray-400">+{skList.length - 1}</span>
-          )}
+          {/* ✅ PERBAIKAN 2: Indikator + jumlah sisa dokumen dihilangkan */}
         </div>
       );
     },
@@ -177,6 +178,7 @@ export const getKabkotaColumns = (
         return <span className="text-gray-300 text-xs">—</span>;
       }
 
+      // Mengambil file urutan paling pertama (terbaru)
       const latest = baList[0];
 
       return (
@@ -184,7 +186,6 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* ✅ SUDAH DIPERBAIKI: Menggunakan helper getDocUrl */}
                 <a
                   href={getDocUrl(latest.filename)}
                   target="_blank"
@@ -200,9 +201,7 @@ export const getKabkotaColumns = (
             </Tooltip>
           </TooltipProvider>
 
-          {baList.length > 1 && (
-            <span className="text-xs text-gray-400">+{baList.length - 1}</span>
-          )}
+          {/* ✅ PERBAIKAN 2: Indikator + jumlah sisa dokumen dihilangkan */}
         </div>
       );
     },

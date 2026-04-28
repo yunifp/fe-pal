@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CustTextArea } from "@/components/CustTextArea";
 import type { VerifikasiFormData } from "@/types/beasiswa";
 import { Check, X, RotateCcw } from "lucide-react";
@@ -109,15 +111,6 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
     }
   };
 
-  // const handleStatusChange = (value: number) => {
-  //   setSelectedStatus(value);
-  //   setValue("selectedStatus", value);
-
-  //   if (value !== 8) {
-  //     setSelectedFile(null);
-  //     setValue("fileSuratKeputusan", "");
-  //   }
-  // };
   const handleStatusChange = (value: number) => {
     if (value === -1) {
       setShowKembalikanDialog(true);
@@ -132,6 +125,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
       setValue("fileSuratKeputusan", "");
     }
   };
+
   useEffect(() => {
     if (selectedFile) {
       setValue("_uploadFile", uploadFileToServer as any);
@@ -142,7 +136,6 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
   // Mutation untuk kembalikan ke admin ditjenbun (flow 13)
   const kembalikanMutation = useMutation({
     mutationFn: async () => {
-      // Panggil endpoint kembalikan — sesuaikan path dengan router kamu
       const response =
         await beasiswaService.kembalikanKeAdminDitjenbun(idTrxBeasiswa);
       return response;
@@ -151,7 +144,8 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
       if (res?.success) {
         toast.success("Berhasil dikembalikan ke admin Ditjenbun");
         queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
-        navigate("/beasiswa_verifikasi_dinas_provinsi");
+        // ✅ PERBAIKAN: Gunakan navigate(-1) untuk kembali ke riwayat List dengan State nya.
+        navigate(-1);
       } else {
         toast.error(res?.message ?? "Terjadi kesalahan");
       }

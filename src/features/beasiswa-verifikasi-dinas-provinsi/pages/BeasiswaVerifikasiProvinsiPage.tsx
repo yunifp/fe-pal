@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router-dom"; // ✅ Tambahkan useLocation & useNavigate
 import { DataTable } from "../../../components/DataTable";
 import { getColumns } from "../components/columns";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
@@ -23,8 +24,6 @@ import {
   Upload,
   X,
   FileText,
-  // FolderOpen,
-  // ChevronRight,
   AlertCircle,
   ChevronLeft,
   Users,
@@ -66,12 +65,25 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   const authUser = useAuthStore((state) => state.user);
   const kodeProvinsi = authUser?.kode_prov || "";
 
+  // ✅ Definisikan navigasi & location
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingRekap, setIsDownloadingRekap] = useState(false);
 
   const queryClient = useQueryClient();
 
-  const [view, setView] = useState<ViewState>({ mode: "kabkota-list" });
+  // ✅ Inisialisasi state view dari riwayat router (location.state)
+  const [view, setView] = useState<ViewState>(() => {
+    return location.state?.view || { mode: "kabkota-list" };
+  });
+
+  // ✅ Sinkronisasi ViewState ke dalam Browser History
+  useEffect(() => {
+    navigate(".", { state: { view }, replace: true });
+  }, [view, navigate]);
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 500);
@@ -81,21 +93,11 @@ const BeasiswaVerifikasiProvinsiPage = () => {
   const [filterIdJalur, setFilterIdJalur] = useState<string>("all");
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  // const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedSKFile, setSelectedSKFile] = useState<File | null>(null);
   const [selectedBAFile, setSelectedBAFile] = useState<File | null>(null);
   const fileSKInputRef = useRef<HTMLInputElement>(null);
   const fileBAInputRef = useRef<HTMLInputElement>(null);
-
-  // const [showSkDialog, setShowSkDialog] = useState(false);
-  // const [selectedKabkotaSk, setSelectedKabkotaSk] = useState<{
-  //   kode: string;
-  //   nama: string;
-  // } | null>(null);
-
-  // const baseFileUrl = import.meta.env.VITE_BEASISWA_SERVICE_URL;
 
   // ─── Beasiswa aktif ───────────────────────────────────────────────────────
   const { data: responseBeasiswaAktif } = useQuery({
@@ -245,7 +247,6 @@ const BeasiswaVerifikasiProvinsiPage = () => {
 
   const refDokumenUmum = refDokumenUmumRes?.data?.result ?? [];
   const refDokumenUmumKota = refDokumenUmumKabkotaRes?.data?.result ?? [];
-  console.log(refDokumenUmumKota);
 
   const refDokumenKhusus = refDokumenKhususRes?.data?.result ?? [];
 
@@ -332,25 +333,6 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     setView({ mode: "kabkota-list" });
   };
 
-  // const handleFileChange = (file: File | null) => {
-  //   if (!file) return;
-  //   if (file.type !== "application/pdf") {
-  //     toast.error("File harus berformat PDF");
-  //     return;
-  //   }
-  //   if (file.size > 5 * 1024 * 1024) {
-  //     toast.error("Ukuran file maksimal 5MB");
-  //     return;
-  //   }
-  //   setSelectedFile(file);
-  // };
-
-  // const handleCloseUploadDialog = () => {
-  //   setShowUploadDialog(false);
-  //   setSelectedFile(null);
-  //   if (fileInputRef.current) fileInputRef.current.value = "";
-  // };
-
   const validateAndSetFile = (
     file: File | null,
     setter: (f: File | null) => void,
@@ -375,46 +357,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     if (fileBAInputRef.current) fileBAInputRef.current.value = "";
   };
 
-  // const handleCloseSkDialog = () => {
-  //   setShowSkDialog(false);
-  //   setSelectedKabkotaSk(null);
-  // };
-
   // ─── Mutations ────────────────────────────────────────────────────────────
-  // const submitMutation = useMutation({
-  //   mutationFn: async () => {
-  //     const formData = new FormData();
-  //     formData.append("file", selectedFile!);
-
-  //     const uploadRes = await beasiswaService.uploadFileSKProvinsi(
-  //       beasiswaAktif?.id ?? 0,
-  //       formData,
-  //     );
-  //     if (!uploadRes.success) throw new Error(uploadRes.message);
-
-  //     const filename = uploadRes.data?.filename;
-  //     if (!filename) throw new Error("Gagal mendapatkan nama file");
-
-  //     return beasiswaService.submitTagDinasProvinsiToDitjenbun(
-  //       beasiswaAktif?.id ?? 0,
-  //       filename,
-  //     );
-  //   },
-  //   onSuccess: (res) => {
-  //     if (res.success) {
-  //       toast.success(res.message);
-  //       queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
-  //       queryClient.invalidateQueries({ queryKey: ["count-tag-provinsi"] });
-  //       handleCloseUploadDialog();
-  //     } else {
-  //       toast.error(res.message);
-  //     }
-  //   },
-  //   onError: (error: any) => {
-  //     toast.error(error?.message ?? "Gagal mengirim data");
-  //   },
-  // });
-
   const submitMutation = useMutation({
     mutationFn: async () => {
       // Upload SK Provinsi
@@ -496,23 +439,6 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     );
   }, [kabkotaCountRes]);
 
-  // const kabkotaColumns = useMemo(
-  //   () => getKabkotaColumns(handleSelectKabkota, skMap, baseFileUrl, countMap),
-  //   [skMap, baseFileUrl, countMap],
-  // );
-
-  // const kabkotaColumns = useMemo(
-  //   () =>
-  //     getKabkotaColumns(
-  //       handleSelectKabkota,
-  //       skMap,
-  //       // baseFileUrl,
-  //       countMap,
-  //       baMap,
-  //     ),
-  //   [skMap, baseFileUrl, countMap, baMap],
-  // );
-
   const kabkotaColumns = useMemo(
     () =>
       getKabkotaColumns(
@@ -520,7 +446,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
         skMap,
         countMap,
         baMap,
-        statusVerifikasiMap, // ← tambahkan ini
+        statusVerifikasiMap, 
       ),
     [skMap, countMap, baMap, statusVerifikasiMap],
   );
@@ -539,13 +465,10 @@ const BeasiswaVerifikasiProvinsiPage = () => {
           { name: view.nama },
         ];
 
-  // Tambah guard — sama seperti kabkota
   const isRefReady = refDokumenUmum.length > 0;
 
   const handleDownloadCSV = async () => {
     if (!isRefReady) {
-      console.log(refDokumenUmum);
-
       toast.error("Referensi dokumen belum siap, tunggu sebentar...");
       return;
     }
@@ -562,7 +485,6 @@ const BeasiswaVerifikasiProvinsiPage = () => {
         ...(filterIdJalur !== "all" && { idJalur: Number(filterIdJalur) }),
         ...(filterIdFlow === "lulus" && { statusLulus: "Y" }),
         ...(filterIdFlow === "tidak_lulus" && { statusLulus: "N" }),
-        // ✅ tambah ini
         refDokumenUmum: refDokumenUmum.map((d: any) => ({
           id: d.id,
           persyaratan: d.persyaratan,
@@ -580,29 +502,12 @@ const BeasiswaVerifikasiProvinsiPage = () => {
     }
   };
 
-  // const handleDownloadRekap = async () => {
-  //   setIsDownloadingRekap(true);
-  //   try {
-  //     await beasiswaService.downloadRekapProvinsi({
-  //       idBeasiswa: beasiswaAktif?.id ?? 0,
-  //       kodeProvinsi,
-  //     });
-  //     toast.success("Rekap berhasil diunduh");
-  //   } catch {
-  //     toast.error("Gagal mengunduh rekap");
-  //   } finally {
-  //     setIsDownloadingRekap(false);
-  //   }
-  // };
-  // const kodeKabkota = authUser?.kode_kab || "";
-
   const handleDownloadRekap = async () => {
     if (!isRefReady) {
       toast.error("Referensi dokumen belum siap, tunggu sebentar...");
       return;
     }
 
-    // Ambil kode kabkota dari view state, bukan dari authUser
     const kodeKabkotaForDownload =
       view.mode === "pendaftar-list" ? view.kode : "";
 
@@ -619,7 +524,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
       await beasiswaService.downloadVerifikasiKabkota({
         idBeasiswa: beasiswaAktif?.id ?? 0,
         kodeProvinsi,
-        kodeKabkota: kodeKabkotaForDownload, // ✅ pakai ini
+        kodeKabkota: kodeKabkotaForDownload,
         search: debouncedSearch,
         idFlow:
           !isSpecialFlow && filterIdFlow !== "all"
@@ -649,6 +554,7 @@ const BeasiswaVerifikasiProvinsiPage = () => {
       setIsDownloadingRekap(false);
     }
   };
+  
   // ─── Filter node (dipakai di DataTable pendaftar) ─────────────────────────
   const filterContent = (
     <>
@@ -746,7 +652,6 @@ const BeasiswaVerifikasiProvinsiPage = () => {
                   </span>
                 )}
               </button>
-              {/* Tombol Download Rekap — letakkan sebelum tombol Kirim */}
               <button
                 type="button"
                 onClick={handleDownloadCSV}

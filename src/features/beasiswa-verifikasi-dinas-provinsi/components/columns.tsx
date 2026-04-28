@@ -178,7 +178,10 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
 
       const beasiswa = row.original;
       const navigate = useNavigate();
-      const isVerifikasi = beasiswa.id_flow === 6;
+
+      // ✅ PERBAIKAN: Tombol akan berubah jadi "Lihat Detail" jika hasil_dinas_provinsi bukan 0/null
+      const sudahVerifikasi = beasiswa.hasil_dinas_provinsi === "1" || beasiswa.hasil_dinas_provinsi === "2";
+      const isVerifikasi = beasiswa.id_flow === 6 && !sudahVerifikasi;
 
       return (
         <Button
