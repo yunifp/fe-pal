@@ -425,7 +425,7 @@ const UploadPersyaratanKhusus = forwardRef<
                             Ekstensi yang diterima:{" "}
                             {validTypeToAccept(item.valid_type)}.
                             <br />
-                            Maksimal {item.size || "2 MB"}. Jika PDF kebesaran, silakan kompres melalui{" "}
+                            Maksimal {item.size || "10 MB"} Mb. Jika PDF kebesaran, silakan kompres melalui{" "}
                             <a
                               href="https://www.ilovepdf.com/compress_pdf"
                               target="_blank"

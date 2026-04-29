@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ const S = {
     display: "flex",
     alignItems: "center",
     flexShrink: 0,
+    cursor: "pointer", // Tambahan agar terlihat bisa diklik
   }),
   logoImg: (): React.CSSProperties => ({
     height: 40,
@@ -64,6 +66,7 @@ const S = {
     padding: "6px 12px",
     borderRadius: 6,
     transition: "color 0.2s, background 0.2s",
+    cursor: "pointer",
   }),
   auth: (): React.CSSProperties => ({
     display: "flex",
@@ -128,6 +131,7 @@ const S = {
     fontWeight: 500,
     padding: "10px 12px",
     borderRadius: 6,
+    cursor: "pointer",
   }),
   mobileAuth: (): React.CSSProperties => ({
     display: "flex",
@@ -187,12 +191,20 @@ const NavbarLanding = ({
 }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate(); // ✅ Inisialisasi useNavigate
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ✅ Helper untuk navigasi tanpa full reload
+  const handleNavigate = (path: string) => (e: React.MouseEvent) => {
+    e.preventDefault(); // Mencegah reload halaman
+    setMenuOpen(false); // Tutup menu mobile jika sedang terbuka
+    navigate(path);
+  };
 
   const handleLinkClick = () => setMenuOpen(false);
 
@@ -211,7 +223,7 @@ const NavbarLanding = ({
     <nav style={S.nav(isScrolled)}>
       <div style={S.inner()}>
         {/* Logo */}
-        <div style={S.logoWrap()}>
+        <div style={S.logoWrap()} onClick={() => navigate("/")}>
           <img
             src="/images/landing/logo.png"
             alt="BPDP Logo"
@@ -225,9 +237,10 @@ const NavbarLanding = ({
         {/* Desktop nav */}
         <div style={S.desktop()}>
           <div style={S.navLinks()}>
-            <a href="/" style={S.navLink()}>
+            <a href="/" onClick={handleNavigate("/")} style={S.navLink()}>
               Beranda
             </a>
+            {/* Hash link (#) biarkan tetap normal agar bisa scroll */}
             <a
               href="#jalur-pendaftaran"
               onClick={handleLinkClick}
@@ -235,29 +248,29 @@ const NavbarLanding = ({
               Jalur Pendaftaran
             </a>
             <a
-              href="cek-status"
-              onClick={handleLinkClick}
+              href="/cek-status"
+              onClick={handleNavigate("/cek-status")}
               style={S.mobileLink()}>
               Cek Status
             </a>
-            {/* <a href="/pendaftaran-beasiswa" style={S.navLink()}>
-              Beasiswa
-            </a> */}
-            <a href="#kontak" style={S.navLink()}>
+            <a href="#kontak" onClick={handleLinkClick} style={S.navLink()}>
               Kontak
             </a>
-            {/* <a href="#tentang" onClick={handleLinkClick} style={S.mobileLink()}>
-              Tentang
-            </a> */}
           </div>
           <div style={S.auth()}>
             {hasBeasiswaAktif && (
-              <a href="/daftar-penerima-beasiswa" style={S.btnDaftar()}>
+              <a
+                href="/daftar-penerima-beasiswa"
+                onClick={handleNavigate("/daftar-penerima-beasiswa")}
+                style={S.btnDaftar()}>
                 <IconDaftar />
                 Daftar
               </a>
             )}
-            <a href="/login" style={S.btnMasuk()}>
+            <a
+              href="/login"
+              onClick={handleNavigate("/login")}
+              style={S.btnMasuk()}>
               <IconMasuk />
               Masuk
             </a>
@@ -298,12 +311,12 @@ const NavbarLanding = ({
 
       {/* Mobile menu */}
       <div style={S.mobileMenu(menuOpen)}>
-        <a href="/" onClick={handleLinkClick} style={S.mobileLink()}>
+        <a href="/" onClick={handleNavigate("/")} style={S.mobileLink()}>
           Beranda
         </a>
         <a
           href="/pendaftaran-beasiswa"
-          onClick={handleLinkClick}
+          onClick={handleNavigate("/pendaftaran-beasiswa")}
           style={S.mobileLink()}>
           Beasiswa
         </a>
@@ -317,13 +330,16 @@ const NavbarLanding = ({
           {hasBeasiswaAktif && (
             <a
               href="/daftar-penerima-beasiswa"
-              onClick={handleLinkClick}
+              onClick={handleNavigate("/daftar-penerima-beasiswa")}
               style={S.btnDaftar(true)}>
               <IconDaftar />
               Daftar
             </a>
           )}
-          <a href="/login" onClick={handleLinkClick} style={S.btnMasuk(true)}>
+          <a
+            href="/login"
+            onClick={handleNavigate("/login")}
+            style={S.btnMasuk(true)}>
             <IconMasuk />
             Masuk
           </a>
