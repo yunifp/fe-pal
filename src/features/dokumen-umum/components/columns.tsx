@@ -40,9 +40,18 @@ export const getColumns = (
     accessorKey: "persyaratan",
     header: "Nama Dokumen",
     cell: ({ row }) => (
-      <div className="font-bold text-slate-900 whitespace-normal break-words min-w-[200px] max-w-[400px] leading-relaxed">
+      <div className="font-bold text-slate-900 whitespace-normal break-words min-w-[200px] max-w-[300px] leading-relaxed">
         {row.original.persyaratan}
       </div>
+    ),
+  },
+  {
+    accessorKey: "nama_file_unduh",
+    header: "Template File",
+    cell: ({ row }) => (
+      <span className="text-sm font-medium text-slate-600 truncate max-w-[150px] inline-block">
+        {row.original.nama_file_unduh || "-"}
+      </span>
     ),
   },
   {
@@ -76,10 +85,10 @@ export const getColumns = (
   },
   {
     accessorKey: "size",
-    header: "Max Size",
+    header: "Max (MB)",
     cell: ({ row }) => (
       <span className="text-sm font-medium text-slate-700">
-        {row.original.size ? `${row.original.size} MB` : "-"}
+        {row.original.size ? `${row.original.size}` : "-"}
       </span>
     ),
   },

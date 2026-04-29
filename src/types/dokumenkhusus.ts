@@ -8,6 +8,7 @@ export interface IDokumenKhusus {
   is_kabkota: "Y" | "N"; 
   is_prov: "Y" | "N";    
   size?: string | number;
+  nama_file_unduh?: string | null;
   created_at?: string;
   updated_at?: string;
   jalur_ref?: {

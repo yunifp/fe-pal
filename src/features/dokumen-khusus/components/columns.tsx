@@ -49,9 +49,19 @@ export const getColumns = (
     accessorKey: "persyaratan",
     header: "Nama Dokumen Khusus",
     cell: ({ row }) => (
-      <div className="font-bold text-slate-900 whitespace-normal break-words min-w-[200px] max-w-[350px] leading-relaxed">
+      <div className="font-bold text-slate-900 whitespace-normal break-words min-w-[200px] max-w-[300px] leading-relaxed">
         {row.original.persyaratan}
       </div>
+    ),
+  },
+  // --- TAMBAHAN KOLOM NAMA FILE UNDUH ---
+  {
+    accessorKey: "nama_file_unduh",
+    header: "Template File",
+    cell: ({ row }) => (
+      <span className="text-sm font-medium text-slate-600 truncate max-w-[150px] inline-block">
+        {row.original.nama_file_unduh || "-"}
+      </span>
     ),
   },
   {

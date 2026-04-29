@@ -38,6 +38,7 @@ const DokumenKhususPage: React.FC = () => {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   
+  // Tambahan `nama_file_unduh`
   const [formData, setFormData] = useState<Omit<IDokumenKhusus, "id" | "created_at" | "updated_at" | "jalur_ref">>({
     id_jalur: 0,
     persyaratan: "",
@@ -46,7 +47,8 @@ const DokumenKhususPage: React.FC = () => {
     is_required: "Y",
     is_kabkota: "N",
     is_prov: "N",
-    size: "", // Tambahan kolom size
+    size: "",
+    nama_file_unduh: "", 
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -123,7 +125,8 @@ const DokumenKhususPage: React.FC = () => {
       is_required: "Y",
       is_kabkota: "N",
       is_prov: "N",
-      size: "", // Reset field size
+      size: "", 
+      nama_file_unduh: "", 
     });
     setIsModalOpen(true);
   };
@@ -139,7 +142,8 @@ const DokumenKhususPage: React.FC = () => {
       is_required: data.is_required,
       is_kabkota: data.is_kabkota || "N",
       is_prov: data.is_prov || "N",
-      size: data.size || "", // Set field size jika ada
+      size: data.size || "", 
+      nama_file_unduh: data.nama_file_unduh || "", 
     });
     setIsModalOpen(true);
   };
@@ -172,7 +176,7 @@ const DokumenKhususPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-10">
       <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
-        <CustBreadcrumb items={[{ name: "Master Dokumen", url: "/master/dokumen-khusus" }]} />
+        <CustBreadcrumb items={[{ name: "Master Dokumen Khusus", url: "/master/dokumen-khusus" }]} />
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
@@ -262,7 +266,18 @@ const DokumenKhususPage: React.FC = () => {
                   className="resize-none rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 bg-slate-50/50" 
                   value={formData.persyaratan}
                   onChange={(e) => setFormData({ ...formData, persyaratan: e.target.value })}
-                  autoFocus
+                />
+              </div>
+
+              {/* INPUT NAMA FILE UNDUH */}
+              <div className="space-y-2">
+                <Label htmlFor="nama_file_unduh" className="text-sm font-bold text-slate-700 ml-1">Nama File Template (Opsional)</Label>
+                <Input
+                  id="nama_file_unduh"
+                  placeholder="Cth: template_pernyataan_kebun.pdf"
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  value={formData.nama_file_unduh || ""}
+                  onChange={(e) => setFormData({ ...formData, nama_file_unduh: e.target.value })}
                 />
               </div>
               

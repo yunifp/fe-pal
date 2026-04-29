@@ -4,43 +4,85 @@ import { useNavigate } from "react-router-dom";
 import useHasAccess from "@/hooks/useHasAccess";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
-import { ShieldCheck, Eye, User } from "lucide-react";
+// Tambahkan FileDown dan Loader2 dari lucide-react
+import { ShieldCheck, Eye, User, FileDown, Loader2 } from "lucide-react";
+import { useState } from "react";
+// Pastikan path import beasiswaService ini sesuai dengan struktur folder Anda
+import { beasiswaService } from "@/services/beasiswaService"; 
 
 // They belong in a wrapper component instead.
 const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const isViewOnly = [3, 4, 6, 7, 9, 10, 11, 12, 13].includes(
     beasiswa.id_flow ?? 0,
   );
 
+  // Sesuai rule: button hanya muncul di pendaftar yang telah diverifikasi.
+  // Asumsinya flow > 2 berarti sudah melewati tahap draft/verifikasi awal.
+  const hasBeenVerified = (beasiswa.id_flow ?? 0) > 2;
+
+  const handleDownloadPdf = async () => {
+    try {
+      setIsDownloading(true);
+      await beasiswaService.downloadPdfHasilVerifikasi(beasiswa.id_trx_beasiswa);
+    } catch (error) {
+      console.error("Gagal mengunduh PDF:", error);
+      // Jika Anda menggunakan library toast (seperti sonner/react-hot-toast), Anda bisa memunculkan notifikasi error di sini
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (!canUpdate && !isViewOnly) return null;
 
   return (
-    <Button
-      size="sm"
-      variant={isViewOnly ? "outline" : "default"}
-      className={
-        isViewOnly
-          ? "gap-1.5 text-muted-foreground"
-          : "gap-1.5 bg-primary hover:bg-primary/90"
-      }
-      onClick={() =>
-        navigate(`/beasiswa_seleksi/detail/${beasiswa.id_trx_beasiswa}`)
-      }>
-      {isViewOnly ? (
-        <>
-          <Eye className="h-3.5 w-3.5" />
-          Lihat
-        </>
-      ) : (
-        <>
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Verifikasi
-        </>
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant={isViewOnly ? "outline" : "default"}
+        className={
+          isViewOnly
+            ? "gap-1.5 text-muted-foreground"
+            : "gap-1.5 bg-primary hover:bg-primary/90"
+        }
+        onClick={() =>
+          navigate(`/beasiswa_seleksi/detail/${beasiswa.id_trx_beasiswa}`)
+        }>
+        {isViewOnly ? (
+          <>
+            <Eye className="h-3.5 w-3.5" />
+            Lihat
+          </>
+        ) : (
+          <>
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Verifikasi
+          </>
+        )}
+      </Button>
+
+      {/* Button PDF */}
+      {hasBeenVerified && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+          onClick={handleDownloadPdf}
+          disabled={isDownloading}
+          title="Unduh Hasil Verifikasi PDF"
+        >
+          {isDownloading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FileDown className="h-3.5 w-3.5" />
+          )}
+          PDF
+        </Button>
       )}
-    </Button>
+    </div>
   );
 };
 

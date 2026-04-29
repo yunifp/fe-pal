@@ -49,6 +49,9 @@ const NikCekalPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteData, setDeleteData] = useState<{ id: number; identitas: string } | null>(null);
 
+  // Array untuk pilihan tahun (2026 mundur ke 2021)
+  const listTahun = [2026, 2025, 2024, 2023, 2022, 2021];
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (debouncedSearch !== searchTerm) {
@@ -250,17 +253,29 @@ const NikCekalPage: React.FC = () => {
                     className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50"
                   />
                 </div>
+                {/* === UPDATE DI SINI: MENGUBAH INPUT MENJADI SELECT === */}
                 <div className="col-span-1 space-y-2">
                   <Label htmlFor="tahun" className="text-sm font-bold text-slate-700 ml-1">Tahun</Label>
-                  <Input
+                  <select
                     id="tahun"
                     value={formData.tahun}
                     onChange={(e) => setFormData({ ...formData, tahun: e.target.value })}
-                    placeholder="2024"
-                    maxLength={4}
-                    className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50 text-center"
-                  />
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-base focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-medium text-slate-700 appearance-none"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23475569' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: `right 0.75rem center`,
+                      backgroundRepeat: `no-repeat`,
+                      backgroundSize: `1.2em 1.2em`,
+                    }}
+                  >
+                    {listTahun.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {/* === AKHIR UPDATE === */}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="keterangan" className="text-sm font-bold text-slate-700 ml-1">Keterangan (Opsional)</Label>

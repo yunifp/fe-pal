@@ -1146,4 +1146,21 @@ export const beasiswaService = {
     );
     return response.data;
   },
+  downloadPdfHasilVerifikasi: async (idTrxBeasiswa: number): Promise<void> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-pdf-verifikasi/${idTrxBeasiswa}`,
+      {
+        responseType: "blob",
+      },
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Hasil_Verifikasi_${idTrxBeasiswa}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };

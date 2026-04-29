@@ -36,6 +36,7 @@ const DokumenUmumPage: React.FC = () => {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   
+  // Tambahkan inisialisasi nama_file_unduh
   const [formData, setFormData] = useState<Omit<IDokumenUmum, "id" | "created_at" | "updated_at">>({
     persyaratan: "",
     status_aktif: "Y",
@@ -44,6 +45,7 @@ const DokumenUmumPage: React.FC = () => {
     is_kabkota: "N",
     is_prov: "N",
     size: "",
+    nama_file_unduh: "",
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -113,6 +115,7 @@ const DokumenUmumPage: React.FC = () => {
       is_kabkota: "N",
       is_prov: "N",
       size: "",
+      nama_file_unduh: "",
     });
     setIsModalOpen(true);
   };
@@ -128,6 +131,7 @@ const DokumenUmumPage: React.FC = () => {
       is_kabkota: data.is_kabkota || "N",
       is_prov: data.is_prov || "N",
       size: data.size || "",
+      nama_file_unduh: data.nama_file_unduh || "", // Load data
     });
     setIsModalOpen(true);
   };
@@ -164,6 +168,7 @@ const DokumenUmumPage: React.FC = () => {
       is_kabkota: "N",
       is_prov: "N",
       size: "",
+      nama_file_unduh: "",
     });
   };
 
@@ -231,6 +236,7 @@ const DokumenUmumPage: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+              
               <div className="space-y-2">
                 <Label htmlFor="persyaratan" className="text-sm font-bold text-slate-700 ml-1">Nama / Deskripsi Dokumen</Label>
                 <Textarea
@@ -241,6 +247,18 @@ const DokumenUmumPage: React.FC = () => {
                   value={formData.persyaratan}
                   onChange={(e) => setFormData({ ...formData, persyaratan: e.target.value })}
                   autoFocus
+                />
+              </div>
+
+              {/* INPUT NAMA FILE UNDUH */}
+              <div className="space-y-2">
+                <Label htmlFor="nama_file_unduh" className="text-sm font-bold text-slate-700 ml-1">Nama File Template (Opsional)</Label>
+                <Input
+                  id="nama_file_unduh"
+                  placeholder="Contoh: template_keterangan_sehat.pdf"
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  value={formData.nama_file_unduh || ""}
+                  onChange={(e) => setFormData({ ...formData, nama_file_unduh: e.target.value })}
                 />
               </div>
               
@@ -342,6 +360,7 @@ const DokumenUmumPage: React.FC = () => {
         </Dialog>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          {/* ... Alert Dialog Sama Seperti Sebelumnya ... */}
           <AlertDialogContent className="rounded-3xl border-0 shadow-2xl p-8 max-w-md">
             <AlertDialogHeader>
               <div className="flex items-center gap-4 mb-3">
