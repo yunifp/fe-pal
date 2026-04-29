@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { INikCekal } from "@/types/nikCekal";
 
 const NikCekalPage: React.FC = () => {
@@ -40,7 +41,9 @@ const NikCekalPage: React.FC = () => {
   const [formData, setFormData] = useState({ 
     nik: "", 
     nama: "", 
-    keterangan: "" 
+    tahun: new Date().getFullYear().toString(),
+    keterangan: "",
+    is_aktif: "Y" as "Y" | "N"
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -108,7 +111,13 @@ const NikCekalPage: React.FC = () => {
 
   const handleOpenCreate = () => {
     setModalMode("create");
-    setFormData({ nik: "", nama: "", keterangan: "" });
+    setFormData({ 
+      nik: "", 
+      nama: "", 
+      tahun: new Date().getFullYear().toString(), 
+      keterangan: "",
+      is_aktif: "Y"
+    });
     setIsModalOpen(true);
   };
 
@@ -118,7 +127,9 @@ const NikCekalPage: React.FC = () => {
     setFormData({ 
         nik: data.nik, 
         nama: data.nama || "", 
-        keterangan: data.keterangan || "" 
+        tahun: data.tahun || new Date().getFullYear().toString(),
+        keterangan: data.keterangan || "",
+        is_aktif: data.is_aktif || "Y"
     });
     setIsModalOpen(true);
   };
@@ -142,7 +153,13 @@ const NikCekalPage: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedId(null);
-    setFormData({ nik: "", nama: "", keterangan: "" });
+    setFormData({ 
+      nik: "", 
+      nama: "", 
+      tahun: new Date().getFullYear().toString(), 
+      keterangan: "",
+      is_aktif: "Y" 
+    });
   };
 
   const columns = useMemo(() => getColumns(page, limit, handleEditClick, handleDeleteClick), [page, limit]);
@@ -154,7 +171,6 @@ const NikCekalPage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
-            {/* Ubah warna icon header ke Hijau */}
             <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 hidden sm:block">
               <UserX className="h-7 w-7 text-emerald-600" />
             </div>
@@ -164,7 +180,6 @@ const NikCekalPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Ubah tombol utama ke Hijau */}
           <Button 
             onClick={handleOpenCreate} 
             className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md transition-all"
@@ -174,7 +189,6 @@ const NikCekalPage: React.FC = () => {
         </div>
 
         <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white relative">
-          {/* Garis atas tabel diubah ke Hijau */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-400"></div>
           <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-5 pt-7 px-6 sm:px-8">
             <CardTitle className="text-xl font-bold text-slate-800">Daftar NIK Cekal</CardTitle>
@@ -182,7 +196,6 @@ const NikCekalPage: React.FC = () => {
           <CardContent className="p-0">
             {isLoading && tableData.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                {/* Loader spinner hijau */}
                 <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
                 <p className="text-slate-500 text-sm font-medium mt-5 animate-pulse">Memuat data...</p>
               </div>
@@ -202,7 +215,7 @@ const NikCekalPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Modal Form Tambah/Ubah */}
+        {/* Modal Form */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="rounded-3xl border-0 shadow-2xl p-6 sm:p-8 max-w-md">
             <DialogHeader className="mb-6">
@@ -216,7 +229,6 @@ const NikCekalPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nik" className="text-sm font-bold text-slate-700 ml-1">NIK <span className="text-red-500">*</span></Label>
-                {/* Ring focus hijau */}
                 <Input
                   id="nik"
                   value={formData.nik}
@@ -227,27 +239,57 @@ const NikCekalPage: React.FC = () => {
                   autoFocus
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="nama" className="text-sm font-bold text-slate-700 ml-1">Nama Lengkap (Opsional)</Label>
-                <Input
-                  id="nama"
-                  value={formData.nama}
-                  onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                  placeholder="Nama pemilik NIK"
-                  className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50"
-                />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="nama" className="text-sm font-bold text-slate-700 ml-1">Nama Lengkap</Label>
+                  <Input
+                    id="nama"
+                    value={formData.nama}
+                    onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                    placeholder="Nama pemilik NIK"
+                    className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50"
+                  />
+                </div>
+                <div className="col-span-1 space-y-2">
+                  <Label htmlFor="tahun" className="text-sm font-bold text-slate-700 ml-1">Tahun</Label>
+                  <Input
+                    id="tahun"
+                    value={formData.tahun}
+                    onChange={(e) => setFormData({ ...formData, tahun: e.target.value })}
+                    placeholder="2024"
+                    maxLength={4}
+                    className="h-12 rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50 text-center"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="keterangan" className="text-sm font-bold text-slate-700 ml-1">Alasan Cekal (Opsional)</Label>
+                <Label htmlFor="keterangan" className="text-sm font-bold text-slate-700 ml-1">Keterangan (Opsional)</Label>
                 <Textarea
                   id="keterangan"
                   value={formData.keterangan}
                   onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
-                  placeholder="Kenapa NIK ini diblokir?"
+                  placeholder="Contoh: Mundur saat proses rekomtek"
                   className="min-h-[100px] rounded-xl border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base px-4 bg-slate-50/50 resize-none"
                 />
               </div>
-              <DialogFooter className="gap-2 sm:gap-3 mt-6">
+              
+              {/* Checkbox Status Aktif */}
+              <div className="flex items-center space-x-2 pt-2 ml-1">
+                <Checkbox 
+                  id="is_aktif" 
+                  checked={formData.is_aktif === "Y"}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_aktif: checked ? "Y" : "N" })}
+                  className="data-[state=checked]:bg-emerald-600 data-[state=checked]:text-white border-slate-300"
+                />
+                <Label 
+                  htmlFor="is_aktif" 
+                  className="text-sm font-bold text-slate-700 cursor-pointer select-none"
+                >
+                  Aktif Cekal (Berlaku)
+                </Label>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-3 mt-6 pt-2">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -256,7 +298,6 @@ const NikCekalPage: React.FC = () => {
                 >
                   Batal
                 </Button>
-                {/* Tombol Simpan hijau */}
                 <Button 
                   type="submit" 
                   disabled={createMutation.isPending || updateMutation.isPending || !formData.nik.trim()}
@@ -271,7 +312,6 @@ const NikCekalPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Modal Konfirmasi Hapus - Tetap Merah karena aksi Delete */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent className="rounded-3xl border-0 shadow-2xl p-8 max-w-md">
             <AlertDialogHeader>

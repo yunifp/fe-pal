@@ -746,9 +746,25 @@ export const beasiswaService = {
     );
     return response.data;
   },
+ getRekapKabkotaByProvinsiV2: async (kode_prov: string): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/rekap-kabkota/${kode_prov}`
+    );
+    return response.data;
+  },
+
+  // ✅ TAMBAHAN BARU: Fungsi untuk mendapatkan Dokumen BA & SK milik Kabupaten/Kota
+  getDokumenKabkotaV2: async (kode_kabkota: string): Promise<any> => {
+    const response = await axiosInstanceBeasiswa.get(
+      `/verifikasi-nasional-v2/dokumen-kabkota/${kode_kabkota}`
+    );
+    return response.data;
+  },
+
+  // ✅ MODIFIKASI: Tambahkan `kode_kabkota?: string` di dalam interface params
   getDetailProvinsiV2: async (
     kode_prov: string,
-    params?: { page?: number; limit?: number; search?: string },
+    params?: { page?: number; limit?: number; search?: string; kode_kabkota?: string },
   ): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
       `/verifikasi-nasional-v2/detail-provinsi/${kode_prov}`,

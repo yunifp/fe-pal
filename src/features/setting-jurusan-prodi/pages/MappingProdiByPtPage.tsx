@@ -14,10 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link2, Settings2 } from "lucide-react";
-import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const MappingProdiByPtPage = () => {
-  useRedirectIfHasNotAccess("U");
+
 
   const { id_pt } = useParams<{ id_pt: string }>();
   const queryClient = useQueryClient();
@@ -132,7 +131,7 @@ const MappingProdiByPtPage = () => {
     }
   ], [page]);
 
-  // Columns Modal (Tabel Jurusan)
+// Columns Modal (Tabel Jurusan)
   const modalColumns = useMemo(() => [
     {
       id: "no",
@@ -150,13 +149,15 @@ const MappingProdiByPtPage = () => {
       cell: ({ row }: any) => (
         <Switch 
           checked={row.original.is_mapped} 
+          // Sekarang handleToggle akan menerima selectedProdi yang benar
           onCheckedChange={() => handleToggle(row.original.id_jurusan_sekolah, row.original.is_mapped)}
           disabled={toggleMutation.isPending}
           className="data-[state=checked]:bg-emerald-600"
         />
       )
     }
-  ], [jurusanPage, toggleMutation.isPending]);
+  // ✅ TAMBAHKAN `selectedProdi` DI DALAM ARRAY INI:
+  ], [jurusanPage, toggleMutation.isPending, selectedProdi]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-10">

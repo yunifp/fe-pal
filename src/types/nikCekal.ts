@@ -1,10 +1,10 @@
-// src/types/nikCekal.ts
-
 export interface INikCekal {
   id: number;
   nik: string;
-  nama: string | null;
-  keterangan: string | null;
+  nama?: string;
+  tahun?: string;
+  keterangan?: string;
+  is_aktif?: "Y" | "N";
   created_at?: string;
   updated_at?: string;
 }
