@@ -2,7 +2,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Link dihapus
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { CustInput } from "@/components/CustInput";
@@ -280,11 +280,15 @@ const DbAdminVerifikatorDinasCreatePage = () => {
               />
 
               <div className="mt-8 flex items-center justify-between">
-                <Link to="/database/user-admin-verifikator-dinas">
-                  <Button type="button" variant="secondary">
-                    Kembali
-                  </Button>
-                </Link>
+                {/* Bagian ini yang diubah menggunakan navigate(-1) */}
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={() => navigate(-1)}
+                >
+                  Kembali
+                </Button>
+                
                 <Button type="submit" disabled={mutation.isPending}>
                   {mutation.isPending ? "Menyimpan..." : "Simpan"}
                 </Button>

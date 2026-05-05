@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,6 +23,8 @@ import {
   Download,
   Lock,
   LockOpen,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   Select,
@@ -330,64 +334,100 @@ const ManajemenVerifikator = () => {
     }
   };
 
+  // Tambah di bawah state lainnya (dekat isLocking)
+  const [expandedVerifikator, setExpandedVerifikator] = useState<number | null>(
+    null,
+  );
+
+  // Ganti query rincian dengan ini
+  const { data: responseRincian, isLoading: isLoadingRincian } = useQuery({
+    queryKey: ["rincian-status-verifikator", expandedVerifikator],
+    queryFn: async () => {
+      if (!expandedVerifikator) return null;
+
+      const verifikator = verifikatorList.find(
+        (v) => v.id === expandedVerifikator,
+      );
+      const totalBebanV = verifikator?.total_beban ?? 100;
+
+      const resAll = await beasiswaService.getPendaftarForAssignment({
+        page: 1,
+        limit: totalBebanV + 50,
+        filter: "filter-assigned",
+        status_filter: "",
+        id_verifikator: expandedVerifikator,
+      });
+
+      const rows: any[] = resAll?.data?.result ?? [];
+
+      // Group by id_flow
+      const flowMap: Record<number, number> = {};
+      rows.forEach((r) => {
+        const idFlow = r.id_flow;
+        if (idFlow != null) {
+          flowMap[idFlow] = (flowMap[idFlow] ?? 0) + 1;
+        }
+      });
+
+      // ✅ Map id_flow ke label yang lebih lengkap
+      // Catatan: Jika di DB Anda id_flow untuk "Perlu Perbaikan" BUKAN 4, silakan sesuaikan angkanya di bawah ini.
+      const flowLabelMap = (idFlow: number): string => {
+        if (idFlow === 3) return "Tidak Lulus Administrasi";
+        if (idFlow === 4) return "Perlu Perbaikan"; 
+        if (idFlow === 5) return "Seleksi Hasil Perbaikan";
+        if (idFlow === 6 || idFlow > 6) return "Lulus Administrasi"; 
+        return "Seleksi Administrasi"; 
+      };
+
+      // Merge count per label
+      const labelCount: Record<string, number> = {};
+      Object.entries(flowMap).forEach(([idFlow, count]) => {
+        const label = flowLabelMap(Number(idFlow));
+        labelCount[label] = (labelCount[label] ?? 0) + count;
+      });
+
+      // ✅ Tambahkan status baru ke ALL_STATUSES
+      const ALL_STATUSES = [
+        "Seleksi Administrasi",
+        "Perlu Perbaikan",
+        "Seleksi Hasil Perbaikan",
+        "Lulus Administrasi",
+        "Tidak Lulus Administrasi",
+      ];
+
+      return ALL_STATUSES.map((status) => ({
+        status,
+        count: labelCount[status] ?? 0,
+      }));
+    },
+    enabled:
+      expandedVerifikator !== null && (responseFlow?.data?.length ?? 0) >= 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  // Ganti rincianStatus useMemo dengan ini
+  type RincianStatus = { status: string; count: number };
+  type RincianMap = Record<number, RincianStatus[]>;
+
+  const [rincianPerVerifikator, setRincianPerVerifikator] =
+    useState<RincianMap>({});
+  // Update ketika data rincian berhasil di-fetch
+  useEffect(() => {
+    if (expandedVerifikator !== null && responseRincian) {
+      setRincianPerVerifikator((prev) => ({
+        ...prev,
+        [expandedVerifikator]: responseRincian,
+      }));
+    }
+  }, [responseRincian, expandedVerifikator]);
+
   const [isLocking, setIsLocking] = useState(false);
 
   return (
     <div className="pb-10">
       <CustBreadcrumb items={[{ name: "Manajemen Selektor" }]} />
-
-      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            Manajemen Selektor
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Pembagian dan monitoring beban selektor
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLockGlobal(true)}
-            disabled={isLocking}
-            className="border-amber-300 text-amber-700 hover:bg-amber-50">
-            {isLocking ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Lock className="h-4 w-4 mr-2" />
-            )}
-            Kunci Semua
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLockGlobal(false)}
-            disabled={isLocking}
-            className="border-slate-300 text-slate-600 hover:bg-slate-50">
-            {isLocking ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <LockOpen className="h-4 w-4 mr-2" />
-            )}
-            Buka Kunci
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              queryClient.invalidateQueries({
-                queryKey: ["beban-verifikator"],
-              });
-              queryClient.invalidateQueries({
-                queryKey: ["pendaftar-assignment-stats"],
-              });
-            }}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div> */}
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5">
         <div>
@@ -477,16 +517,7 @@ const ManajemenVerifikator = () => {
           </p>
         </div>
       )}
-      {/* {!isLoadingInfo && !isLoadingPendaftar && totalBelumAssign > 0 && (
-        <div className="mt-2 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-          <Lock className="h-4 w-4 text-blue-600 flex-shrink-0" />
-          <p className="text-sm text-blue-800">
-            Klik <span className="font-semibold">Kunci Semua</span> terlebih
-            dahulu sebelum melakukan assignment — hanya pendaftar yang sudah
-            dikunci yang dapat di-assign ke selektor.
-          </p>
-        </div>
-      )} */}
+      
       {/* Banner: belum ada yang di-lock */}
       {!isLoadingPendaftar && totalBelumAssign > 0 && totalLocked === 0 && (
         <div className="mt-2 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -627,15 +658,12 @@ const ManajemenVerifikator = () => {
                       </SelectItem>
                     ))}
                     <SelectItem value="lulus">Lulus Administrasi</SelectItem>
-                    <SelectItem value="tidak_lulus">
-                      Tidak Lulus Administrasi
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
 
-            {/* Tombol download — letakkan di dalam div Controls, setelah Select selektor */}
+            {/* Tombol download */}
             <Button
               variant="outline"
               size="sm"
@@ -716,8 +744,6 @@ const ManajemenVerifikator = () => {
                   .slice()
                   .sort((a, b) => a.total_beban - b.total_beban) // ringan di atas
                   .map((v) => {
-                    console.log(v);
-
                     const inputVal = jumlahMap[v.id] ?? "";
                     const inputNum = parseInt(inputVal);
                     const afterAssign =
@@ -734,8 +760,6 @@ const ManajemenVerifikator = () => {
                             ? "border-primary/30 bg-primary/5"
                             : "border-border"
                         }`}>
-                        {/* Nama verifikator */}
-                        {/* Ganti bagian div flex items-center gap-2 mb-3 di dalam card verifikator */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div
@@ -757,7 +781,6 @@ const ManajemenVerifikator = () => {
                               </p>
                             </div>
                           </div>
-                          {/* Status lock badge di pojok card */}
                           {totalLocked === 0 ? (
                             <LockOpen className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
                           ) : (
@@ -837,7 +860,6 @@ const ManajemenVerifikator = () => {
                       Reset
                     </Button>
                   )}
-                  {/* Ganti Button Assign Sekarang */}
                   <div className="relative group">
                     <Button
                       size="sm"
@@ -850,7 +872,6 @@ const ManajemenVerifikator = () => {
                       )}
                       Assign Sekarang
                     </Button>
-                    {/* Tooltip saat belum lock */}
                     {hasAnyInput && !isOverQuota && totalLocked === 0 && (
                       <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
                         <Lock className="h-3 w-3" />
@@ -893,7 +914,7 @@ const ManajemenVerifikator = () => {
                 .slice()
                 .sort((a, b) => b.total_beban - a.total_beban)
                 .map((v) => {
-                  const pct = (v.total_beban / maxBeban) * 100;
+                  const pct = maxBeban > 0 ? (v.total_beban / maxBeban) * 100 : 0;
                   const pctTotal =
                     totalBeban > 0
                       ? ((v.total_beban / totalBeban) * 100).toFixed(1)
@@ -904,6 +925,8 @@ const ManajemenVerifikator = () => {
                       : pct > 50
                         ? "bg-amber-400"
                         : "bg-blue-500";
+                  const isExpanded = expandedVerifikator === v.id;
+
                   return (
                     <div key={v.id} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
@@ -915,25 +938,101 @@ const ManajemenVerifikator = () => {
                             {v.nama}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-sm font-bold tabular-nums">
-                            {/* {v.total_beban.toLocaleString("id-ID")} */}
-                          </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-xs text-muted-foreground">
-                            ({pctTotal}%)
+                            {v.total_beban.toLocaleString("id-ID")} ({pctTotal}
+                            %)
                           </span>
+                          <button
+                            onClick={() =>
+                              setExpandedVerifikator(isExpanded ? null : v.id)
+                            }
+                            className="text-xs text-primary hover:underline flex items-center gap-1">
+                            {isExpanded ? (
+                              <>
+                                <ChevronUp className="h-3.5 w-3.5" />
+                                Tutup
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-3.5 w-3.5" />
+                                Rincian
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
+
+                      {/* Progress bar Beban Total */}
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
+
+                      {/* Rincian per status — collapsible (GRAFIK BATANG) */}
+                      {isExpanded && (
+                        <div className="mt-3 ml-9 rounded-xl border bg-muted/30 px-5 py-4 space-y-3">
+                          {isLoadingRincian && expandedVerifikator === v.id ? (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Memuat rincian beban kerja...
+                            </div>
+                          ) : (rincianPerVerifikator[v.id] ?? []).length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-2">
+                              Tidak ada data rincian
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                                <BarChart3 className="h-3.5 w-3.5" />
+                                Grafik Status Seleksi Administrasi
+                              </p>
+                              
+                              <div className="space-y-4">
+                                {(rincianPerVerifikator[v.id] ?? []).map(({ status, count }) => {
+                                  // Hitung persentase bar (relatif terhadap beban total verifikator)
+                                  const pctStatus = v.total_beban > 0 ? ((count / v.total_beban) * 100) : 0;
+                                  
+                                  // Warnai bar sesuai status agar mudah dibedakan
+                                  let barColor = "bg-slate-400";
+                                  if (status === "Lulus Administrasi") barColor = "bg-emerald-500";
+                                  if (status === "Tidak Lulus Administrasi") barColor = "bg-red-500";
+                                  if (status === "Perlu Perbaikan") barColor = "bg-amber-400";
+                                  if (status === "Seleksi Hasil Perbaikan") barColor = "bg-purple-500";
+                                  if (status === "Seleksi Administrasi") barColor = "bg-blue-400";
+
+                                  return (
+                                    <div key={status} className="w-full">
+                                      <div className="flex justify-between items-end mb-1.5">
+                                        <span className="text-xs font-medium text-foreground">
+                                          {status}
+                                        </span>
+                                        <div className="text-xs font-semibold tabular-nums">
+                                          {count} <span className="text-muted-foreground font-normal">({pctStatus.toFixed(1)}%)</span>
+                                        </div>
+                                      </div>
+                                      {/* Bar (Grafik Batang) */}
+                                      <div className="h-2.5 w-full bg-slate-200/60 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
+                                          style={{ width: `${pctStatus}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })
             )}
+            
             {!isLoadingInfo && verifikatorList.length > 0 && (
               <div className="pt-1 border-t flex justify-between text-xs text-muted-foreground">
                 <span>
@@ -954,55 +1053,6 @@ const ManajemenVerifikator = () => {
             )}
           </div>
         </div>
-
-        {/* Breakdown Jalur */}
-        {/* <div className="rounded-xl border bg-card shadow-sm">
-          <div className="px-5 py-4 border-b flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <h2 className="text-sm font-semibold">Breakdown per Jalur</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Distribusi pendaftar berdasarkan jalur penerimaan
-              </p>
-            </div>
-          </div>
-          <div className="px-5 py-4 space-y-4">
-            {isLoadingPendaftar ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 rounded-lg" />
-              ))
-            ) : jalurBreakdown.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Belum ada data jalur
-              </div>
-            ) : (
-              jalurBreakdown.map(({ jalur, jumlah }, idx) => {
-                const pct = totalJalur > 0 ? (jumlah / totalJalur) * 100 : 0;
-                return (
-                  <div key={jalur} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium truncate">
-                        {jalur}
-                      </span>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-sm font-bold tabular-nums"></span>
-                        <span className="text-xs text-muted-foreground">
-                          ({pct.toFixed(1)}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${JALUR_COLORS[idx % JALUR_COLORS.length]}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div> */}
       </div>
     </div>
   );

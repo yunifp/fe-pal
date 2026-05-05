@@ -2,14 +2,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { laporanPendaftarService } from "@/services/laporanPendaftarService";
-import { nikCekalService } from "@/services/nikCekalService"; // ✅ IMPORT SERVICE MASTER CEKAL
+import { nikCekalService } from "@/services/nikCekalService";
 import { DataTable } from "@/components/DataTable";
 import { getColumns, getCekalColumns } from "../components/columns";
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 
 const TIPE_LAPORAN_OPTIONS = [
@@ -24,8 +23,11 @@ const TIPE_LAPORAN_OPTIONS = [
 
 const LaporanPendaftarPage: React.FC = () => {
     const [page, setPage] = useState<number>(1);
+    
+    // ✅ Menggunakan 1 pasang state saja untuk pencarian (dihubungkan langsung ke DataTable)
     const [search, setSearch] = useState<string>("");
-    const [searchInput, setSearchInput] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    
     const [tipeLaporan, setTipeLaporan] = useState<string>("1");
     const [idJalur, setIdJalur] = useState<string>(""); 
     const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -38,27 +40,27 @@ const LaporanPendaftarPage: React.FC = () => {
     });
     const listJalur = jalurRes?.data || [];
 
+    // ✅ Fitur delay (debounce) pencarian agar tidak memberatkan server saat mengetik
     useEffect(() => {
         const timer = setTimeout(() => {
-            setSearch(searchInput);
+            setDebouncedSearch(search);
             setPage(1);
         }, 500);
         return () => clearTimeout(timer);
-    }, [searchInput]);
+    }, [search]);
 
     useEffect(() => {
         setPage(1);
     }, [tipeLaporan, idJalur]);
 
     // === FETCH DATA TABEL DINAMIS ===
-    // ✅ Tambahkan <any> di useQuery untuk mengatasi Error Union Types
     const { data: response, isLoading } = useQuery<any>({
-        queryKey: ["laporan-pendaftar", page, search, tipeLaporan, idJalur],
+        queryKey: ["laporan-pendaftar", page, debouncedSearch, tipeLaporan, idJalur],
         queryFn: async () => {
             if (tipeLaporan === "3") {
-                return await nikCekalService.getPaginated(page, search);
+                return await nikCekalService.getPaginated(page, debouncedSearch);
             }
-            return await laporanPendaftarService.getPaginated(page, search, tipeLaporan, idJalur);
+            return await laporanPendaftarService.getPaginated(page, debouncedSearch, tipeLaporan, idJalur);
         },
         refetchOnWindowFocus: false,
     });
@@ -73,11 +75,10 @@ const LaporanPendaftarPage: React.FC = () => {
             toast.info("Sedang menyiapkan file Excel...");
 
             let blobData;
-            // ✅ EXPORT EXCEL DINAMIS
             if (tipeLaporan === "3") {
-                blobData = await nikCekalService.exportExcel(search);
+                blobData = await nikCekalService.exportExcel(debouncedSearch);
             } else {
-                blobData = await laporanPendaftarService.exportExcel(search, tipeLaporan, idJalur);
+                blobData = await laporanPendaftarService.exportExcel(debouncedSearch, tipeLaporan, idJalur);
             }
 
             const url = window.URL.createObjectURL(new Blob([blobData]));
@@ -149,16 +150,7 @@ const LaporanPendaftarPage: React.FC = () => {
                                 )}
                             </select>
                         </div>
-
-                        <div className="relative w-full md:w-72">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Cari Nama / NIK / Kode..."
-                                className="pl-9 h-9 border-gray-300 w-full"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                            />
-                        </div>
+                        {/* ✅ Manual Search Input dihilangkan dari sini agar tidak tabrakan dengan milik DataTable */}
                     </div>
                 </CardHeader>
                 <CardContent className="p-0 sm:p-4">
@@ -171,6 +163,13 @@ const LaporanPendaftarPage: React.FC = () => {
                             pageCount={totalPages}
                             pageIndex={page - 1}
                             onPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
+                            
+                            // ✅ SEARCH BAR AKTIF (menggunakan komponen bawaan DataTable yang letaknya di atas Tabel)
+                            searchValue={search}
+                            onSearchChange={(value) => {
+                                setSearch(value);
+                                setPage(1);
+                            }}
                         />
                     )}
                 </CardContent>
