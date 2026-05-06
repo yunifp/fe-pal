@@ -1,31 +1,29 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom"; // Link dihapus
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Checkbox } from "../../../components/ui/checkbox";
 import { toast } from "sonner";
-import { CustInput } from "@/components/CustInput";
+import { CustInput } from "../../../components/CustInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import CustBreadcrumb from "@/components/CustBreadCrumb";
-import { STALE_TIME } from "@/constants/reactQuery";
+import CustBreadcrumb from "../../../components/CustBreadCrumb";
+import { STALE_TIME } from "../../../constants/reactQuery";
 import { useMemo } from "react";
-// import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
-import { CustSelect } from "@/components/ui/CustSelect";
+import { CustSelect } from "../../../components/ui/CustSelect";
 import {
   adminVerifikatorDinasCreateSchema,
   type AdminVerifikatorDinasCreateFormData,
 } from "../types/db";
-import { masterService } from "@/services/masterService";
-import { roleService } from "@/features/role/services/roleService";
-import { CustSearchableSelect } from "@/components/CustSearchableSelect";
+import { masterService } from "../../../services/masterService";
+import { roleService } from "../../role/services/roleService";
+import { CustSearchableSelect } from "../../../components/CustSearchableSelect";
 import { dbService } from "../services/dbService";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { CustPassword } from "@/components/CustPassword";
+import { Label } from "../../../components/ui/label";
+import { Input } from "../../../components/ui/input";
+import { CustPassword } from "../../../components/CustPassword";
 
 const DbAdminVerifikatorDinasCreatePage = () => {
-  // useRedirectIfHasNotAccess("C");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -52,7 +50,6 @@ const DbAdminVerifikatorDinasCreatePage = () => {
   const jenisAkun = watch("jenis_akun");
   const selectedProvinsi = watch("provinsi");
 
-  // --- ROLE DATA QUERIES (Dynamic dari Database) ---
   const { data: rolesData } = useQuery({
     queryKey: ["roles-all"],
     queryFn: () => roleService.getAll(),
@@ -61,7 +58,6 @@ const DbAdminVerifikatorDinasCreatePage = () => {
 
   const jenisAkunOptions = useMemo(() => {
     if (!rolesData?.data) return [];
-    // Filter ID Role: 3 (Provinsi), 4 (Kabkota)
     const allowedRoles = [3, 4];
     return rolesData.data
       .filter((role) => allowedRoles.includes(role.id))
@@ -71,12 +67,12 @@ const DbAdminVerifikatorDinasCreatePage = () => {
       }));
   }, [rolesData]);
 
-  // --- MASTER DATA QUERIES ---
   const { data: responseProvinsi } = useQuery({
     queryKey: ["opsi-provinsi"],
     queryFn: () => masterService.getProvinsi(),
     staleTime: STALE_TIME,
   });
+
   const provinsiOptions = useMemo(() => {
     return (
       responseProvinsi?.data?.map((p) => ({
@@ -93,6 +89,7 @@ const DbAdminVerifikatorDinasCreatePage = () => {
     enabled: !!selectedProvinsi,
     staleTime: STALE_TIME,
   });
+
   const kabkotOptions = useMemo(() => {
     return (
       responseKabkot?.data?.map((k) => ({
@@ -102,7 +99,6 @@ const DbAdminVerifikatorDinasCreatePage = () => {
     );
   }, [responseKabkot]);
 
-  // --- MUTATION ---
   const mutation = useMutation({
     mutationFn: (data: AdminVerifikatorDinasCreateFormData) =>
       dbService.createDinas(data),
@@ -208,7 +204,6 @@ const DbAdminVerifikatorDinasCreatePage = () => {
                 {...register("no_hp")}
               />
 
-              {/* Conditional Fields Based on Role */}
               {(jenisAkun === "3" || jenisAkun === "4") && (
                 <CustSearchableSelect
                   name="provinsi"
@@ -280,7 +275,6 @@ const DbAdminVerifikatorDinasCreatePage = () => {
               />
 
               <div className="mt-8 flex items-center justify-between">
-                {/* Bagian ini yang diubah menggunakan navigate(-1) */}
                 <Button 
                   type="button" 
                   variant="secondary" 

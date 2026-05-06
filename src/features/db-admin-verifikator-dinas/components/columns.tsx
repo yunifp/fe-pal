@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable react-hooks/rules-of-hooks */
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Edit, FileText, MoreHorizontal, Trash } from "lucide-react";
+import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -11,9 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import useHasAccess from "@/hooks/useHasAccess";
+} from "../../../components/ui/dropdown-menu";
+import useHasAccess from "../../../hooks/useHasAccess";
 import type { IAdminVerifikator } from "../types/db";
+import { SecureDownloadButton } from "../../../components/SecureDownloadButton";
 
 export const getColumns = (
   onDeleteClick: (id: number) => void,
@@ -86,12 +87,11 @@ export const getColumns = (
       if (!file) return <span className="text-muted-foreground">-</span>;
 
       return (
-        <Button variant="outline" size="sm" asChild>
-          <a href={file} target="_blank" rel="noopener noreferrer">
-            <FileText className="w-4 h-4 mr-1" />
-            Lihat
-          </a>
-        </Button>
+        <SecureDownloadButton 
+          url={file}
+          filename={`Surat_Penunjukan_${row.original.username || "Instansi"}.pdf`}
+          label="Lihat"
+        />
       );
     },
   },

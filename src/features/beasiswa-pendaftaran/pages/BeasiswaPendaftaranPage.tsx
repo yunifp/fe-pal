@@ -114,7 +114,7 @@ const BeasiswaPendaftaranPage = () => {
           {/* Flow 4: Perlu Perbaikan - Alert Perbaikan + Form */}
           {existBeasiswa.id_flow === 4 && (
             <>
-              <AlertPerbaikan
+              <AlertPerbaikan 
                 catatan={
                   existBeasiswa.id_flow === 4
                     ? existBeasiswa.verifikator_catatan!!

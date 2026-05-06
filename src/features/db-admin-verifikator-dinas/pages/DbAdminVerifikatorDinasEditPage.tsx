@@ -1,36 +1,32 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useNavigate, useParams } from "react-router-dom"; // Link dihapus
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { useNavigate, useParams } from "react-router-dom";
+import { Checkbox } from "../../../components/ui/checkbox";
 import { toast } from "sonner";
-import { CustInput } from "@/components/CustInput";
+import { CustInput } from "../../../components/CustInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import CustBreadcrumb from "@/components/CustBreadCrumb";
-import { STALE_TIME } from "@/constants/reactQuery";
+import CustBreadcrumb from "../../../components/CustBreadCrumb";
+import { STALE_TIME } from "../../../constants/reactQuery";
 import { useEffect, useMemo } from "react";
-// import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
-import { CustSelect } from "@/components/ui/CustSelect";
-import { CustSearchableSelect } from "@/components/CustSearchableSelect";
+import { CustSelect } from "../../../components/ui/CustSelect";
+import { CustSearchableSelect } from "../../../components/CustSearchableSelect";
 import {
   adminVerifikatorDinasEditSchema,
   type AdminVerifikatorDinasEditFormData,
   type IAdminVerifikator,
 } from "../types/db";
-import { masterService } from "@/services/masterService";
-import { roleService } from "@/features/role/services/roleService";
+import { masterService } from "../../../services/masterService";
+import { roleService } from "../../role/services/roleService";
 import { dbService } from "../services/dbService";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { CustPassword } from "@/components/CustPassword";
-import { Download } from "lucide-react";
+import { Label } from "../../../components/ui/label";
+import { Input } from "../../../components/ui/input";
+import { CustPassword } from "../../../components/CustPassword";
+import { SecureDownloadButton } from "../../../components/SecureDownloadButton";
 
 const DbAdminVerifikatorDinasEditPage = () => {
-  // useRedirectIfHasNotAccess("U");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -83,7 +79,6 @@ const DbAdminVerifikatorDinasEditPage = () => {
   const jenisAkun = watch("jenis_akun");
   const selectedProvinsi = watch("provinsi");
 
-  // --- ROLE DATA QUERIES (Dynamic dari Database) ---
   const { data: rolesData } = useQuery({
     queryKey: ["roles-all"],
     queryFn: () => roleService.getAll(),
@@ -92,7 +87,6 @@ const DbAdminVerifikatorDinasEditPage = () => {
 
   const jenisAkunOptions = useMemo(() => {
     if (!rolesData?.data) return [];
-    // Filter ID Role: 3 (Provinsi), 4 (Kabkota)
     const allowedRoles = [3, 4];
     return rolesData.data
       .filter((role) => allowedRoles.includes(role.id))
@@ -102,12 +96,12 @@ const DbAdminVerifikatorDinasEditPage = () => {
       }));
   }, [rolesData]);
 
-  // --- MASTER DATA QUERIES ---
   const { data: responseProvinsi } = useQuery({
     queryKey: ["opsi-provinsi"],
     queryFn: () => masterService.getProvinsi(),
     staleTime: STALE_TIME,
   });
+
   const provinsiOptions = useMemo(() => {
     return (
       responseProvinsi?.data?.map((p) => ({
@@ -124,6 +118,7 @@ const DbAdminVerifikatorDinasEditPage = () => {
     enabled: !!selectedProvinsi,
     staleTime: STALE_TIME,
   });
+
   const kabkotOptions = useMemo(() => {
     return (
       responseKabkot?.data?.map((k) => ({
@@ -133,7 +128,6 @@ const DbAdminVerifikatorDinasEditPage = () => {
     );
   }, [responseKabkot]);
 
-  // --- MUTATION ---
   const mutation = useMutation({
     mutationFn: (data: AdminVerifikatorDinasEditFormData) =>
       dbService.updateDinas(idx, data),
@@ -239,7 +233,6 @@ const DbAdminVerifikatorDinasEditPage = () => {
                 {...register("no_hp")}
               />
 
-              {/* Conditional Fields Based on Role */}
               {(jenisAkun === "3" || jenisAkun === "4") && (
                 <CustSearchableSelect
                   name="provinsi"
@@ -270,14 +263,11 @@ const DbAdminVerifikatorDinasEditPage = () => {
                     Surat Penunjukan
                   </Label>
                   {detailUser?.surat_penunjukan && (
-                    <a
-                      onClick={() =>
-                        window.open(detailUser?.surat_penunjukan!!, "_blank")
-                      }
-                      className="cursor-pointer hover:underline text-sm text-primary flex">
-                      <Download className="h-4 w-4 mr-1" />
-                      File Sebelumnya
-                    </a>
+                    <SecureDownloadButton
+                      url={detailUser.surat_penunjukan}
+                      filename={`Surat_Penunjukan_${detailUser.nama || "Instansi"}.pdf`}
+                      label="File Sebelumnya"
+                    />
                   )}
                 </div>
                 <Input
@@ -324,7 +314,6 @@ const DbAdminVerifikatorDinasEditPage = () => {
               />
 
               <div className="mt-8 flex items-center justify-between">
-                {/* Bagian ini yang diubah menggunakan navigate(-1) */}
                 <Button 
                   type="button" 
                   variant="secondary" 

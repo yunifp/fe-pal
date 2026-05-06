@@ -5,16 +5,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { DataTable } from "../../../components/DataTable";
-import CustBreadcrumb from "@/components/CustBreadCrumb";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import { Button } from "@/components/ui/button";
+import CustBreadcrumb from "../../../components/CustBreadCrumb";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import { Button } from "../../../components/ui/button";
 
 import { getColumns } from "../components/columns";
-import useHasAccess from "@/hooks/useHasAccess";
+import useHasAccess from "../../../hooks/useHasAccess";
 
-import { STALE_TIME } from "@/constants/reactQuery";
-import { useDebounce } from "@/hooks/useDebounce";
-import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
+import { STALE_TIME } from "../../../constants/reactQuery";
+import { useDebounce } from "../../../hooks/useDebounce";
+import useRedirectIfHasNotAccess from "../../../hooks/useRedirectIfHasNotAccess";
 import type { IAdminVerifikator } from "../types/db";
 import { dbService } from "../services/dbService";
 import { Plus } from "lucide-react";
@@ -33,7 +33,6 @@ const DbAdminVerifikatorDinasPage = () => {
 
   const canCreate = useHasAccess("C");
 
-  // Fetch data pengguna
   const {
     data: response,
     isLoading,
@@ -56,7 +55,6 @@ const DbAdminVerifikatorDinasPage = () => {
     }
   }, [isError, error]);
 
-  // Hapus user
   const deleteMutation = useMutation({
     mutationFn: (id: number) => dbService.deleteById(id),
     onSuccess: (res) => {

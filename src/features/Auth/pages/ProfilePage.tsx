@@ -17,8 +17,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
+import { SecureImage } from "@/components/SecureImage"; // Import komponen SecureImage
 
 const ProfilePage = () => {
+  // accessToken sudah dihapus dari sini karena SecureImage mengambilnya sendiri di dalam komponennya
   const { logout } = useAuthStore();
 
   const navigate = useNavigate();
@@ -105,16 +107,20 @@ const ProfilePage = () => {
         <Card className="w-full max-w-xl shadow-none">
           <CardContent className="pt-4">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="flex flex-col items-center justify-center gap-2">
-                {data?.data?.avatar && (
-                  <img
-                    src={data.data.avatar}
-                    alt="Avatar"
-                    className="w-[150px] h-[150px] rounded-full object-cover"
-                  />
-                )}
+              <div className="flex flex-col items-center justify-center gap-2 mb-6">
+                
+                {/* 
+                  Gunakan SecureImage.
+                  Token dikirim aman via Header di dalam komponen ini, 
+                  dan URL-nya akan diubah menjadi blob (memory url).
+                */}
+                <SecureImage 
+                  src={data?.data?.avatar} 
+                  alt="Avatar" 
+                  className="w-[150px] h-[150px] rounded-full object-cover shadow-sm border border-slate-200 overflow-hidden"
+                />
 
-               <Input
+                <Input
                   id="avatar"
                   type="file"
                   accept="image/*"
@@ -123,16 +129,17 @@ const ProfilePage = () => {
                     if (file) {
                       if (file.size > 1 * 1024 * 1024) {
                         toast.error("Ukuran foto terlalu besar! Maksimal 1 MB.");
-                        e.target.value = ""; // Reset input file agar kosong kembali
-                        return; // Hentikan proses, jangan masukkan ke state
+                        e.target.value = ""; 
+                        return; 
                       }
                       
                       setValue("avatar", file);
                     }
                   }}
-                  className="w-full max-w-xs"
+                  className="w-full max-w-xs mt-3"
                 />
               </div>
+              
               <CustInput
                 label="User ID"
                 id="user_id"
@@ -151,7 +158,7 @@ const ProfilePage = () => {
                 errorMessage={errors.nama?.message}
               />
 
-              <Separator />
+              <Separator className="my-6" />
 
               <Alert className="mb-4 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
                 <Info className="h-4 w-4 text-amber-600" />
