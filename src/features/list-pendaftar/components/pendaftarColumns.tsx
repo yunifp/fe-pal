@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import { Badge } from "@/components/ui/badge";
-import { Clock } from "lucide-react"; // <-- Import icon Clock ditambahkan di sini
 
 export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
   {
@@ -55,34 +54,6 @@ export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
         </div>
       </div>
     ),
-  },
-  // 🔥 KOLOM WAKTU DIKUNCI DITAMBAHKAN DI SINI 🔥
-  {
-    id: "waktu_dikunci",
-    header: "Waktu Dikunci",
-    cell: ({ row }) => {
-      // Ambil timestamp dari field timestamp_lock_selektor atau fallback ke updated_at
-      const rawDate = (row.original as any).timestamp_lock_selektor || row.original.updated_at;
-
-      if (!rawDate) {
-        return <span className="text-muted-foreground text-xs">-</span>;
-      }
-
-      const formattedDate = new Date(rawDate).toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      return (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-          <Clock className="h-3.5 w-3.5" />
-          <span>{formattedDate} WIB</span>
-        </div>
-      );
-    },
   },
   {
     accessorKey: "tinggal_kab_kota",
@@ -149,7 +120,7 @@ export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
 
       if (!nama && !idVerifikator) {
         return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
             Belum ter-assign
           </span>

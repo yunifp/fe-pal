@@ -1128,7 +1128,7 @@ export const verifikasiSchema = z
     data_persyaratan_khusus: z.array(persyaratanSchema),
     data_persyaratan_dinas: z.array(persyaratanDinasSchema),
     fileSuratKeputusan: z.string().optional(),
-    
+    // tambahkan ini:
     koreksi_fields: z
       .array(
         z.object({
@@ -1140,17 +1140,33 @@ export const verifikasiSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-    // 🔥 VALIDASI KOREKSI UNTUK STATUS 4 DIHAPUS DI SINI 🔥
-    // if (
-    //   data.selectedStatus === 4 &&
-    //   (!data.koreksi_fields || data.koreksi_fields.length === 0)
-    // ) {
-    //   ctx.addIssue({
-    //     path: ["koreksi_fields"],
-    //     message: "Pilih minimal 1 field yang perlu dikoreksi",
-    //     code: z.ZodIssueCode.custom,
-    //   });
+    // if (data.selectedStatus === 6) {
+    //   if (!data.kode_dinas_provinsi || data.kode_dinas_provinsi.trim() === "") {
+    //     ctx.addIssue({
+    //       path: ["kode_dinas_provinsi"],
+    //       message: "Provinsi wajib diisi untuk status Lulus Administrasi",
+    //       code: z.ZodIssueCode.custom,
+    //     });
+    //   }
+    //   if (!data.kode_dinas_kabkota || data.kode_dinas_kabkota.trim() === "") {
+    //     ctx.addIssue({
+    //       path: ["kode_dinas_kabkota"],
+    //       message: "Kabupaten/Kota wajib diisi untuk status Lulus Administrasi",
+    //       code: z.ZodIssueCode.custom,
+    //     });
+    //   }
     // }
+
+    if (
+      data.selectedStatus === 4 &&
+      (!data.koreksi_fields || data.koreksi_fields.length === 0)
+    ) {
+      ctx.addIssue({
+        path: ["koreksi_fields"],
+        message: "Pilih minimal 1 field yang perlu dikoreksi",
+        code: z.ZodIssueCode.custom,
+      });
+    }
 
     const rules = [
       {
@@ -1251,4 +1267,4 @@ export interface INilaiRapor {
   created_at?: string | null;
 }
 
-export type VerifikasiDinasFormData = z.infer<typeof verifikasiDinasSchema>;  
+export type VerifikasiDinasFormData = z.infer<typeof verifikasiDinasSchema>;
