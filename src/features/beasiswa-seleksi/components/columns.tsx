@@ -4,13 +4,11 @@ import { useNavigate } from "react-router-dom";
 import useHasAccess from "@/hooks/useHasAccess";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
-// Tambahkan FileDown dan Loader2 dari lucide-react
 import { ShieldCheck, Eye, User, FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
-// Pastikan path import beasiswaService ini sesuai dengan struktur folder Anda
-import { beasiswaService } from "@/services/beasiswaService"; 
+import { beasiswaService } from "@/services/beasiswaService";
+import { SecureImage } from "@/components/SecureImage";
 
-// They belong in a wrapper component instead.
 const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");
@@ -20,8 +18,6 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
     beasiswa.id_flow ?? 0,
   );
 
-  // Sesuai rule: button hanya muncul di pendaftar yang telah diverifikasi.
-  // Asumsinya flow > 2 berarti sudah melewati tahap draft/verifikasi awal.
   const hasBeenVerified = (beasiswa.id_flow ?? 0) > 2;
 
   const handleDownloadPdf = async () => {
@@ -30,7 +26,6 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
       await beasiswaService.downloadPdfHasilVerifikasi(beasiswa.id_trx_beasiswa);
     } catch (error) {
       console.error("Gagal mengunduh PDF:", error);
-      // Jika Anda menggunakan library toast (seperti sonner/react-hot-toast), Anda bisa memunculkan notifikasi error di sini
     } finally {
       setIsDownloading(false);
     }
@@ -64,7 +59,6 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
         )}
       </Button>
 
-      {/* Button PDF */}
       {hasBeenVerified && (
         <Button
           size="sm"
@@ -113,7 +107,7 @@ export const getColumns = (): ColumnDef<ITrxBeasiswa>[] => [
       return (
         <div className="flex items-center gap-3 py-1">
           {foto ? (
-            <img
+            <SecureImage
               src={foto}
               alt={nama_lengkap ?? ""}
               className="w-10 h-10 rounded-full object-cover border border-border shrink-0"

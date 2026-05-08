@@ -15,6 +15,7 @@ import { authService } from "@/features/Auth/services/authService";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import LoadingDialog from "./LoadingDialog";
+import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan import SecureImage
 
 const AvatarDropdown = () => {
   const user = useAuthStore((state) => state.user);
@@ -55,7 +56,7 @@ const AvatarDropdown = () => {
           >
             <div className="relative flex-shrink-0">
               {avatarUrl && !imageError ? (
-                <img
+                <SecureImage
                   src={avatarUrl}
                   className="h-9 w-9 rounded-2xl object-cover ring-2 ring-white shadow-md transition-transform group-hover:scale-105"
                   alt="profile"

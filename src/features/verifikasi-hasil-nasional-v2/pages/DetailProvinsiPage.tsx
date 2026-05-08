@@ -21,18 +21,44 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { DetailPendaftarRow } from "@/types/beasiswa";
 
+// ✅ Import helper unduh dokumen
+import { downloadSecureFile } from "@/utils/fileHelper";
+
+// ✅ Tambahkan Helper URL Proxy Auth Service
+const getSecureProxyUrl = (filename: string, folder: string) => {
+  if (!filename) return "";
+  if (filename.includes("/api/files/view")) return filename;
+
+  let fileKey = filename;
+  if (filename.startsWith("http")) {
+    try {
+      const urlObj = new URL(filename);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts[0] === "palma-upload-bucket-testing" || pathParts[0] === "palma-upload-bucket") {
+        pathParts.shift();
+      }
+      fileKey = pathParts.join('/');
+    } catch (e) {}
+  }
+  
+  const authUrl = import.meta.env.VITE_AUTH_SERVICE_BASE_URL || "http://localhost:3001/api/auth";
+  const baseUrl = authUrl.replace(/\/auth\/?$/, ""); 
+  
+  const encodedFilename = encodeURIComponent(fileKey);
+  const encodedFolder = encodeURIComponent(folder);
+  
+  return `${baseUrl}/files/view?folder=${encodedFolder}&file=${encodedFilename}`;
+};
+
 const DetailProvinsiPage: React.FC = () => {
   const { kode_prov } = useParams<{ kode_prov: string }>();
   
-  // State untuk mengatur tampilan (List KabKota vs List Pendaftar)
   const [viewMode, setViewMode] = useState<"kabkota" | "pendaftar">("kabkota");
   
-  // State Data Provinsi / KabKota
   const [namaProvinsi, setNamaProvinsi] = useState<string>("");
   const [dataKabkota, setDataKabkota] = useState<any[]>([]);
   const [selectedKabkota, setSelectedKabkota] = useState<{ id: string, name: string } | null>(null);
 
-  // State Data Detail Pendaftar
   const [dataPendaftar, setDataPendaftar] = useState<DetailPendaftarRow[]>([]);
   const [totalPendaftar, setTotalPendaftar] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
@@ -42,19 +68,16 @@ const DetailProvinsiPage: React.FC = () => {
   const [search, setSearch] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
 
-  // State Dialog Dokumen KabKota
   const [openDokumenDialog, setOpenDokumenDialog] = useState<boolean>(false);
   const [dokumenLoading, setDokumenLoading] = useState<boolean>(false);
   const [selectedKabkotaDocName, setSelectedKabkotaDocName] = useState<string>("");
   const [dokumenList, setDokumenList] = useState<{ ba: any[], sk: any[] }>({ ba: [], sk: [] });
 
-  // Debounce Search
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput), 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Route Effects
   useEffect(() => {
     if (kode_prov && viewMode === "kabkota") {
       fetchDataKabkota();
@@ -67,12 +90,10 @@ const DetailProvinsiPage: React.FC = () => {
     }
   }, [viewMode, selectedKabkota, page, search]);
 
-  // Fetch List Kabupaten / Kota di dalam Provinsi
   const fetchDataKabkota = async () => {
     if (!kode_prov) return;
     setLoading(true);
     try {
-      // PERHATIKAN: Anda mungkin perlu menambahkan fungsi getRekapKabkotaByProvinsiV2 di beasiswaService
       const res = await beasiswaService.getRekapKabkotaByProvinsiV2(kode_prov);
       if (res?.data) {
         setDataKabkota(res.data.rekap || []);
@@ -86,17 +107,15 @@ const DetailProvinsiPage: React.FC = () => {
     }
   };
 
-  // Fetch Detail Pendaftar untuk Kabupaten / Kota Tertentu
   const fetchDetailPendaftar = async () => {
     if (!kode_prov || !selectedKabkota) return;
     setLoading(true);
     try {
-      // PERHATIKAN: Endpoint ini perlu menerima parameter tambahan kode_kabkota
       const res = await beasiswaService.getDetailProvinsiV2(kode_prov, {
         page,
         limit,
         search,
-        kode_kabkota: selectedKabkota.id // Pass kode kabkota ke parameter API
+        kode_kabkota: selectedKabkota.id 
       });
       if (res?.data) {
         setDataPendaftar(res.data.result || []);
@@ -121,7 +140,6 @@ const DetailProvinsiPage: React.FC = () => {
     }
   };
 
-  // Actions Tabel KabKota
   const handleViewDokumenKabkota = async (kodeKabkota: string, namaKabkota: string) => {
     setSelectedKabkotaDocName(namaKabkota);
     setOpenDokumenDialog(true);
@@ -129,7 +147,6 @@ const DetailProvinsiPage: React.FC = () => {
     setDokumenList({ ba: [], sk: [] });
 
     try {
-      // PERHATIKAN: Tambahkan endpoint getDokumenKabkotaV2 di service Anda
       const res = await beasiswaService.getDokumenKabkotaV2(kodeKabkota);
       if (res?.data) {
         setDokumenList({
@@ -149,6 +166,30 @@ const DetailProvinsiPage: React.FC = () => {
     setViewMode("pendaftar");
     setPage(1);
     setSearchInput("");
+  };
+
+  // ✅ Fungsi eksekusi download dokumen
+  const handleDownloadDokumen = async (fileKey: string, folder: string, prefix: string) => {
+    const toastId = toast.loading("Mengunduh dokumen...");
+    try {
+      const url = getSecureProxyUrl(fileKey, folder);
+      
+      let ext = ".pdf";
+      try {
+        // ✅ PERBAIKAN: Bersihkan parameter ?t=... atau &t=... sebelum mengambil ekstensi
+        const cleanFileKey = fileKey.split('?')[0].split('&')[0];
+        const actualFile = cleanFileKey.split('/').pop() || "";
+        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+      } catch (err) {}
+
+      const cleanName = selectedKabkotaDocName.replace(/[^a-zA-Z0-9]/g, "_");
+      const fileName = `${prefix}_${cleanName}${ext}`;
+
+      await downloadSecureFile(url, fileName);
+      toast.success("Dokumen berhasil diunduh.", { id: toastId });
+    } catch (error) {
+      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.", { id: toastId });
+    }
   };
 
   const kabkotaCols = useMemo(() => getColumnsKabkota(handleViewDokumenKabkota, handleViewDetailKabkota), []);
@@ -267,7 +308,6 @@ const DetailProvinsiPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* DIALOG UNTUK MENAMPILKAN DOKUMEN KABUPATEN/KOTA */}
       <AlertDialog open={openDokumenDialog} onOpenChange={setOpenDokumenDialog}>
         <AlertDialogContent className="rounded-3xl border-0 shadow-2xl p-8 w-full max-w-lg overflow-hidden">
           <AlertDialogHeader>
@@ -302,7 +342,7 @@ const DetailProvinsiPage: React.FC = () => {
                         <Button 
                           key={`ba-${idx}`}
                           variant="outline" 
-                          onClick={() => window.open(item.file_url, "_blank")}
+                          onClick={() => handleDownloadDokumen(item.file_url || item.filename, "berita_acara", "Berita_Acara")}
                           className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
                         >
                           <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />
@@ -329,7 +369,7 @@ const DetailProvinsiPage: React.FC = () => {
                         <Button 
                           key={`sk-${idx}`}
                           variant="outline" 
-                          onClick={() => window.open(item.file_url, "_blank")}
+                          onClick={() => handleDownloadDokumen(item.file_url || item.filename, "rekomtek", "Surat_Rekomendasi")}
                           className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
                         >
                           <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />

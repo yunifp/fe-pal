@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SecureImage } from "@/components/SecureImage"; // ✅ Import SecureImage
 
 const SkeletonRow = () => (
   <div className="flex items-center gap-4">
@@ -36,7 +37,8 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
       ) : (
         <div className="flex items-center gap-3 py-1">
           <div className="relative flex-shrink-0">
-            <img
+            {/* ✅ Ganti img dengan SecureImage */}
+            <SecureImage
               src={row.original.foto!}
               alt={row.original.nama_lengkap!}
               className="w-14 h-18 object-cover rounded-md border border-border"

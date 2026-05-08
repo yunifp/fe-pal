@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";

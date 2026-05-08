@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -8,6 +9,7 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { isValidByDocType, parseValidTypes } from "@/utils/fileFormatter";
 import { validTypeToAccept } from "@/utils/stringFormatter";
 import { compressIfImage, parseSizeToBytes } from "@/utils/fileCompressor";
+import { downloadSecureFile } from "@/utils/fileHelper";
 
 type ExtendedPersyaratan = IPersyaratanKhususBeasiswa & { size?: string };
 
@@ -443,10 +445,30 @@ const UploadPersyaratanKhusus = forwardRef<
                 </div>
 
                 {isUploaded && (
-                  <a
-                    href={fileName}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        let extractedName = `Dokumen_Khusus_${item.id}.pdf`;
+                        try {
+                          const urlObj = new URL(fileName, window.location.origin);
+                          const fileParam = urlObj.searchParams.get("file");
+                          if (fileParam) {
+                            const actualFile = fileParam.split('/').pop() || "";
+                            const ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+                            const cleanTitle = item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_');
+                            extractedName = `${cleanTitle}${ext}`;
+                          }
+                        } catch (e) {
+                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_')}.pdf`;
+                        }
+
+                        await downloadSecureFile(fileName, extractedName);
+                      } catch (error) {
+                        toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                      }
+                    }}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     title="Unduh file">
                     <svg
@@ -461,7 +483,7 @@ const UploadPersyaratanKhusus = forwardRef<
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                       />
                     </svg>
-                  </a>
+                  </button>
                 )}
               </div>
             )}

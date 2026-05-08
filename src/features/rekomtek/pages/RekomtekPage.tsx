@@ -34,6 +34,35 @@ import { useAuthRole } from "@/hooks/useAuthRole";
 import { useAuthStore } from "@/stores/authStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// ✅ Import helper unduh dokumen aman
+import { downloadSecureFile } from "@/utils/fileHelper";
+
+// ✅ Tambahkan Helper URL Proxy Auth Service
+const getSecureProxyUrl = (filename: string, folder: string) => {
+  if (!filename) return "";
+  if (filename.includes("/api/files/view")) return filename;
+
+  let fileKey = filename;
+  if (filename.startsWith("http")) {
+    try {
+      const urlObj = new URL(filename);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts[0] === "palma-upload-bucket-testing" || pathParts[0] === "palma-upload-bucket") {
+        pathParts.shift();
+      }
+      fileKey = pathParts.join('/');
+    } catch (e) {}
+  }
+  
+  const authUrl = import.meta.env.VITE_AUTH_SERVICE_BASE_URL || "http://localhost:3001/api/auth";
+  const baseUrl = authUrl.replace(/\/auth\/?$/, ""); 
+  
+  const encodedFilename = encodeURIComponent(fileKey);
+  const encodedFolder = encodeURIComponent(folder);
+  
+  return `${baseUrl}/files/view?folder=${encodedFolder}&file=${encodedFilename}`;
+};
+
 
 const RekomtekPage = () => {
   const queryClient = useQueryClient();
@@ -47,6 +76,7 @@ const RekomtekPage = () => {
   const pageSize = 10;
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingDoc, setIsDownloadingDoc] = useState(false); // ✅ State untuk loading unduh dokumen
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -104,7 +134,6 @@ const RekomtekPage = () => {
   const totalData = response?.data?.total || 0;
   const summaryKuotaData = kuotaResponse?.data || [];
   
-  // ✅ uploadedFilename sudah berisi URL NEO S3 murni
   const uploadedFilename = docResponse?.data?.filename;
 
   const handleResignClick = (id: number, nama: string) => {
@@ -160,10 +189,31 @@ const RekomtekPage = () => {
     }
   };
 
-  // ✅ SUDAH BERSIH: Langsung buka URL tanpa imbuhan "/uploads/"
-  const handleViewDokumen = () => {
-    if (uploadedFilename) {
-      window.open(uploadedFilename, "_blank");
+  // ✅ Fungsi handleViewDokumen diperbarui untuk menggunakan Axios Blob Download
+  const handleViewDokumen = async () => {
+    if (!uploadedFilename) return;
+
+    setIsDownloadingDoc(true);
+    const toastId = toast.loading("Mengunduh dokumen...");
+    try {
+      // Rekomtek disimpan di folder 'rekomtek'
+      const url = getSecureProxyUrl(uploadedFilename, "rekomtek");
+      
+      let ext = ".pdf";
+      try {
+        const cleanFileKey = uploadedFilename.split('?')[0].split('&')[0];
+        const actualFile = cleanFileKey.split('/').pop() || "";
+        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+      } catch (err) {}
+
+      const fileName = `SK_Rekomtek${ext}`;
+
+      await downloadSecureFile(url, fileName);
+      toast.success("Dokumen berhasil diunduh.", { id: toastId });
+    } catch (error) {
+      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.", { id: toastId });
+    } finally {
+      setIsDownloadingDoc(false);
     }
   };
 
@@ -209,7 +259,7 @@ const RekomtekPage = () => {
     }
   });
 
-  const isActionDisabled = isDownloading || isUploading || isSending || resignMutation.isPending || cancelResignMutation.isPending;
+  const isActionDisabled = isDownloading || isDownloadingDoc || isUploading || isSending || resignMutation.isPending || cancelResignMutation.isPending;
 
   if (!canRead) {
     return (
@@ -256,8 +306,8 @@ const RekomtekPage = () => {
                 variant="outline" 
                 className="h-11 px-5 flex items-center gap-2 bg-white border-slate-200 hover:bg-slate-50 shadow-sm text-slate-700 rounded-xl transition-all"
               >
-                <FileDown className="h-4 w-4 text-slate-500" />
-                Download Data
+                {isDownloading ? <RotateCcw className="h-4 w-4 animate-spin text-slate-500" /> : <FileDown className="h-4 w-4 text-slate-500" />}
+                {isDownloading ? "Mengunduh..." : "Download Data"}
               </Button>
 
               {!isLembagaPendidikan && (
@@ -270,8 +320,8 @@ const RekomtekPage = () => {
                         disabled={isActionDisabled} 
                         className="h-11 px-5 flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-sm rounded-xl transition-all"
                       >
-                        <UploadCloud className="h-4 w-4" />
-                        Upload SK Dirut
+                        {isUploading ? <RotateCcw className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                        {isUploading ? "Mengunggah..." : "Upload SK Dirut"}
                       </Button>
                     </>
                   )}
@@ -283,8 +333,8 @@ const RekomtekPage = () => {
                       variant="outline"
                       className="h-11 px-5 flex items-center gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-all"
                     >
-                      <Eye className="h-4 w-4" />
-                      Lihat Dokumen
+                      {isDownloadingDoc ? <RotateCcw className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                      {isDownloadingDoc ? "Memuat..." : "Lihat Dokumen"}
                     </Button>
                   )}
 
@@ -528,4 +578,4 @@ const RekomtekPage = () => {
   );
 };
 
-export default RekomtekPage;  
+export default RekomtekPage;

@@ -107,14 +107,6 @@ export const buildSlotCount = (
 
 /**
  * Validasi semua pilihan sebelum lanjut ke step berikutnya.
- *
- * Aturan:
- * 1. Setiap slot wajib diisi (PT + prodi).
- * 2. Jika PT yang sama dipilih di 2 slot:
- * a. PT tersebut wajib memiliki prodi D1/D2 dan non-D1/D2 di ptProdiMap.
- * b. Satu slot harus prodi D1/D2, satu slot harus prodi non-D1/D2.
- * 3. PT tanpa D1/D2 tidak boleh dipilih lebih dari 1×.
- * 4. Tidak ada PT yang dipilih lebih dari 2×.
  */
 export const validatePilihan = (
   pilihan: Array<{
@@ -162,17 +154,6 @@ export const validatePilihan = (
     const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j));
     const ptHasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j));
 
-    if (!ptHasD1D2 || !ptHasNonD1D2) {
-      // errs.push(
-      //   `Perguruan tinggi pada pilihan ${rows
-      //     .map((r) => r.rowIndex + 1)
-      //     .join(
-      //       " dan ",
-      //     )} tidak memiliki program D1/D2 dan non-D1/D2 sekaligus, sehingga tidak dapat dipilih dua kali.`,
-      // );
-      // return;
-    }
-
     const jenjangList = rows.map((r) => r.jenjang.trim().toUpperCase());
     const hasD1D2Slot = jenjangList.some((j) => D1D2_JENJANG.has(j));
     const hasNonD1D2Slot = jenjangList.some((j) => NON_D1D2_JENJANG.has(j));
@@ -207,24 +188,15 @@ const PilihanJurusan = ({
   const [isPopulating, setIsPopulating] = useState(false);
 
   /**
-   * Map idPT → array jenjang prodi yang tersedia untuk jurusan sekolah ini.
-   * Diisi dari batch-fetch prodi semua PT setelah daftar PT ter-load.
-   * Digunakan untuk:
-   * 1. Menentukan totalSlot (PT tanpa prodi → tidak masuk slot)
-   * 2. Menentukan apakah PT layak mendapat slot ekstra (harus punya D1/D2 + non-D1/D2)
-   * 3. Validasi saat handleNext
-   * 4. Filter PT yang ditampilkan ke user (hanya PT dengan prodi)
+   * State untuk menyimpan data UTUH program studi dari API
    */
-  const [ptProdiMap, setPtProdiMap] = useState<Map<string, string[]>>(
+  const [rawPtProdiMap, setRawPtProdiMap] = useState<Map<string, any[]>>(
     new Map(),
   );
   const [isFetchingAllProdi, setIsFetchingAllProdi] = useState(false);
 
   // Ref untuk mencegah double-populate
   const hasPopulatedRef = useRef(false);
-  // Ref menyimpan totalSlot terakhir yang digunakan untuk replace()
-  // Bila totalSlot berubah (mis. karena buta warna berubah → prodi berubah),
-  // kita perlu populate ulang.
   const lastTotalSlotRef = useRef(0);
 
   const { fields, replace } = useFieldArray({
@@ -279,15 +251,8 @@ const PilihanJurusan = ({
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
 
   /**
-   * Batch-fetch semua prodi untuk setiap PT setelah daftar PT ter-load
-   * dan jurusan sekolah tersedia.
-   *
-   * Menggunakan Promise.allSettled agar satu PT yang gagal tidak menghentikan lainnya.
-   * Hasil disimpan di ptProdiMap sebagai Map<idPT, jenjang[]>.
-   *
-   * Re-fetch dilakukan ketika:
-   * - jurusan sekolah berubah
-   * - daftar PT berubah (responsePerguruanTinggi berubah)
+   * Batch-fetch semua prodi untuk setiap PT
+   * Menyimpan DATA MENTAH dari API ke rawPtProdiMap
    */
   useEffect(() => {
     if (!responsePerguruanTinggi?.data?.length) return;
@@ -307,20 +272,18 @@ const PilihanJurusan = ({
           )
           .then((res) => ({
             idPT: String(pt.id_pt),
-            jenjangList: (res?.data ?? []).map(
-              (ps: { jenjang: string }) => ps.jenjang,
-            ),
+            prodiData: res?.data ?? [], // Simpan data utuh dari API
           })),
       ),
     ).then((results) => {
       if (cancelled) return;
-      const map = new Map<string, string[]>();
+      const map = new Map<string, any[]>();
       results.forEach((r) => {
         if (r.status === "fulfilled") {
-          map.set(r.value.idPT, r.value.jenjangList);
+          map.set(r.value.idPT, r.value.prodiData);
         }
       });
-      setPtProdiMap(map);
+      setRawPtProdiMap(map);
       setIsFetchingAllProdi(false);
       // Reset populate flag agar slot di-rebuild dengan data baru
       hasPopulatedRef.current = false;
@@ -332,8 +295,38 @@ const PilihanJurusan = ({
   }, [responsePerguruanTinggi, selectedIdJurusanSekolah]);
 
   /**
+   * ptProdiMap Dinamis (Computed)
+   * Menyaring rawPtProdiMap berdasarkan kondisi buta warna user.
+   * Hanya mengembalikan array jenjang string untuk PT yang memiliki prodi valid.
+   */
+  const ptProdiMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+
+    rawPtProdiMap.forEach((prodiList, idPT) => {
+      let filteredProdi = prodiList;
+
+      // Jika user buta warna, saring prodi yang memperbolehkan buta warna
+      if (selectedKondisiButaWarna === "Y") {
+        filteredProdi = prodiList.filter(
+          (ps: any) => ps.boleh_buta_warna === "Y"
+        );
+      }
+
+      // Jika ada prodi yang lolos filter, masukkan jenjangnya ke map
+      if (filteredProdi.length > 0) {
+        map.set(
+          idPT,
+          filteredProdi.map((ps: any) => ps.jenjang)
+        );
+      }
+    });
+
+    return map;
+  }, [rawPtProdiMap, selectedKondisiButaWarna]);
+
+  /**
    * PT yang ditampilkan ke user = hanya PT yang punya prodi di ptProdiMap.
-   * PT tanpa prodi tidak ditampilkan di select dan tidak diberi slot.
+   * PT tanpa prodi (karena difilter buta warna) tidak ditampilkan.
    */
   const perguruanTinggiOptions = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return [];
@@ -353,11 +346,6 @@ const PilihanJurusan = ({
 
   /**
    * Total slot dihitung ulang setiap kali ptProdiMap berubah
-   * (setelah batch-fetch prodi selesai).
-   *
-   * Logika slot ekstra: PT mendapat slot ekstra HANYA jika punya prodi D1/D2
-   * dan prodi non-D1/D2 sekaligus → user bisa pilih PT yang sama dua kali
-   * dengan kombinasi berbeda.
    */
   const totalSlot = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
@@ -377,8 +365,6 @@ const PilihanJurusan = ({
   }, [responsePerguruanTinggi, ptProdiMap]);
 
   // ── Inisialisasi / populate slot ─────────────────────────────
-  // Dipicu ulang setiap kali totalSlot berubah (lastTotalSlotRef berbeda)
-  // agar slot di-rebuild ketika prodi selesai di-fetch.
   useEffect(() => {
     if (!selectedKondisiButaWarna) return;
     if (!hasPerguruanTinggi) return;
@@ -387,7 +373,6 @@ const PilihanJurusan = ({
     if (idTrxBeasiswa && isLoadingExisting) return;
     if (totalSlot === 0) return;
 
-    // Jika totalSlot sama dengan sebelumnya dan sudah populate → skip
     if (hasPopulatedRef.current && lastTotalSlotRef.current === totalSlot)
       return;
 
@@ -413,8 +398,7 @@ const PilihanJurusan = ({
       );
     }
 
-    // setTimeout(() => setIsPopulating(false), 600);
-    setIsPopulating(false); // langsung, tanpa delay
+    setIsPopulating(false);
   }, [
     selectedKondisiButaWarna,
     hasPerguruanTinggi,
@@ -424,7 +408,7 @@ const PilihanJurusan = ({
     totalSlot,
   ]);
   
-  // ── BARU: track slot mana yang prodinya sudah siap ──────────
+  // ── Track slot mana yang prodinya sudah siap ──────────
   const [readySet, setReadySet] = useState<Set<number>>(new Set());
 
   const handleProdiReady = useCallback((index: number) => {
@@ -438,17 +422,17 @@ const PilihanJurusan = ({
 
   const allProdiReady = fields.length === 0 || readySet.size >= fields.length;
   
-  // ── FIX BUG: Pemisahan reset flag saat jurusan / buta warna berubah ──────────
+  // ── Pemisahan reset flag saat jurusan / buta warna berubah ──────────
   
-  // 1. Reset SEMUA (termasuk cache prodi) HANYA ketika Jurusan Sekolah berubah
+  // 1. Reset SEMUA (termasuk cache prodi raw) HANYA ketika Jurusan Sekolah berubah
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
-    setPtProdiMap(new Map());
+    setRawPtProdiMap(new Map());
     setReadySet(new Set()); 
   }, [selectedIdJurusanSekolah]);
 
-  // 2. Reset flag populasi saja ketika Kondisi Buta Warna berubah (TIDAK menghapus data prodi)
+  // 2. Reset flag populasi saja ketika Kondisi Buta Warna berubah
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
@@ -531,42 +515,6 @@ const PilihanJurusan = ({
 
   return (
     <div className="space-y-6">
-      {/* Info Card */}
-      {/* <Card className="shadow-none border-blue-200 bg-blue-50">
-        <CardContent className="pt-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="space-y-2 text-sm text-blue-900">
-              <p className="font-medium">Informasi Penting:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>
-                  Pilihan perguruan tinggi akan muncul setelah jurusan sekolah
-                  dipilih
-                </li>
-                <li>
-                  Lakukan tes buta warna untuk melihat program studi yang sesuai
-                </li>
-                <li>
-                  Perguruan tinggi yang memiliki program D1/D2{" "}
-                  <strong>dan</strong> D3/D4/S1 sekaligus mendapat{" "}
-                  <strong>slot tambahan</strong> — Anda dapat memilih PT yang
-                  sama dua kali: satu slot pilih prodi D1/D2, satu slot pilih
-                  prodi D3/D4/S1
-                </li>
-                <li>
-                  Perguruan tinggi yang hanya memiliki satu jenis jenjang hanya
-                  dapat dipilih satu kali
-                </li>
-                <li>
-                  <strong>Semua slot wajib diisi</strong> sebelum dapat
-                  melanjutkan ke tahap berikutnya
-                </li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card> */}
-
       {!selectedIdJurusanSekolah && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -604,50 +552,11 @@ const PilihanJurusan = ({
           </Alert>
         )}
 
-      {hasPerguruanTinggi && (
+      {selectedIdJurusanSekolah && !isLoadingPTAny && !isFetchingAllProdi && (
         <>
           {!selectedKondisiButaWarna && (
             <TesButaWarna onResult={handleResult} />
           )}
-
-          {/* {selectedKondisiButaWarna && (
-            <div
-              className={`flex items-start gap-3 p-4 rounded-lg border ${
-                selectedKondisiButaWarna === "N"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              }`}>
-              <div className="flex-shrink-0 mt-0.5">
-                {selectedKondisiButaWarna === "N" ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h4
-                  className={`font-medium ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-900"
-                      : "text-red-900"
-                  }`}>
-                  {selectedKondisiButaWarna === "N"
-                    ? "Penglihatan Normal"
-                    : "Terdeteksi Buta Warna"}
-                </h4>
-                <p
-                  className={`text-sm mt-1 ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}>
-                  {selectedKondisiButaWarna === "N"
-                    ? "Hasil tes menunjukkan tidak ada indikasi buta warna."
-                    : "Hasil tes menunjukkan adanya indikasi buta warna."}
-                </p>
-              </div>
-            </div>
-          )} */}
 
           {selectedKondisiButaWarna && (
             <div className="grid grid-cols-1 gap-4">
@@ -662,79 +571,79 @@ const PilihanJurusan = ({
               />
             </div>
           )}
+        </>
+      )}
 
-          {selectedKondisiButaWarna && (
-            <>
-              {showSkeleton ? (
-                <PilihanSkeleton />
-              ) : fields.length === 0 ? (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    Tidak ada pilihan yang dapat ditampilkan.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <h3 className="text-lg font-semibold">
-                      Pilihan Perguruan Tinggi &amp; Program Studi
-                    </h3>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <p className="text-sm text-muted-foreground">
-                        {fields.length} slot tersedia
-                      </p>
-                      {extraSlotCount > 0 && (
-                        <p className="text-xs text-blue-600">
-                          termasuk {extraSlotCount} slot ekstra dari PT
-                          ber-program D1/D2 + D3/D4/S1
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {fields.map((field, index) => (
-                    <PerguruanTinggiItem
-                      key={field.id}
-                      index={index}
-                      control={control}
-                      remove={() => {}}
-                      kondisiButaWarna={selectedKondisiButaWarna}
-                      perguruanTinggiOptions={perguruanTinggiOptions}
-                      ptProdiMap={ptProdiMap}
-                      allPilihan={(allPilihan as any[]) ?? []}
-                      setValue={setValue}
-                      isPopulating={isPopulating}
-                      isEmpty={
-                        !!(allPilihan as any[])?.[index]?.perguruan_tinggi &&
-                        !(allPilihan as any[])?.[index]?.program_studi
-                      }
-                      onResetSlot={() => handleResetSlot(index)}
-                      onProdiReady={handleProdiReady} // ← tambahkan
-                    />
-                  ))}
-
-                  {hasEmptyRows && (
-                    <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-                      <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-amber-800">
-                        <span className="font-medium">
-                          {totalIncomplete} slot
-                        </span>{" "}
-                        belum dilengkapi. Semua perguruan tinggi dan program
-                        studi wajib diisi.
-                      </p>
-                    </div>
-                  )}
-
-                  {errors.pilihan_program_studi && (
-                    <p className="text-sm text-red-500">
-                      {(errors.pilihan_program_studi as any).message}
+      {hasPerguruanTinggi && selectedKondisiButaWarna && (
+        <>
+          {showSkeleton ? (
+            <PilihanSkeleton />
+          ) : fields.length === 0 ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Tidak ada pilihan yang dapat ditampilkan.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <h3 className="text-lg font-semibold">
+                  Pilihan Perguruan Tinggi &amp; Program Studi
+                </h3>
+                <div className="flex flex-col items-end gap-0.5">
+                  <p className="text-sm text-muted-foreground">
+                    {fields.length} slot tersedia
+                  </p>
+                  {extraSlotCount > 0 && (
+                    <p className="text-xs text-blue-600">
+                      termasuk {extraSlotCount} slot ekstra dari PT
+                      ber-program D1/D2 + D3/D4/S1
                     </p>
                   )}
                 </div>
+              </div>
+
+              {fields.map((field, index) => (
+                <PerguruanTinggiItem
+                  key={field.id}
+                  index={index}
+                  control={control}
+                  remove={() => {}}
+                  kondisiButaWarna={selectedKondisiButaWarna}
+                  perguruanTinggiOptions={perguruanTinggiOptions}
+                  ptProdiMap={ptProdiMap}
+                  allPilihan={(allPilihan as any[]) ?? []}
+                  setValue={setValue}
+                  isPopulating={isPopulating}
+                  isEmpty={
+                    !!(allPilihan as any[])?.[index]?.perguruan_tinggi &&
+                    !(allPilihan as any[])?.[index]?.program_studi
+                  }
+                  onResetSlot={() => handleResetSlot(index)}
+                  onProdiReady={handleProdiReady}
+                />
+              ))}
+
+              {hasEmptyRows && (
+                <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
+                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-amber-800">
+                    <span className="font-medium">
+                      {totalIncomplete} slot
+                    </span>{" "}
+                    belum dilengkapi. Semua perguruan tinggi dan program
+                    studi wajib diisi.
+                  </p>
+                </div>
               )}
-            </>
+
+              {errors.pilihan_program_studi && (
+                <p className="text-sm text-red-500">
+                  {(errors.pilihan_program_studi as any).message}
+                </p>
+              )}
+            </div>
           )}
         </>
       )}

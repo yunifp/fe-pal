@@ -39,8 +39,7 @@ import type {
   IPersyaratanUmumBeasiswa,
   IPersyaratanKhususBeasiswa,
 } from "@/types/beasiswa";
-
-// ─── InfoItem ─────────────────────────────────────────────────────────────────
+import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan ini
 
 const InfoItem = ({
   icon: Icon,
@@ -60,8 +59,7 @@ const InfoItem = ({
   </div>
 );
 
-// ─── FotoItem ─────────────────────────────────────────────────────────────────
-
+// ✅ Sesuaikan FotoItem
 const FotoItem = ({
   label,
   src,
@@ -102,7 +100,8 @@ const FotoItem = ({
           </Badge>
         )}
       </div>
-      <img
+      {/* ✅ Ganti img dengan SecureImage */}
+      <SecureImage
         src={src}
         alt={label}
         className="aspect-[3/4] w-full rounded-lg object-cover border"
@@ -110,8 +109,6 @@ const FotoItem = ({
     </div>
   );
 };
-
-// ─── ParentSubSection ─────────────────────────────────────────────────────────
 
 const ParentSubSection = ({
   title,
@@ -138,8 +135,6 @@ const ParentSubSection = ({
   </div>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 interface PreviewDataProps {
   onBack: () => void;
   onSubmit: (data: BeasiswaFormData) => void;
@@ -147,7 +142,6 @@ interface PreviewDataProps {
   idTrxBeasiswa: number;
   persyaratan_umum?: IPersyaratanUmumBeasiswa[];
   persyaratan_khusus?: IPersyaratanKhususBeasiswa[];
-  // URL foto yang sudah tersimpan di backend
   existFoto?: string | null;
   existFotoDepan?: string | null;
   existFotoSampingKiri?: string | null;
@@ -155,8 +149,6 @@ interface PreviewDataProps {
   existFotoBelakang?: string | null;
 }
 
-// Helper: ambil src untuk ditampilkan
-// Prioritas: File baru (object URL) → URL existing → null
 const useFotoSrc = (
   fileField: File | undefined,
   existUrl: string | null | undefined,
@@ -188,7 +180,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
 }) => {
   const data = previewData;
 
-  // Resolve semua src foto
   const fotoProfile = useFotoSrc(data.foto as File | undefined, existFoto);
   const fotoDepan = useFotoSrc(
     data.foto_depan as File | undefined,
@@ -229,11 +220,8 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </div>
 
-        {/* ── Data Pribadi ── */}
         <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
-          {/* Foto */}
           <div className="mb-6 space-y-4">
-            {/* Foto Profil */}
             <div className="space-y-1.5">
               <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
                 <Camera className="w-4 h-4" />
@@ -255,7 +243,8 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
                           : "Foto Tersimpan"}
                       </Badge>
                     )}
-                    <img
+                    {/* ✅ Ganti img dengan SecureImage */}
+                    <SecureImage
                       src={fotoProfile.src}
                       alt="Foto profil"
                       className="mx-auto h-40 w-auto rounded-lg object-cover border"
@@ -270,7 +259,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
               </div>
             </div>
 
-            {/* 4 Foto Badan */}
             <div className="space-y-2">
               <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
                 <Camera className="w-4 h-4" />
@@ -303,7 +291,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
             <div className="border-t" />
           </div>
 
-          {/* Data diri */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
             <InfoItem
               icon={User}
@@ -350,7 +337,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
               label="Berat Badan"
               value={data.berat_badan ? `${data.berat_badan} kg` : null}
             />
-            {/* Status Buta Warna */}
             <div className="flex items-start gap-3 py-2">
               <Heart className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -374,7 +360,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </CollapsibleSection>
 
-        {/* Data Tempat Tinggal */}
         <CollapsibleSection
           title="Data Tempat Tinggal"
           icon={MapPin}
@@ -410,7 +395,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </CollapsibleSection>
 
-        {/* Data Tempat Bekerja */}
         <CollapsibleSection
           title="Data Tempat Bekerja / Kebun"
           icon={Briefcase}
@@ -444,7 +428,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </CollapsibleSection>
 
-        {/* Data Orang Tua */}
         <CollapsibleSection
           title="Data Orang Tua"
           icon={Users}
@@ -611,7 +594,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </CollapsibleSection>
 
-        {/* Data Pendidikan */}
         <CollapsibleSection
           title="Data Pendidikan"
           icon={GraduationCap}
@@ -655,7 +637,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </div>
         </CollapsibleSection>
 
-        {/* Pilihan Program Studi */}
         {hasPilihanProdi && (
           <CollapsibleSection
             title="Pilihan Program Studi"
@@ -687,7 +668,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </CollapsibleSection>
         )}
 
-        {/* Persyaratan Umum */}
         {persyaratan_umum && persyaratan_umum.length > 0 && (
           <CollapsibleSection
             title="Persyaratan Umum"
@@ -700,7 +680,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </CollapsibleSection>
         )}
 
-        {/* Persyaratan Khusus */}
         {persyaratan_khusus && persyaratan_khusus.length > 0 && (
           <CollapsibleSection
             title="Persyaratan Khusus"
@@ -713,7 +692,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           </CollapsibleSection>
         )}
 
-        {/* Action Buttons */}
         <Card className="shadow-none">
           <CardContent className="pt-4 space-y-3">
             <Button className="w-full" onClick={() => onSubmit(data)}>

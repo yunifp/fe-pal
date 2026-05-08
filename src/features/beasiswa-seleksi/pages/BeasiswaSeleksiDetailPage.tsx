@@ -28,7 +28,6 @@ const extractErrorMessages = (
 ): string[] => {
   const messages: string[] = [];
 
-  // Menggunakan type assertion yang lebih aman ketimbang 'any'
   Object.entries(errors as Record<string, unknown>).forEach(([key, value]) => {
     if (!value) return;
 
@@ -125,7 +124,6 @@ const BeasiswaSeleksiDetailPage = () => {
     }
   }, [errors]);
 
-  const selectedStatus = watch("selectedStatus");
 
   const mutation = useMutation({
     mutationFn: async (data: VerifikasiFormData) => {
@@ -149,7 +147,7 @@ const BeasiswaSeleksiDetailPage = () => {
 
       return beasiswaService.updateFlowBeasiswa(
         id,
-        data.selectedStatus!, // ✅ baca dari data langsung
+        data.selectedStatus!,
         data.catatan || "",
         data,
         "ditjenbun",
@@ -165,7 +163,6 @@ const BeasiswaSeleksiDetailPage = () => {
       }
     },
     onError: (error: unknown) => {
-      // Type safe error handling untuk Axios/Custom error
       const errResponse = (
         error as { response?: { data?: { message?: string } } }
       )?.response;
@@ -178,19 +175,12 @@ const BeasiswaSeleksiDetailPage = () => {
   });
 
   const onSubmit = (data: VerifikasiFormData) => {
-    // Guard flow 4: wajib ada field koreksi
-    if (
-      data.selectedStatus === 4 &&
-      (!data.koreksi_fields || data.koreksi_fields.length === 0)
-    ) {
-      toast.error("Pilih minimal 1 field yang perlu dikoreksi");
-      return;
-    }
-    mutation.mutate(data); // kirim data lengkap, selectedStatus dibaca di mutationFn
+    // 🔥 VALIDASI KOREKSI_FIELDS DIHAPUS DI SINI 🔥
+    // Jadi admin bisa langsung klik kembalikan tanpa harus ceklis apapun
+    mutation.mutate(data);
   };
 
   return (
-    // Bungkus semua dengan FormProvider agar useFormContext bisa dipakai di child
     <FormProvider {...methods}>
       <>
         <CustBreadcrumb
@@ -214,7 +204,7 @@ const BeasiswaSeleksiDetailPage = () => {
                 register={register}
                 control={control}
                 errors={errors}
-                showKoreksi={selectedStatus === 4} // ← tambah
+                showKoreksi={false} // 🔥 DIUBAH MENJADI FALSE AGAR CHECKLIST HILANG 🔥
                 setValue={setValue}
               />
             </div>
@@ -226,7 +216,7 @@ const BeasiswaSeleksiDetailPage = () => {
                 errors={errors}
                 setValue={setValue}
                 watch={watch}
-                idTrxBeasiswa={id} // ← tambah
+                idTrxBeasiswa={id}
               />
             </div>
           </div>

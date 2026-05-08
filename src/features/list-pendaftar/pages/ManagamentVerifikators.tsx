@@ -11,13 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
-  // Users,
   UserCheck,
   RefreshCw,
   ArrowRight,
   Loader2,
   BarChart3,
-  // GitBranch,
   AlertCircle,
   CheckCircle2,
   Download,
@@ -35,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "../../../components/DataTable";
-import { getPendaftarColumns } from "../components/pendaftarColumns"; // sesuaikan path
+import { getPendaftarColumns } from "../components/pendaftarColumns"; // Sesuaikan path ini dengan project Anda
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -55,7 +53,6 @@ const ManajemenVerifikator = () => {
 
   const [jumlahMap, setJumlahMap] = useState<JumlahMap>({});
   const [isAssigning, setIsAssigning] = useState(false);
-  // const [lockedCount, setLockedCount] = useState<number>(0);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // ── Verifikator IDs ────────────────────────────────────────────────────────
@@ -99,7 +96,6 @@ const ManajemenVerifikator = () => {
     return verifikatorIds.map((id) => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
       const namaData = namaList.find((n) => n.id === id); // ← ambil dari auth
-      console.log(id);
 
       return {
         id,
@@ -165,6 +161,19 @@ const ManajemenVerifikator = () => {
   });
 
   const totalLocked: number = responseLockedCount?.data?.total ?? 0;
+  
+  // 🔥 Ekstrak dan Format Timestamp Kapan Dikunci 🔥
+  const lockedSample = responseLockedCount?.data?.result?.[0] as any;
+  const lockTimestampRaw = lockedSample?.timestamp_lock_selektor || lockedSample?.updated_at;
+  const formattedLockTime = lockTimestampRaw
+    ? new Date(lockTimestampRaw).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }) + " WIB"
+    : null;
 
   const totalPendaftar: number = responsePendaftar?.data?.total ?? 0;
   const unassigneds: number = unassigned?.data?.total ?? 0;
@@ -230,6 +239,7 @@ const ManajemenVerifikator = () => {
         queryKey: ["pendaftar-assignment-stats"],
       });
       queryClient.invalidateQueries({ queryKey: ["pendaftar-list-table"] });
+      queryClient.invalidateQueries({ queryKey: ["pendaftar-locked-count"] });
     } catch {
       toast.error("Gagal melakukan assignment");
     } finally {
@@ -334,12 +344,10 @@ const ManajemenVerifikator = () => {
     }
   };
 
-  // Tambah di bawah state lainnya (dekat isLocking)
   const [expandedVerifikator, setExpandedVerifikator] = useState<number | null>(
     null,
   );
 
-  // Ganti query rincian dengan ini
   const { data: responseRincian, isLoading: isLoadingRincian } = useQuery({
     queryKey: ["rincian-status-verifikator", expandedVerifikator],
     queryFn: async () => {
@@ -369,8 +377,7 @@ const ManajemenVerifikator = () => {
         }
       });
 
-      // ✅ Map id_flow ke label yang lebih lengkap
-      // Catatan: Jika di DB Anda id_flow untuk "Perlu Perbaikan" BUKAN 4, silakan sesuaikan angkanya di bawah ini.
+      // Map id_flow ke label yang lebih lengkap
       const flowLabelMap = (idFlow: number): string => {
         if (idFlow === 3) return "Tidak Lulus Administrasi";
         if (idFlow === 4) return "Perlu Perbaikan"; 
@@ -386,7 +393,6 @@ const ManajemenVerifikator = () => {
         labelCount[label] = (labelCount[label] ?? 0) + count;
       });
 
-      // ✅ Tambahkan status baru ke ALL_STATUSES
       const ALL_STATUSES = [
         "Seleksi Administrasi",
         "Perlu Perbaikan",
@@ -407,13 +413,12 @@ const ManajemenVerifikator = () => {
     staleTime: STALE_TIME,
   });
 
-  // Ganti rincianStatus useMemo dengan ini
   type RincianStatus = { status: string; count: number };
   type RincianMap = Record<number, RincianStatus[]>;
 
   const [rincianPerVerifikator, setRincianPerVerifikator] =
     useState<RincianMap>({});
-  // Update ketika data rincian berhasil di-fetch
+  
   useEffect(() => {
     if (expandedVerifikator !== null && responseRincian) {
       setRincianPerVerifikator((prev) => ({
@@ -530,41 +535,56 @@ const ManajemenVerifikator = () => {
         </div>
       )}
 
-      {/* Banner: sebagian sudah di-lock */}
+      {/* Banner: sebagian sudah di-lock (DITAMBAH TIMESTAMP) */}
       {!isLoadingPendaftar &&
         totalBelumAssign > 0 &&
         totalLocked > 0 &&
         totalLocked < totalBelumAssign && (
-          <div className="mt-2 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <Lock className="h-4 w-4 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
-              <span className="font-semibold">
-                {totalLocked.toLocaleString("id-ID")}
-              </span>{" "}
-              dari{" "}
-              <span className="font-semibold">
-                {totalBelumAssign.toLocaleString("id-ID")}
-              </span>{" "}
-              pendaftar sudah dikunci dan siap di-assign.
-            </p>
+          <div className="mt-2 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <Lock className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">
+                  {totalLocked.toLocaleString("id-ID")}
+                </span>{" "}
+                dari{" "}
+                <span className="font-semibold">
+                  {totalBelumAssign.toLocaleString("id-ID")}
+                </span>{" "}
+                pendaftar sudah dikunci dan siap di-assign.
+              </p>
+              {formattedLockTime && (
+                <p className="text-xs text-amber-700">
+                  Terakhir dikunci pada: <span className="font-medium">{formattedLockTime}</span>
+                </p>
+              )}
+            </div>
           </div>
         )}
 
-      {/* Banner: semua sudah di-lock */}
+      {/* Banner: semua sudah di-lock (DITAMBAH TIMESTAMP) */}
       {!isLoadingPendaftar &&
         totalBelumAssign > 0 &&
         totalLocked >= totalBelumAssign && (
-          <div className="mt-2 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <Lock className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-            <p className="text-sm text-emerald-800">
-              Semua{" "}
-              <span className="font-semibold">
-                {totalLocked.toLocaleString("id-ID")}
-              </span>{" "}
-              pendaftar sudah dikunci dan siap di-assign ke selektor.
-            </p>
+          <div className="mt-2 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <Lock className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm text-emerald-800">
+                Semua{" "}
+                <span className="font-semibold">
+                  {totalLocked.toLocaleString("id-ID")}
+                </span>{" "}
+                pendaftar sudah dikunci dan siap di-assign ke selektor.
+              </p>
+              {formattedLockTime && (
+                <p className="text-xs text-emerald-700">
+                  Dikunci pada: <span className="font-medium">{formattedLockTime}</span>
+                </p>
+              )}
+            </div>
           </div>
         )}
+        
       {!isLoadingInfo &&
         !isLoadingPendaftar &&
         totalBelumAssign === 0 &&
@@ -618,10 +638,9 @@ const ManajemenVerifikator = () => {
               </button>
             </div>
 
-            {/* Dropdown filter selektor — hanya muncul saat mode assigned */}
+            {/* Dropdown filter selektor */}
             {filterAssign === "filter-assigned" && (
               <div className="flex items-center gap-2">
-                {/* Filter Selektor */}
                 <Select
                   value={filterSelektor}
                   onValueChange={(val) => {

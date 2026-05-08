@@ -8,6 +8,7 @@ export const getColumnsRekap = (
   onViewDokumen: (kodeProv: string, namaProv: string) => void
 ): ColumnDef<RekapProvinsiRow>[] => [
   {
+    id: "no",
     header: "No",
     cell: (info) => <span className="text-slate-500">{info.row.index + 1}</span>,
     size: 50,
@@ -15,7 +16,11 @@ export const getColumnsRekap = (
   {
     accessorKey: "nama_dinas_provinsi",
     header: "Provinsi",
-    cell: ({ row }) => <span className="font-bold text-slate-900">{row.original.nama_dinas_provinsi}</span>,
+    cell: ({ row }) => (
+      <span className="font-bold text-slate-900">
+        {row.original.nama_dinas_provinsi}
+      </span>
+    ),
   },
   {
     accessorKey: "jumlah_pendaftar",
@@ -32,10 +37,11 @@ export const getColumnsRekap = (
     cell: ({ row }) => {
       const kodeProvinsi = row.original.kode_dinas_provinsi;
       const namaProvinsi = row.original.nama_dinas_provinsi;
+      
       return (
         <div className="flex gap-2 items-center">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => onViewDokumen(kodeProvinsi, namaProvinsi)}
             className="h-9 px-3 rounded-xl font-semibold border-teal-200 text-teal-700 hover:bg-teal-50 hover:text-teal-800 transition-colors shadow-none"
@@ -44,8 +50,8 @@ export const getColumnsRekap = (
             Dokumen
           </Button>
           <Link to={`/verifikasi-nasional-v2/${kodeProvinsi}`}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="h-9 px-4 rounded-xl font-semibold border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors shadow-none"
             >

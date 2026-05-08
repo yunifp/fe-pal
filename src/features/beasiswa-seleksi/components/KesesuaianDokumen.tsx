@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, Clock, Download } from "lucide-react";
 import {
   Controller,
@@ -19,6 +20,8 @@ import type {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { downloadSecureFile } from "@/utils/fileHelper";
+import { toast } from "sonner";
 
 interface KesesuaianDokumenProps {
   dokumen: ITrxDokumenKhusus | ITrxDokumenUmum;
@@ -43,10 +46,12 @@ export const KesesuaianDokumen = ({
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
   const errorRadio = errors[fieldName]?.[index]?.is_valid;
 
-  // ✅ Ambil setValue dari FormProvider context
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Ambil setValue dari FormProvider context
   const { setValue } = useFormContext<VerifikasiFormData>();
 
-  // ✅ Pre-populate nilai radio & catatan berdasarkan status_verifikasi yang sudah ada di DB
+  // Pre-populate nilai radio & catatan berdasarkan status_verifikasi yang sudah ada di DB
   useEffect(() => {
     const statusVerifikasi = (dokumen as any).status_verifikasi as
       | "sesuai"
@@ -70,6 +75,45 @@ export const KesesuaianDokumen = ({
     nameCatatan,
     setValue,
   ]);
+
+  // ✅ Fungsi khusus untuk handle download dengan ekstensi yang akurat
+  const handleDownload = async () => {
+    if (!dokumen.file) return;
+
+    setIsDownloading(true);
+    try {
+      let fileName = `Dokumen_${index + 1}.pdf`;
+
+      if (dokumen.nama_dokumen_persyaratan) {
+        let ext = ".pdf";
+        
+        try {
+          // Parsing URL untuk mengambil parameter "file" yang bersih dari &t=
+          const urlObj = new URL(dokumen.file, window.location.origin);
+          const fileParam = urlObj.searchParams.get("file");
+          
+          if (fileParam) {
+            const actualFile = fileParam.split('/').pop() || "";
+            // Ambil ekstensi asli (misal .png, .jpg, .pdf)
+            ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+          }
+        } catch (e) {
+          // Fallback jika URL gagal di-parsing
+        }
+
+        // Ganti spasi/karakter aneh di nama dokumen dengan underscore
+        // eslint-disable-next-line no-useless-escape
+        const cleanName = dokumen.nama_dokumen_persyaratan.replace(/[^a-zA-Z0-9 \-]/g, "_");
+        fileName = `${cleanName}${ext}`;
+      }
+
+      await downloadSecureFile(dokumen.file, fileName);
+    } catch (error) {
+      toast.error("Gagal mengunduh file. Sesi Anda mungkin sudah berakhir.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Controller
@@ -99,7 +143,7 @@ export const KesesuaianDokumen = ({
               {...register(`${fieldName}.${index}.kategori` as const)}
               value={fieldName === "data_persyaratan_umum" ? "Umum" : "Khusus"}
             />
-            {/* ✅ Banner biru dokumen diupload ulang */}
+            {/* Banner biru dokumen diupload ulang */}
             {revisedAt && (
               <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-r-lg p-3 mb-2 text-sm text-blue-800">
                 <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-500" />
@@ -112,7 +156,7 @@ export const KesesuaianDokumen = ({
                     terbaru sebelum memverifikasi.
                   </p>
 
-                  {/* ✅ Catatan verifikasi sebelumnya */}
+                  {/* Catatan verifikasi sebelumnya */}
                   {dokumen.verifikator_catatan && (
                     <div className="mt-2 bg-white/60 border border-blue-200 rounded-md p-2">
                       <p className="text-xs font-medium text-blue-900 mb-1">
@@ -150,7 +194,7 @@ export const KesesuaianDokumen = ({
                   </p>
                 )}
 
-                {/* ✅ Tampilkan info sudah pernah diverifikasi */}
+                {/* Tampilkan info sudah pernah diverifikasi */}
                 {(dokumen as any).status_verifikasi && (
                   <p
                     className={`text-xs mt-1 flex items-center gap-1 font-medium ${
@@ -173,22 +217,28 @@ export const KesesuaianDokumen = ({
                 )}
               </div>
 
+              {/* ✅ Ganti tag a dengan Button onClick dan handleDownload */}
               {dokumen.file && (
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={dokumen.file}
-                    target="_blank"
-                    rel="noopener noreferrer">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  type="button"
+                >
+                  {isDownloading ? (
+                    <Clock className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
                     <Download className="w-4 h-4 mr-1" />
-                    Lihat File
-                  </a>
+                  )}
+                  {isDownloading ? "Mengunduh..." : "Lihat File"}
                 </Button>
               )}
             </div>
 
             <Separator />
 
-            {/* ✅ Radio tetap bisa diubah oleh verifikator */}
+            {/* Radio tetap bisa diubah oleh verifikator */}
             <RadioGroup
               value={field.value?.toString() ?? ""}
               onValueChange={field.onChange}

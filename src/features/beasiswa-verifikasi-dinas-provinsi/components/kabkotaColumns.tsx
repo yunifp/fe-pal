@@ -15,6 +15,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { downloadSecureFile } from "@/utils/fileHelper";
+import { toast } from "sonner";
+
 export interface IKabkotaRow {
   kode_kab: number;
   nama_wilayah: string;
@@ -36,23 +39,48 @@ export interface IBaKabkota {
   kode_dinas_kabkota: string;
 }
 
-// ✅ Helper function cerdas untuk memperbaiki dan merapikan URL Dokumen S3
-const getDocUrl = (filename: string) => {
-  if (!filename) return "#";
+// ✅ Helper untuk membuat URL proxy lokal yang aman via JWT
+const getSecureProxyUrl = (filename: string, folder: string) => {
+  if (!filename) return "";
   
-  // Jika backend sudah mengirim full URL (diawali http/https), langsung gunakan
-  if (filename.startsWith("http")) {
+  // Jika filename dari database kebetulan sudah berupa URL proxy lengkap, langsung gunakan
+  if (filename.includes("/api/files/view")) {
     return filename;
   }
+
+  let fileKey = filename;
+
+  // Bersihkan jika backend mengirimkan URL S3 utuh (http/https)
+  if (filename.startsWith("http")) {
+    try {
+      const urlObj = new URL(filename);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      // Buang nama bucket jika ada di awal path S3
+      if (pathParts[0] === "palma-upload-bucket-testing" || pathParts[0] === "palma-upload-bucket") {
+        pathParts.shift();
+      }
+      fileKey = pathParts.join('/');
+    } catch (e) {
+      // Abaikan error parsing
+    }
+  }
   
-  // Jika backend hanya mengirim path S3 (contoh: 2026/ADMIN_...), gabungkan dengan Bucket URL S3 Anda
-  return `https://nos.wjv-1.neo.id/palma-upload-bucket-testing/${filename}`;
+  // ✅ PERBAIKAN: Gunakan VITE_AUTH_SERVICE_BASE_URL karena endpoint /api/files/view ada di Auth Service
+  const authUrl = import.meta.env.VITE_AUTH_SERVICE_BASE_URL || "http://localhost:3001/api/auth";
+  
+  // Hilangkan "/auth" di akhir URL untuk mendapatkan "http://localhost:3001/api"
+  const baseUrl = authUrl.replace(/\/auth\/?$/, ""); 
+  
+  const encodedFilename = encodeURIComponent(fileKey);
+  const encodedFolder = encodeURIComponent(folder);
+  
+  // Hasil akhir: http://localhost:3001/api/files/view?folder=...&file=...
+  return `${baseUrl}/files/view?folder=${encodedFolder}&file=${encodedFilename}`;
 };
 
 export const getKabkotaColumns = (
   onSelect: (kode: string, nama: string) => void,
   skMap: Record<string, ISkKabkota[]>,
-  // baseFileUrl: string,
   countMap: Record<string, number>,
   baMap: Record<string, IBaKabkota[]> = {},
   statusVerifikasiMap: Record<
@@ -83,9 +111,6 @@ export const getKabkotaColumns = (
     header: "Jumlah Pendaftar",
     cell: ({ row }) => {
       const kode = String(row.original.kode_kab);
-      
-      // ✅ PERBAIKAN 1: Menggunakan statusVerifikasiMap.total sebagai fallback yang akurat 
-      // jika countMap tidak terisi dari backend
       const count = countMap[kode] || statusVerifikasiMap[kode]?.total || 0;
 
       return (
@@ -139,7 +164,6 @@ export const getKabkotaColumns = (
         return <span className="text-gray-300 text-xs">—</span>;
       }
 
-      // Mengambil file urutan paling pertama (terbaru)
       const latest = skList[0];
 
       return (
@@ -147,22 +171,38 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <a
-                  href={getDocUrl(latest.filename)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
-                  onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    try {
+                      // ✅ Panggil helper dengan nama folder 'rekomtek'
+                      const url = getSecureProxyUrl(latest.filename, "rekomtek");
+                      
+                      let ext = ".pdf";
+                      try {
+                        const actualFile = latest.filename.split('/').pop() || "";
+                        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+                      } catch (err) {}
+
+                      const cleanNamaWilayah = row.original.nama_wilayah.replace(/[^a-zA-Z0-9]/g, "_");
+                      const fileName = `Surat_Rekomendasi_${cleanNamaWilayah}${ext}`;
+
+                      await downloadSecureFile(url, fileName);
+                    } catch (error) {
+                      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                    }
+                  }}>
                   <FileText className="w-4 h-4 text-primary" />
-                </a>
+                </button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Surat Keputusan</p>
+                <p>Unduh Surat Rekomendasi</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
-          {/* ✅ PERBAIKAN 2: Indikator + jumlah sisa dokumen dihilangkan */}
         </div>
       );
     },
@@ -178,7 +218,6 @@ export const getKabkotaColumns = (
         return <span className="text-gray-300 text-xs">—</span>;
       }
 
-      // Mengambil file urutan paling pertama (terbaru)
       const latest = baList[0];
 
       return (
@@ -186,22 +225,38 @@ export const getKabkotaColumns = (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <a
-                  href={getDocUrl(latest.filename)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
-                  onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    try {
+                      // ✅ Panggil helper dengan nama folder 'berita_acara'
+                      const url = getSecureProxyUrl(latest.filename, "berita_acara");
+                      
+                      let ext = ".pdf";
+                      try {
+                        const actualFile = latest.filename.split('/').pop() || "";
+                        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+                      } catch (err) {}
+
+                      const cleanNamaWilayah = row.original.nama_wilayah.replace(/[^a-zA-Z0-9]/g, "_");
+                      const fileName = `Berita_Acara_${cleanNamaWilayah}${ext}`;
+
+                      await downloadSecureFile(url, fileName);
+                    } catch (error) {
+                      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                    }
+                  }}>
                   <FileText className="w-4 h-4 text-primary" />
-                </a>
+                </button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Berita Acara</p>
+                <p>Unduh Berita Acara</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
-          {/* ✅ PERBAIKAN 2: Indikator + jumlah sisa dokumen dihilangkan */}
         </div>
       );
     },

@@ -1,4 +1,7 @@
-import { type FC } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { type FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +36,9 @@ import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "./CollapsibleSection";
 import { formatRupiah } from "@/utils/stringFormatter";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
+import { SecureImage } from "@/components/SecureImage"; 
+import { downloadSecureFile } from "@/utils/fileHelper"; 
+import { toast } from "sonner"; 
 
 interface FullDataBeasiswaProps {
   idTrxBeasiswa: number;
@@ -83,32 +89,51 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
     </div>
   );
 
-  const DokumenItem = ({ dokumen, index }: { dokumen: any; index: number }) => (
-    <div className="border rounded-lg p-4 space-y-3">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <p className="font-medium text-sm">
-            {dokumen.nama_dokumen_persyaratan || `Dokumen ${index + 1}`}
-          </p>
-          {dokumen.timestamp && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Upload: {new Date(dokumen.timestamp).toLocaleString("id-ID")}
+  // ✅ Sesuaikan DokumenItem
+  const DokumenItem = ({ dokumen, index }: { dokumen: any; index: number }) => {
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleDownload = async () => {
+      try {
+        setIsDownloading(true);
+        const fileName = dokumen.nama_dokumen_persyaratan || `Dokumen_${index + 1}.pdf`;
+        await downloadSecureFile(dokumen.file, fileName);
+      } catch (error) {
+        toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+      } finally {
+        setIsDownloading(false);
+      }
+    };
+
+    return (
+      <div className="border rounded-lg p-4 space-y-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="font-medium text-sm">
+              {dokumen.nama_dokumen_persyaratan || `Dokumen ${index + 1}`}
             </p>
+            {dokumen.timestamp && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload: {new Date(dokumen.timestamp).toLocaleString("id-ID")}
+              </p>
+            )}
+          </div>
+          {dokumen.file && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              <Download className="w-4 h-4 mr-1" />
+              {isDownloading ? "Mengunduh..." : "Unduh"}
+            </Button>
           )}
         </div>
-        {dokumen.file && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={dokumen.file} target="_blank" rel="noopener noreferrer">
-              <Download className="w-4 h-4 mr-1" />
-              Unduh
-            </a>
-          </Button>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
 
-  // Config 4 foto tambahan — key harus sesuai field dari data_beasiswa
   const fotoTambahanConfig = [
     {
       key: "foto_depan" as keyof typeof data_beasiswa,
@@ -134,7 +159,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
 
   return (
     <>
-      {/* Data Pribadi */}
       <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
@@ -144,7 +168,8 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <p className="text-sm font-medium text-muted-foreground">
                   Foto Profil
                 </p>
-                <img
+                {/* ✅ Ganti img dengan SecureImage */}
+                <SecureImage
                   src={data_beasiswa.foto!!}
                   alt="Foto Profil"
                   className="h-64 w-auto rounded-lg mx-auto"
@@ -173,7 +198,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                           {foto.label}
                         </p>
                         {url ? (
-                          <img
+                          <SecureImage
                             src={url}
                             alt={foto.label}
                             className="w-full h-100 object-cover rounded-lg border"
@@ -267,13 +292,11 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal & Bekerja */}
       <CollapsibleSection
         title="Data Tempat Tinggal & Bekerja / Kebun"
         icon={MapPin}
         defaultOpen={false}>
         <>
-          {/* Data Tempat Tinggal */}
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Data Tempat Tinggal
           </h3>
@@ -319,7 +342,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
 
           <hr className="border-gray-200 my-4" />
 
-          {/* Data Tempat Bekerja */}
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Data Tempat Bekerja / Kebun
           </h3>
@@ -365,110 +387,12 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal */}
-      {/* <CollapsibleSection
-        title="Data Tempat Tinggal"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={MapPin}
-              label="Provinsi"
-              value={data_beasiswa.tinggal_prov}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.tinggal_kab_kota}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kecamatan"
-              value={data_beasiswa.tinggal_kec}
-            />
-            <InfoItem
-              icon={MapPin}
-              label="Kelurahan"
-              value={data_beasiswa.tinggal_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.tinggal_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.tinggal_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.tinggal_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.tinggal_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.tinggal_alamat}
-            />
-          </div>
-        </>
-      </CollapsibleSection> */}
-
-      {/* Data Tempat Bekerja / Kebun */}
-      {/* <CollapsibleSection
-        title="Data Tempat Bekerja"
-        icon={MapPin}
-        defaultOpen={false}>
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <InfoItem
-              icon={Briefcase}
-              label="Provinsi"
-              value={data_beasiswa.kerja_prov}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kabupaten / Kota"
-              value={data_beasiswa.kerja_kab_kota}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kecamatan"
-              value={data_beasiswa.kerja_kec}
-            />
-            <InfoItem
-              icon={Briefcase}
-              label="Kelurahan"
-              value={data_beasiswa.kerja_kel}
-            />
-            <InfoItem
-              icon={Home}
-              label="Dusun"
-              value={data_beasiswa.kerja_dusun}
-            />
-            <InfoItem
-              icon={Hash}
-              label="Kode Pos"
-              value={data_beasiswa.kerja_kode_pos}
-            />
-            <InfoItem icon={Hash} label="RT" value={data_beasiswa.kerja_rt} />
-            <InfoItem icon={Hash} label="RW" value={data_beasiswa.kerja_rw} />
-            <InfoItem
-              icon={Map}
-              label="Alamat Lengkap"
-              value={data_beasiswa.kerja_alamat}
-            />
-          </div>
-        </>
-      </CollapsibleSection> */}
-
-      {/* Data Orang Tua */}
       <CollapsibleSection
         title="Data Orang Tua"
         icon={Users}
         defaultOpen={false}>
         <>
           <div className="space-y-8">
-            {/* Data Ayah */}
             <div>
               <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
                 <User className="w-5 h-5" />
@@ -607,7 +531,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
               </div>
             </div>
 
-            {/* Data Wali */}
             {(data_beasiswa.wali_nama ||
               data_beasiswa.wali_nik ||
               data_beasiswa.wali_email) && (
@@ -687,7 +610,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {/* Data Pendidikan */}
       <CollapsibleSection
         title="Data Pendidikan"
         icon={GraduationCap}
@@ -738,7 +660,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {/* Persyaratan Umum */}
       {persyaratan_umum && persyaratan_umum.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Umum"
@@ -754,7 +675,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </CollapsibleSection>
       )}
 
-      {/* Persyaratan Khusus */}
       {persyaratan_khusus && persyaratan_khusus.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Khusus"

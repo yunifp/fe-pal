@@ -28,6 +28,35 @@ import {
 } from "@/components/ui/select";
 import type { RekapProvinsiRow } from "@/types/beasiswa";
 
+// ✅ Import helper unduh dokumen
+import { downloadSecureFile } from "@/utils/fileHelper";
+
+// ✅ Tambahkan Helper URL Proxy Auth Service
+const getSecureProxyUrl = (filename: string, folder: string) => {
+  if (!filename) return "";
+  if (filename.includes("/api/files/view")) return filename;
+
+  let fileKey = filename;
+  if (filename.startsWith("http")) {
+    try {
+      const urlObj = new URL(filename);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts[0] === "palma-upload-bucket-testing" || pathParts[0] === "palma-upload-bucket") {
+        pathParts.shift();
+      }
+      fileKey = pathParts.join('/');
+    } catch (e) {}
+  }
+  
+  const authUrl = import.meta.env.VITE_AUTH_SERVICE_BASE_URL || "http://localhost:3001/api/auth";
+  const baseUrl = authUrl.replace(/\/auth\/?$/, ""); 
+  
+  const encodedFilename = encodeURIComponent(fileKey);
+  const encodedFolder = encodeURIComponent(folder);
+  
+  return `${baseUrl}/files/view?folder=${encodedFolder}&file=${encodedFilename}`;
+};
+
 const RekapProvinsiPage: React.FC = () => {
   const [data, setData] = useState<RekapProvinsiRow[]>([]);
   const [stats, setStats] = useState<{ afirmasi: number; reguler: number }>({
@@ -41,7 +70,6 @@ const RekapProvinsiPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [openKirimDialog, setOpenKirimDialog] = useState<boolean>(false);
 
-  // State untuk Dialog Dokumen
   const [openDokumenDialog, setOpenDokumenDialog] = useState<boolean>(false);
   const [dokumenLoading, setDokumenLoading] = useState<boolean>(false);
   const [selectedProvinsiName, setSelectedProvinsiName] = useState<string>("");
@@ -129,6 +157,30 @@ const RekapProvinsiPage: React.FC = () => {
       toast.error("Gagal menarik data dokumen.");
     } finally {
       setDokumenLoading(false);
+    }
+  };
+
+  // ✅ Fungsi eksekusi download dokumen
+  const handleDownloadDokumen = async (fileKey: string, folder: string, prefix: string) => {
+    const toastId = toast.loading("Mengunduh dokumen...");
+    try {
+      const url = getSecureProxyUrl(fileKey, folder);
+      
+      let ext = ".pdf";
+      try {
+        // ✅ PERBAIKAN: Bersihkan parameter ?t=... atau &t=... sebelum mengambil ekstensi
+        const cleanFileKey = fileKey.split('?')[0].split('&')[0];
+        const actualFile = cleanFileKey.split('/').pop() || "";
+        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+      } catch (err) {}
+
+      const cleanName = selectedProvinsiName.replace(/[^a-zA-Z0-9]/g, "_");
+      const fileName = `${prefix}_${cleanName}${ext}`;
+
+      await downloadSecureFile(url, fileName);
+      toast.success("Dokumen berhasil diunduh.", { id: toastId });
+    } catch (error) {
+      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.", { id: toastId });
     }
   };
 
@@ -285,7 +337,6 @@ const RekapProvinsiPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* DIALOG UNTUK MENAMPILKAN DOKUMEN PROVINSI */}
       <AlertDialog open={openDokumenDialog} onOpenChange={setOpenDokumenDialog}>
         <AlertDialogContent className="rounded-3xl border-0 shadow-2xl p-8 w-full max-w-lg overflow-hidden">
           <AlertDialogHeader>
@@ -293,21 +344,20 @@ const RekapProvinsiPage: React.FC = () => {
               <div className="p-3 bg-teal-100 rounded-2xl text-teal-600">
                 <FileText className="h-6 w-6" />
               </div>
-              <div className="min-w-0"> {/* ✅ FIX: Mencegah text panjang menembus box flex */}
+              <div className="min-w-0"> 
                 <AlertDialogTitle className="text-xl font-bold text-slate-900 truncate">Dokumen Pengesahan</AlertDialogTitle>
                 <p className="text-sm text-slate-500 font-medium truncate">{selectedProvinsiName}</p>
               </div>
             </div>
           </AlertDialogHeader>
           
-          <div className="py-4 space-y-5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"> {/* ✅ FIX: Scrollbar vertikal jika dokumen banyak */}
+          <div className="py-4 space-y-5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"> 
             {dokumenLoading ? (
               <div className="flex justify-center py-6">
                 <div className="w-8 h-8 border-4 border-slate-100 border-t-teal-600 rounded-full animate-spin"></div>
               </div>
             ) : (
               <>
-                {/* Bagian Berita Acara */}
                 <div className="w-full">
                   <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wider">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -323,12 +373,10 @@ const RekapProvinsiPage: React.FC = () => {
                           <Button 
                             key={`ba-${idx}`}
                             variant="outline" 
-                            onClick={() => window.open(item.file_url, "_blank")}
-                            // ✅ FIX: "overflow-hidden" dan "max-w-full" agar button tidak offsite
+                            onClick={() => handleDownloadDokumen(item.file_url || item.filename, "berita_acara", "Berita_Acara")}
                             className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
                           >
                             <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />
-                            {/* ✅ FIX: "min-w-0" sangat penting pada flex-child agar text truncate bekerja! */}
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold truncate block w-full">{safeName}</p>
                               <p className="text-xs text-slate-400 mt-0.5 truncate block w-full">Oleh: {item.uploaded_by || "Admin"}</p>
@@ -340,7 +388,6 @@ const RekapProvinsiPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Bagian Surat Keputusan */}
                 <div className="w-full">
                   <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wider">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -356,8 +403,7 @@ const RekapProvinsiPage: React.FC = () => {
                           <Button 
                             key={`sk-${idx}`}
                             variant="outline" 
-                            onClick={() => window.open(item.file_url, "_blank")}
-                            // ✅ FIX: Sama seperti di atas
+                            onClick={() => handleDownloadDokumen(item.file_url || item.filename, "rekomtek", "Surat_Rekomendasi")}
                             className="w-full max-w-full overflow-hidden justify-start text-left h-auto py-3 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700"
                           >
                             <FileText className="w-4 h-4 mr-3 text-slate-400 flex-shrink-0" />
@@ -383,7 +429,6 @@ const RekapProvinsiPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ✅ CSS Tambahan (Opsional) untuk merapikan scrollbar di modal */}
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;

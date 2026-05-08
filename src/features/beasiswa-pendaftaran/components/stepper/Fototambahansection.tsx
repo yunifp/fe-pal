@@ -13,6 +13,7 @@ import {
 import DropAndCropRectangle from "@/components/DropAndCropRectangle";
 import type { BeasiswaFormData } from "@/types/beasiswa";
 import type { FieldErrors, UseFormSetValue } from "react-hook-form";
+import { SecureImage } from "@/components/SecureImage"; // ✅ Import SecureImage
 
 const fotoTambahanConfig = [
   {
@@ -147,7 +148,8 @@ const Lightbox = ({
             className="relative mx-14 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10"
             style={{ animation: "lbSlideUp 0.2s ease" }}
             key={activeIndex}>
-            <img
+            {/* ✅ Ganti img dengan SecureImage */}
+            <SecureImage
               src={current.url}
               alt={current.label}
               className="max-h-[68vh] w-auto object-contain"
@@ -176,7 +178,8 @@ const Lightbox = ({
                   ? "border-white scale-110 shadow-lg"
                   : "border-white/20 opacity-40 hover:opacity-70 hover:scale-105"
               }`}>
-              <img
+              {/* ✅ Ganti img dengan SecureImage */}
+              <SecureImage
                 src={img.url}
                 alt={img.label}
                 className="h-full w-full object-cover object-top"
@@ -376,7 +379,8 @@ const FotoTambahanSection = ({
                 {/* Preview + hover actions */}
                 {currentPreview && (
                   <div className="relative group rounded-xl overflow-hidden border border-slate-100">
-                    <img
+                    {/* ✅ Ganti img dengan SecureImage */}
+                    <SecureImage
                       src={currentPreview}
                       alt={foto.label}
                       className="w-full h-48 object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
@@ -395,7 +399,7 @@ const FotoTambahanSection = ({
                         Lihat Full
                       </button>
                       {/* Ganti */}
-                      <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
+                      <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white shadow-lg pointer-events-none">
                         <RefreshCw className="h-3 w-3" />
                         Ganti
                       </div>
@@ -449,7 +453,8 @@ const FotoTambahanSection = ({
                 onClick={() => setLightboxIndex(i)}
                 title={img.description}
                 className="group relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition-all hover:border-slate-400 hover:shadow-md hover:-translate-y-0.5">
-                <img
+                {/* ✅ Ganti img dengan SecureImage */}
+                <SecureImage
                   src={img.url}
                   alt={img.label}
                   className="h-full w-full object-cover object-top transition-transform group-hover:scale-105"

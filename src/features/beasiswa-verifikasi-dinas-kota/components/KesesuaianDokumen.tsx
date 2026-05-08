@@ -1,5 +1,7 @@
-import { useEffect } from "react";
-import { CheckCircle, Clock, Download } from "lucide-react";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from "react";
+import { CheckCircle, Clock, Download, ExternalLink } from "lucide-react";
 import {
   Controller,
   useFormContext,
@@ -17,6 +19,10 @@ import type {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+// ✅ Tambahkan import helper downloadSecureFile dan toast
+import { downloadSecureFile } from "@/utils/fileHelper";
+import { toast } from "sonner";
 
 interface KesesuaianDokumenProps {
   dokumen: ITrxDokumenKhusus | ITrxDokumenUmum;
@@ -42,6 +48,8 @@ export const KesesuaianDokumen = ({
   const nameValid = `${fieldName}.${index}.is_valid` as const;
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
   const errorRadio = errors[fieldName]?.[index]?.is_valid;
+
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { setValue } = useFormContext<VerifikasiFormData>();
 
@@ -83,6 +91,43 @@ export const KesesuaianDokumen = ({
       }
     }
   }, [existingIsValid, existingCatatan, nameValid, nameCatatan, setValue]);
+
+  const handleDownload = async () => {
+    if (!dokumen.file) return;
+
+    setIsDownloading(true);
+    try {
+      let fileName = `Dokumen_${index + 1}.pdf`;
+
+      if (dokumen.nama_dokumen_persyaratan) {
+        let ext = ".pdf";
+
+        try {
+          // Parsing URL untuk mengambil parameter "file" yang bersih dari &t=
+          const urlObj = new URL(dokumen.file, window.location.origin);
+          const fileParam = urlObj.searchParams.get("file");
+
+          if (fileParam) {
+            const actualFile = fileParam.split('/').pop() || "";
+            // Ambil ekstensi asli (misal .png, .jpg, .pdf)
+            ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+          }
+        } catch (e) {
+          // Fallback jika URL gagal di-parsing
+        }
+
+        // Ganti spasi/karakter aneh di nama dokumen dengan underscore
+        const cleanName = dokumen.nama_dokumen_persyaratan.replace(/[^a-zA-Z0-9 \-]/g, "_");
+        fileName = `${cleanName}${ext}`;
+      }
+
+      await downloadSecureFile(dokumen.file, fileName);
+    } catch (error) {
+      toast.error("Gagal mengunduh file. Sesi Anda mungkin sudah berakhir.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Controller
@@ -154,15 +199,21 @@ export const KesesuaianDokumen = ({
                 )}
               </div>
 
+              {/* ✅ Ganti tag a dengan Button onClick dan handleDownload */}
               {dokumen.file && (
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={dokumen.file}
-                    target="_blank"
-                    rel="noopener noreferrer">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  type="button"
+                >
+                  {isDownloading ? (
+                    <Clock className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
                     <Download className="w-4 h-4 mr-1" />
-                    Lihat File
-                  </a>
+                  )}
+                  {isDownloading ? "Mengunduh..." : "Lihat File"}
                 </Button>
               )}
             </div>

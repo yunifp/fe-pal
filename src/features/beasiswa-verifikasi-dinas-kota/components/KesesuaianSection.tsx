@@ -19,10 +19,10 @@ interface KesesuaianSectionProps {
     isValid?: "Y" | "N" | null;
     catatan?: string | null;
   };
-
   register: UseFormRegister<VerifikasiFormData>;
   control: Control<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
+  revisedAt?: string | null; // ✅ Tambahkan properti opsional ini
 }
 
 export const KesesuaianSection = ({

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
@@ -16,10 +17,9 @@ import FotoTambahanSection from "./Fototambahansection";
 import { useWatch } from "react-hook-form";
 import { useEffect, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
-
-// ✅ IMPORT COMPRESSOR & TOAST DITAMBAHKAN
 import { compressIfImage } from "@/utils/fileCompressor";
 import { toast } from "sonner";
+import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan ini
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -81,7 +81,6 @@ const IdentitasPribadi = ({
   getFieldCatatan = () => null,
 }: Step1IdentitasPribadiProps) => {
   
-  // ✅ PERUBAHAN: Fungsi onFotoChange menjadi async dan menggunakan compressIfImage
   const onFotoChange = async (file: File | null) => {
     if (!file) {
       setValue("foto", undefined, { shouldValidate: true });
@@ -89,11 +88,9 @@ const IdentitasPribadi = ({
     }
 
     try {
-      // Kompres hasil crop agar ukurannya dijamin maksimal 1 MB
       const compressedFile = await compressIfImage(file);
       setValue("foto", compressedFile, { shouldValidate: true });
     } catch (error) {
-      console.error("Gagal mengompres foto:", error);
       toast.error("Gagal memproses foto profil");
     }
   };
@@ -113,7 +110,6 @@ const IdentitasPribadi = ({
     return umur > 23;
   }, [tanggalLahir]);
 
-  // Teruskan ke parent setiap kali berubah
   useEffect(() => {
     onUmurChange?.(umurMelebihi);
   }, [umurMelebihi]);
@@ -128,12 +124,12 @@ const IdentitasPribadi = ({
       )}
 
       <div className="space-y-6">
-        {/* ── Foto Profil ── */}
         <div className="flex flex-col items-center space-y-4">
           {existFoto && (
             <div className="space-y-1 text-center">
               <Label>Foto Profil Sekarang</Label>
-              <img
+              {/* ✅ Ganti img dengan SecureImage */}
+              <SecureImage
                 src={existFoto}
                 alt="Foto profil saat ini"
                 className="mx-auto h-56 w-auto rounded-lg object-cover"
@@ -152,7 +148,6 @@ const IdentitasPribadi = ({
           </div>
         </div>
 
-        {/* ── 4 Foto Full Body ── */}
         <FotoTambahanSection
           existFotoDepan={existFotoDepan}
           existFotoSampingKiri={existFotoSampingKiri}
@@ -162,7 +157,6 @@ const IdentitasPribadi = ({
           setValue={setValue}
         />
 
-        {/* ── Field data diri ── */}
         <div className="grid grid-cols-2 gap-4 items-start">
           <div>
             <CustInput
@@ -182,7 +176,6 @@ const IdentitasPribadi = ({
                 },
               })}
             />
-            {/* Tampilkan catatan koreksi jika ada */}
             {isFieldKoreksi("nama_lengkap") &&
               getFieldCatatan("nama_lengkap") && (
                 <p className="text-xs text-amber-600 flex items-center gap-1">

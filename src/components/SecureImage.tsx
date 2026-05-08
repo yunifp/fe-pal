@@ -1,64 +1,110 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuthStore } from "@/stores/authStore";
-import { User as UserIcon } from "lucide-react";
+import { User } from "lucide-react";
 
-interface SecureImageProps {
+interface SecureImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string | null | undefined;
   alt: string;
   className?: string;
+  fallbackIcon?: React.ReactNode;
 }
 
-export const SecureImage = ({ src, alt, className }: SecureImageProps) => {
+export const SecureImage = ({ 
+  src, 
+  alt, 
+  className, 
+  fallbackIcon, 
+  ...props 
+}: SecureImageProps) => {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
-  const { accessToken } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   useEffect(() => {
-    if (!src || !accessToken) return;
+    if (!src) {
+      setIsError(true);
+      setIsLoading(false);
+      return;
+    }
 
-    let objectUrl: string;
+    if (src.startsWith("blob:") || src.startsWith("data:")) {
+      setImgSrc(src);
+      setIsError(false);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!accessToken) {
+      setIsError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    let objectUrl: string | null = null;
+
     const fetchImage = async () => {
+      setIsLoading(true);
+      setIsError(false);
+      
       try {
-        // Hapus tempelan token di URL jika sebelumnya ada
         const cleanSrc = src.split("&token=")[0];
 
         const response = await axios.get(cleanSrc, {
           headers: {
-            Authorization: `Bearer ${accessToken}`, // Token dikirim aman via Header
+            Authorization: `Bearer ${accessToken}`,
           },
-          responseType: "blob", // Ambil sebagai data biner
+          responseType: "blob",
         });
 
-        objectUrl = URL.createObjectURL(response.data);
-        setImgSrc(objectUrl);
+        if (response.data.type && response.data.type.includes("application/json")) {
+           throw new Error("Response is JSON, not an image");
+        }
+
+        if (isMounted) {
+          objectUrl = URL.createObjectURL(response.data);
+          setImgSrc(objectUrl);
+          setIsError(false);
+        }
       } catch (error) {
-        console.error("Gagal memuat gambar aman", error);
-        setIsError(true);
+        if (isMounted) setIsError(true);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchImage();
 
-    // Bersihkan memori browser saat berpindah halaman
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      isMounted = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [src, accessToken]);
 
-  if (!src || isError) {
+  if (isLoading) {
+    return <div className={`${className} bg-slate-200 animate-pulse`} />;
+  }
+
+  if (isError || !imgSrc) {
     return (
-      <div className={`${className} bg-slate-100 flex items-center justify-center`}>
-        <UserIcon className="w-1/2 h-1/2 text-slate-400" />
+      <div className={`${className} bg-slate-100 flex flex-col items-center justify-center text-slate-400`}>
+        {fallbackIcon || <User className="w-1/2 h-1/2 opacity-40" />}
       </div>
     );
   }
 
-  if (!imgSrc) {
-    return (
-      <div className={`${className} bg-slate-200 animate-pulse`} />
-    );
-  }
-
-  return <img src={imgSrc} alt={alt} className={className} />;
+  return (
+    <img 
+      src={imgSrc} 
+      alt={alt} 
+      className={className} 
+      onError={() => setIsError(true)} 
+      {...props} 
+    />
+  );
 };

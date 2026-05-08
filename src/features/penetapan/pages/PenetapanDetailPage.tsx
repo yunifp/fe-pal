@@ -8,8 +8,37 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/DataTable";
 import { getPenetapanColumns } from "../components/columns"; 
 import { penetapanService } from "../../../services/penetapanService";
-import { ArrowLeft, Eye, Users, Download } from "lucide-react"; 
+import { ArrowLeft, Eye, Users, Download, RotateCcw } from "lucide-react"; // ✅ Tambahkan RotateCcw
 import { toast } from "sonner"; 
+
+// ✅ Import helper untuk download aman
+import { downloadSecureFile } from "@/utils/fileHelper";
+
+// ✅ Tambahkan Helper URL Proxy Auth Service
+const getSecureProxyUrl = (filename: string, folder: string) => {
+  if (!filename) return "";
+  if (filename.includes("/api/files/view")) return filename;
+
+  let fileKey = filename;
+  if (filename.startsWith("http")) {
+    try {
+      const urlObj = new URL(filename);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts[0] === "palma-upload-bucket-testing" || pathParts[0] === "palma-upload-bucket") {
+        pathParts.shift();
+      }
+      fileKey = pathParts.join('/');
+    } catch (e) {}
+  }
+  
+  const authUrl = import.meta.env.VITE_AUTH_SERVICE_BASE_URL || "http://localhost:3001/api/auth";
+  const baseUrl = authUrl.replace(/\/auth\/?$/, ""); 
+  
+  const encodedFilename = encodeURIComponent(fileKey);
+  const encodedFolder = encodeURIComponent(folder);
+  
+  return `${baseUrl}/files/view?folder=${encodedFolder}&file=${encodedFilename}`;
+};
 
 const PenetapanDetailPage = () => {
   const { id } = useParams();
@@ -20,6 +49,7 @@ const PenetapanDetailPage = () => {
   const pageSize = 10;
   
   const [isDownloading, setIsDownloading] = useState(false); 
+  const [isDownloadingDoc, setIsDownloadingDoc] = useState(false); // ✅ State untuk loading dokumen SK
 
   const { data: response, isLoading } = useQuery({
     queryKey: ["penetapan-detail", pageIndex, search, id],
@@ -35,7 +65,6 @@ const PenetapanDetailPage = () => {
   const totalPages = response?.data?.total_pages || 1;
   const totalData = response?.data?.total || 0;
   
-  // ✅ uploadedFilename sudah berisi URL NEO S3 murni
   const uploadedFilename = docResponse?.data?.filename;
 
   const columns = useMemo(() => getPenetapanColumns(pageIndex, pageSize), [pageIndex, pageSize]);
@@ -63,6 +92,34 @@ const PenetapanDetailPage = () => {
     }
   };
 
+  // ✅ Fungsi handleViewDokumen diperbarui
+  const handleViewDokumen = async () => {
+    if (!uploadedFilename) return;
+
+    setIsDownloadingDoc(true);
+    const toastId = toast.loading("Mengunduh dokumen...");
+    try {
+      // Biasanya SK Penetapan/Rekomtek disimpan di folder 'rekomtek'
+      const url = getSecureProxyUrl(uploadedFilename, "rekomtek");
+      
+      let ext = ".pdf";
+      try {
+        const cleanFileKey = uploadedFilename.split('?')[0].split('&')[0];
+        const actualFile = cleanFileKey.split('/').pop() || "";
+        ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+      } catch (err) {}
+
+      const fileName = `SK_Penetapan${ext}`;
+
+      await downloadSecureFile(url, fileName);
+      toast.success("Dokumen berhasil diunduh.", { id: toastId });
+    } catch (error) {
+      toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.", { id: toastId });
+    } finally {
+      setIsDownloadingDoc(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-10">
       <div className="max-w-screen-2xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pt-6">
@@ -85,17 +142,18 @@ const PenetapanDetailPage = () => {
               variant="outline"
               className="border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-50 rounded-xl h-11 px-5 shadow-sm transition-all"
             >
-              <Download className="h-4 w-4 mr-2" /> 
+              {isDownloading ? <RotateCcw className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />} 
               {isDownloading ? "Mengunduh..." : "Download Data"}
             </Button>
 
             {uploadedFilename && (
               <Button 
-                // ✅ SUDAH BERSIH: Langsung buka URL tanpa "/uploads/"
-                onClick={() => window.open(uploadedFilename, "_blank")} 
+                onClick={handleViewDokumen} 
+                disabled={isDownloadingDoc}
                 className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl h-11 px-5 shadow-md transition-all font-semibold"
               >
-                <Eye className="h-4 w-4 mr-2" /> Lihat Dokumen SK
+                {isDownloadingDoc ? <RotateCcw className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />} 
+                {isDownloadingDoc ? "Memuat..." : "Lihat Dokumen SK"}
               </Button>
             )}
           </div>

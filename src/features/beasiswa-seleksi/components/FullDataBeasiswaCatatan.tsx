@@ -1,4 +1,7 @@
-/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable no-empty */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-useless-escape */
+ 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type FC, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -51,6 +54,9 @@ import {
 import { KesesuaianDokumen } from "./KesesuaianDokumen";
 import { type KoreksiFieldItem } from "@/constants/koreksiFields";
 import KoreksiInfoItem from "@/components/beasiswa/KoreksiInfoItem";
+import { SecureImage } from "@/components/SecureImage";
+import { downloadSecureFile } from "@/utils/fileHelper";
+import { toast } from "sonner";
 
 interface FullDataBeasiswaCatatanProps {
   idTrxBeasiswa: number;
@@ -100,7 +106,7 @@ const FotoGallery: FC<{
           className="relative group cursor-pointer flex-shrink-0 md:w-52"
           onClick={() => setLightboxIndex(0)}>
           <div className="overflow-hidden rounded-xl border bg-muted h-64 md:h-72">
-            <img
+            <SecureImage
               src={mainFoto.url}
               alt={mainFoto.label}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -124,7 +130,7 @@ const FotoGallery: FC<{
               className="relative group cursor-pointer"
               onClick={() => setLightboxIndex(idx + 1)}>
               <div className="overflow-hidden rounded-xl border bg-muted aspect-[3/4]">
-                <img
+                <SecureImage
                   src={item.url}
                   alt={item.label}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -194,7 +200,7 @@ const FotoGallery: FC<{
           <div
             className="flex flex-col items-center gap-3 max-w-[90vw] max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}>
-            <img
+            <SecureImage
               src={allFotos[lightboxIndex].url}
               alt={allFotos[lightboxIndex].label}
               className="max-h-[76vh] max-w-[85vw] object-contain rounded-lg shadow-2xl"
@@ -230,7 +236,7 @@ const FotoGallery: FC<{
                     ? "border-white scale-110"
                     : "border-white/30 opacity-60 hover:opacity-100"
                 }`}>
-                <img
+                <SecureImage
                   src={f.url}
                   alt={f.label}
                   className="w-full h-full object-cover"
@@ -244,16 +250,29 @@ const FotoGallery: FC<{
   );
 };
 
-// ─────────────────────────────────────────────────────────────
-// Main Component
-// ─────────────────────────────────────────────────────────────
+const extractFileNameFromUrl = (url: string, defaultName: string) => {
+  try {
+    const urlObj = new URL(url, window.location.origin);
+    const fileParam = urlObj.searchParams.get("file");
+    if (fileParam) {
+      const actualFile = fileParam.split("/").pop() || "";
+      const ext = actualFile.includes(".")
+        ? actualFile.substring(actualFile.lastIndexOf("."))
+        : ".pdf";
+      const cleanTitle = defaultName.replace(/[^a-zA-Z0-9 \-]/g, "_");
+      return `${cleanTitle}${ext}`;
+    }
+  } catch (e) {}
+  return `${defaultName.replace(/[^a-zA-Z0-9 \-]/g, "_")}.pdf`;
+};
+
 const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   idTrxBeasiswa,
   register,
   control,
   errors,
-  showKoreksi = false, // ← tambah
-  setValue, // ← tambah
+  showKoreksi = false,
+  setValue,
 }) => {
   const [koreksiFields, setKoreksiFields] = useState<KoreksiFieldItem[]>([]);
   const { data, isLoading } = useQuery({
@@ -278,7 +297,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     setValue("koreksi_fields", koreksiFields);
   }, [koreksiFields, setValue]);
 
-  // Simpan timeout untuk debounce (per dokumen)
   if (isLoading) {
     return (
       <Card className="shadow-none">
@@ -291,9 +309,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     );
   }
 
-  if (!data) return null;
+  if (!data || !data.data) return null;
 
-  const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data!!;
+  const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data;
 
   const toggleKoreksiField = (field: string, label: string) => {
     setKoreksiFields((prev) => {
@@ -309,24 +327,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     );
   };
 
-  // const InfoItem = ({
-  //   icon: Icon,
-  //   label,
-  //   value,
-  // }: {
-  //   icon: any;
-  //   label: string;
-  //   value?: string | null;
-  // }) => (
-  //   <div className="flex items-start gap-3 py-2">
-  //     <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-  //     <div className="flex-1 min-w-0">
-  //       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-  //       <p className="text-sm mt-1 break-words">{value || "-"}</p>
-  //     </div>
-  //   </div>
-  // );
-  // Cari file dari persyaratan_umum berdasarkan keyword nama dokumen
   const findDokumenFile = (keyword: string): string | null => {
     if (!persyaratan_umum?.length) return null;
     const doc = persyaratan_umum.find((d) =>
@@ -361,6 +361,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
       return findDokumenKhususFile("bekerja");
     return null;
   })();
+
   const InfoItem = ({
     icon: Icon,
     label,
@@ -379,25 +380,33 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <p className="text-sm break-words">{value || "-"}</p>
           {fileUrl && (
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary border border-primary/40 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors flex-shrink-0">
+            <button
+              type="button"
+              onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                e.preventDefault();
+                try {
+                  const extractedName = extractFileNameFromUrl(fileUrl, label);
+                  await downloadSecureFile(fileUrl, extractedName);
+                } catch (error) {
+                  toast.error(
+                    "Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.",
+                  );
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary border border-primary/40 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors flex-shrink-0 cursor-pointer">
               <ExternalLink className="w-3 h-3" />
-              Lihat File
-            </a>
+              Unduh File
+            </button>
           )}
         </div>
       </div>
     </div>
   );
+
   return (
     <>
-      {/* Data Pribadi */}
       <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
         <>
-          {/* Foto Gallery: profil + 4 sisi */}
           <FotoGallery
             foto={data_beasiswa.foto}
             fotoSisi={[
@@ -588,21 +597,17 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             nameCatatan="data_pribadi_catatan"
             control={control}
             register={register}
-            errors={errors}
+            errors={errors as any}
             textareaPlaceholder="Contoh: Foto terlalu gelap, mohon upload ulang. NIK tidak sesuai dengan KTP."
             sectionCatatan={{
               isValid:
                 data_beasiswa.catatan_data_section?.data_pribadi_is_valid,
               catatan: data_beasiswa.catatan_data_section?.data_pribadi_catatan,
             }}
-            revisedAt={
-              data_beasiswa.catatan_data_section?.data_pribadi_revised_at
-            }
           />
         </>
       </CollapsibleSection>
 
-      {/* Data Tempat Tinggal & Bekerja / Kebun */}
       <CollapsibleSection
         title="Data Tempat Tinggal & Tempat Bekerja / Kebun"
         icon={MapPin}
@@ -654,10 +659,25 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 }}>
                 —
               </span>
-              <a
-                href={dokumenKhususJalur.file}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
+                  try {
+                    const extractedName = extractFileNameFromUrl(
+                      dokumenKhususJalur.file,
+                      `Dokumen_Jalur_${jalur}`,
+                    );
+                    await downloadSecureFile(
+                      dokumenKhususJalur.file,
+                      extractedName,
+                    );
+                  } catch (error) {
+                    toast.error(
+                      "Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.",
+                    );
+                  }
+                }}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -672,16 +692,16 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   borderRadius: "var(--border-radius-md)",
                   border: "0.5px solid var(--color-border-info)",
                   background: "var(--color-background-info)",
+                  cursor: "pointer",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
                 <ExternalLink style={{ width: "12px", height: "12px" }} />
-                Lihat dokumen
-              </a>
+                Unduh dokumen
+              </button>
             </div>
           )}
 
-          {/* Data Tempat Tinggal */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Data Tempat Tinggal
@@ -782,7 +802,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
           <hr className="border-gray-200 my-4" />
 
-          {/* Data Tempat Bekerja / Kebun */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Data Tempat Bekerja / Kebun
@@ -885,7 +904,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               nameCatatan="data_tempat_tinggal_bekerja_catatan"
               control={control}
               register={register}
-              errors={errors}
+              errors={errors as any}
               textareaPlaceholder="Contoh: Alamat kurang lengkap, mohon ditambahkan nama jalan dan nomor rumah. RT/RW tidak sesuai dengan KK yang diupload."
               sectionCatatan={{
                 isValid:
@@ -895,23 +914,17 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   data_beasiswa.catatan_data_section
                     ?.data_tempat_tinggal_bekerja_catatan,
               }}
-              revisedAt={
-                data_beasiswa.catatan_data_section
-                  ?.data_tempat_tinggal_bekerja_revised_at
-              }
             />
           </div>
         </>
       </CollapsibleSection>
 
-      {/* Data Orang Tua */}
       <CollapsibleSection
         title="Data Orang Tua"
         icon={Users}
         defaultOpen={false}>
         <>
           <div className="space-y-8">
-            {/* Data Ayah */}
             <div>
               <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
                 <User className="w-5 h-5" />
@@ -1170,7 +1183,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               </div>
             </div>
 
-            {/* Data Wali - Only show if data exists */}
             {(data_beasiswa.wali_nama ||
               data_beasiswa.wali_nik ||
               data_beasiswa.wali_email) && (
@@ -1313,7 +1325,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             nameCatatan="data_orang_tua_catatan"
             control={control}
             register={register}
-            errors={errors}
+            errors={errors as any}
             textareaPlaceholder="Contoh: Data ayah/ibu/wali belum lengkap atau tidak sesuai dengan dokumen pendukung. Mohon periksa kembali nama, NIK, alamat, dan pekerjaan."
             sectionCatatan={{
               isValid:
@@ -1321,14 +1333,10 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_orang_tua_catatan,
             }}
-            revisedAt={
-              data_beasiswa.catatan_data_section?.data_orang_tua_revised_at
-            }
           />
         </>
       </CollapsibleSection>
 
-      {/* Data Pendidikan */}
       <CollapsibleSection
         title="Data Pendidikan"
         icon={GraduationCap}
@@ -1417,7 +1425,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             />
           </div>
 
-          {/* Nilai Rapor */}
           {nilaiRapor && (
             <div className="mt-4 border rounded-lg p-4 bg-muted/30">
               <p className="text-sm font-semibold text-gray-700 mb-3">
@@ -1515,7 +1522,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             nameCatatan="data_pendidikan_catatan"
             control={control}
             register={register}
-            errors={errors}
+            errors={errors as any}
             textareaPlaceholder="Contoh: Nama sekolah tidak sesuai dengan ijazah. Jurusan yang dipilih tidak sesuai dengan jalur beasiswa yang tersedia."
             sectionCatatan={{
               isValid:
@@ -1523,9 +1530,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_pendidikan_catatan,
             }}
-            revisedAt={
-              data_beasiswa.catatan_data_section?.data_pendidikan_revised_at
-            }
           />
         </>
       </CollapsibleSection>
@@ -1545,27 +1549,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 />
               ))}
             </div>
-            {/* <KesesuaianSection
-              title="Kesesuaian Data Program Studi"
-              nameValid="data_program_studi_is_valid"
-              nameCatatan="data_program_studi_catatan"
-              control={control}
-              register={register}
-              errors={errors}
-              textareaPlaceholder="Contoh: Program studi yang dipilih tidak sesuai dengan ijazah terakhir. Pilihan program studi tidak sesuai dengan data sekolah atau jurusan pada dokumen yang diunggah."
-              sectionCatatan={{
-                isValid:
-                  data_beasiswa.catatan_data_section
-                    ?.data_program_studi_is_valid,
-                catatan:
-                  data_beasiswa.catatan_data_section
-                    ?.data_program_studi_catatan,
-              }} */}
-            {/* /> */}
           </CollapsibleSection>
         )}
 
-      {/* Persyaratan Umum */}
       {persyaratan_umum && persyaratan_umum.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Umum"
@@ -1580,9 +1566,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   index={index}
                   control={control}
                   register={register}
-                  errors={errors}
+                  errors={errors as any}
                   fieldName="data_persyaratan_umum"
-                  revisedAt={(dokumen as any).peserta_revised_at ?? null}
                 />
               ))}
             </div>
@@ -1590,7 +1575,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
         </CollapsibleSection>
       )}
 
-      {/* Persyaratan Khusus */}
       {persyaratan_khusus && persyaratan_khusus.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Khusus"
@@ -1605,9 +1589,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   index={index}
                   control={control}
                   register={register}
-                  errors={errors}
+                  errors={errors as any}
                   fieldName="data_persyaratan_khusus"
-                  revisedAt={(dokumen as any).peserta_revised_at ?? null}
                 />
               ))}
             </div>

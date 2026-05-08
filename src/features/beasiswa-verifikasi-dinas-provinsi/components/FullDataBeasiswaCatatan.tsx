@@ -39,6 +39,7 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { KesesuaianDokumen } from "./KesesuaianDokumen";
+import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan import SecureImage
 
 interface FullDataBeasiswaCatatanProps {
   idTrxBeasiswa: number;
@@ -151,7 +152,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
           {data_beasiswa.foto && (
             <div className="flex justify-center">
               <div className="relative">
-                <img
+                {/* ✅ Ganti img dengan SecureImage */}
+                <SecureImage
                   src={data_beasiswa.foto}
                   alt="Foto Pendaftar"
                   className="h-52 w-auto rounded-xl object-cover border border-border"
@@ -178,7 +180,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                     className="flex flex-col items-center gap-1.5">
                     <p className="text-xs text-muted-foreground">{label}</p>
                     {src ? (
-                      <img
+                      <SecureImage
                         src={src}
                         alt={`Foto ${label}`}
                         className="h-40 w-full rounded-lg object-cover border border-border"

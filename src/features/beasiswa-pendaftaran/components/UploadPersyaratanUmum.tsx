@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
@@ -6,8 +7,8 @@ import type { IPersyaratanUmumBeasiswa } from "@/types/beasiswa";
 import { beasiswaService } from "@/services/beasiswaService";
 import { isValidByDocType, parseValidTypes } from "@/utils/fileFormatter";
 import { validTypeToAccept } from "@/utils/stringFormatter";
-// ✅ IMPORT parseSizeToBytes DITAMBAHKAN
 import { compressIfImage, parseSizeToBytes } from "@/utils/fileCompressor";
+import { downloadSecureFile } from "@/utils/fileHelper";
 
 interface UploadPersyaratanUmumProps {
   idTrxBeasiswa: number;
@@ -70,17 +71,15 @@ const UploadPersyaratanUmum = ({
     try {
       setCompressingId(item.id);
 
-      // 1. Kompres jika file berupa Gambar (PDF akan diabaikan)
       const processedFile = await compressIfImage(file, item.size);
 
-      // ✅ 2. VALIDASI HARD-BLOCK UNTUK SEMUA FILE (Termasuk PDF)
       const maxSizeBytes = parseSizeToBytes(item.size);
       
       if (processedFile.size > maxSizeBytes) {
         toast.error(
           `Ukuran file terlalu besar! Maksimal ${item.size || "2"} Mb. Silakan kompres file Anda terlebih dahulu.`
         );
-        return; // MENTAL! Proses dihentikan
+        return; 
       }
 
       setUploadingId(item.id);
@@ -139,7 +138,6 @@ const UploadPersyaratanUmum = ({
                   : "border-gray-200 bg-white hover:border-gray-300"
             }
           `}>
-            {/* Status Badge */}
             {isUploaded && !hasCatatan && (
               <div className="absolute top-3 right-3">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
@@ -158,7 +156,6 @@ const UploadPersyaratanUmum = ({
               </div>
             )}
 
-            {/* Badge untuk dokumen dengan catatan */}
             {hasCatatan && (
               <div className="absolute top-3 right-3">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
@@ -192,7 +189,6 @@ const UploadPersyaratanUmum = ({
               )}
             </label>
 
-            {/* Tampilkan Catatan Verifikator */}
             {hasCatatan && (
               <div className="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
                 <div className="flex items-start gap-2">
@@ -244,10 +240,9 @@ const UploadPersyaratanUmum = ({
 
             {!isUploading && (
               <div className="flex items-center gap-3">
-                {/* File Input Area */}
                 <div className="flex-1">
                   <label
-                    htmlFor={`persyaratan-${item.id}`}
+                    htmlFor={`persyaratan-umum-${item.id}`}
                     className={`
           flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg
           cursor-pointer transition-all duration-200
@@ -260,7 +255,7 @@ const UploadPersyaratanUmum = ({
           }
         `}>
                     <input
-                      id={`persyaratan-${item.id}`}
+                      id={`persyaratan-umum-${item.id}`}
                       type="file"
                       className="hidden"
                       accept={parseValidTypes(item.valid_type)
@@ -268,12 +263,11 @@ const UploadPersyaratanUmum = ({
                         .join(",")}
                       onChange={(e) => {
                         handleFileChange(item, e.target.files?.[0] ?? null);
-                        e.target.value = ""; // supaya bisa upload file yang sama lagi
+                        e.target.value = ""; 
                       }}
                       disabled={isUploading || compressingId === item.id}
                     />
 
-                    {/* Icon */}
                     <div
                       className={`
             flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
@@ -327,7 +321,6 @@ const UploadPersyaratanUmum = ({
                       )}
                     </div>
 
-                    {/* File Info */}
                     <div className="flex-1 min-w-0">
                       {hasCatatan ? (
                         <>
@@ -357,7 +350,7 @@ const UploadPersyaratanUmum = ({
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-700 underline font-medium relative z-10"
-                              onClick={(e) => e.stopPropagation()} // ✅ Mencegah popup file explorer terbuka saat klik link
+                              onClick={(e) => e.stopPropagation()} 
                             >
                               iLovePDF
                             </a>
@@ -371,19 +364,38 @@ const UploadPersyaratanUmum = ({
                   </label>
                 </div>
 
-                {/* Action Buttons */}
                 {isUploaded && (
-                  <a
-                    href={fileName}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        let extractedName = `Dokumen_Umum_${item.id}.pdf`;
+                        try {
+                          const urlObj = new URL(fileName, window.location.origin);
+                          const fileParam = urlObj.searchParams.get("file");
+                          if (fileParam) {
+                            const actualFile = fileParam.split('/').pop() || "";
+                            const ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+                            const cleanTitle = item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_');
+                            extractedName = `${cleanTitle}${ext}`;
+                          }
+                        } catch (e) {
+                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_')}.pdf`;
+                        }
+
+                        await downloadSecureFile(fileName, extractedName);
+                      } catch (error) {
+                        toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                      }
+                    }}
                     className="
-          inline-flex items-center justify-center
-          w-10 h-10 rounded-lg
-          bg-blue-50 text-blue-600
-          hover:bg-blue-100 transition-colors
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        "
+                      inline-flex items-center justify-center
+                      w-10 h-10 rounded-lg
+                      bg-blue-50 text-blue-600
+                      hover:bg-blue-100 transition-colors
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    "
                     title="Unduh file">
                     <svg
                       className="w-5 h-5"
@@ -397,7 +409,7 @@ const UploadPersyaratanUmum = ({
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                       />
                     </svg>
-                  </a>
+                  </button>
                 )}
               </div>
             )}
