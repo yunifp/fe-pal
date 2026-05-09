@@ -6,51 +6,19 @@ import { STALE_TIME } from "@/constants/reactQuery";
 
 // Map kategori → label step di stepper agar pendaftar tahu harus ke langkah berapa
 const FIELD_STEP_MAP: Record<string, number> = {
-  // Step 0 - Identitas
-  nama_lengkap: 0,
-  nik: 0,
-  nkk: 0,
-  jenis_kelamin: 0,
-  no_hp: 0,
-  email: 0,
-  tanggal_lahir: 0,
-  tempat_lahir: 0,
-  agama: 0,
-  suku: 0,
-  berat_badan: 0,
-  tinggi_badan: 0,
-  foto_depan: 0,
-  foto_samping_kiri: 0,
-  foto_samping_kanan: 0,
-  foto_belakang: 0,
-  // Step 1 - Alamat
-  tinggal_provinsi: 1,
-  tinggal_kabkot: 1,
-  tinggal_kecamatan: 1,
-  tinggal_kelurahan: 1,
-  tinggal_alamat: 1,
-  kerja_provinsi: 1,
-  kerja_kabkot: 1,
-  kerja_alamat: 1,
-  // Step 2 - Orang Tua
-  ayah_nama: 2,
-  ayah_nik: 2,
-  ibu_nama: 2,
-  ibu_nik: 2,
-  // Step 3 - Sekolah
-  sekolah: 3,
-  jenjang_sekolah: 3,
-  tahun_lulus: 3,
-  // Step 5 - Dok Umum (label dari dokumen)
-  dokumen_umum: 5,
-  // Step 6 - Dok Khusus
-  dokumen_khusus: 6,
+  nama_lengkap: 0, nik: 0, nkk: 0, jenis_kelamin: 0, no_hp: 0, email: 0,
+  tanggal_lahir: 0, tempat_lahir: 0, agama: 0, suku: 0, berat_badan: 0,
+  tinggi_badan: 0, foto_depan: 0, foto_samping_kiri: 0, foto_samping_kanan: 0,
+  foto_belakang: 0, tinggal_provinsi: 1, tinggal_kabkot: 1, tinggal_kecamatan: 1,
+  tinggal_kelurahan: 1, tinggal_alamat: 1, kerja_provinsi: 1, kerja_kabkot: 1,
+  kerja_alamat: 1, ayah_nama: 2, ayah_nik: 2, ibu_nama: 2, ibu_nik: 2,
+  sekolah: 3, jenjang_sekolah: 3, tahun_lulus: 3, dokumen_umum: 5, dokumen_khusus: 6,
 };
 
 interface KoreksiPendaftarAlertProps {
   idTrxBeasiswa: number;
   /** Opsional: callback saat pendaftar klik "Perbaiki" pada suatu item */
-  onGoToStep?: (step: number) => void;
+  onGoToStep?: (step: number, fieldName: string) => void;
 }
 
 const KoreksiPendaftarAlert = ({
@@ -98,7 +66,9 @@ const KoreksiPendaftarAlert = ({
             return (
               <div
                 key={item.id}
-                className="flex items-start justify-between gap-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
+                className="flex items-start justify-between gap-3 rounded-lg border border-amber-200 bg-white px-3 py-2 cursor-pointer hover:border-amber-400 hover:shadow-sm transition-all"
+                onClick={() => onGoToStep && step >= 0 && onGoToStep(step, item.kategori)}
+              >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800">
                     {item.label}
@@ -112,7 +82,6 @@ const KoreksiPendaftarAlert = ({
                 {onGoToStep && step >= 0 && (
                   <button
                     type="button"
-                    onClick={() => onGoToStep(step)}
                     className="text-xs text-amber-700 underline font-medium whitespace-nowrap hover:opacity-70">
                     Perbaiki →
                   </button>

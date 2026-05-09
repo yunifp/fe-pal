@@ -16,7 +16,6 @@ import {
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
 import NilaiRapor, { type NilaiRaporForm } from "./NilaiRapor";
-import { AlertCircle } from "lucide-react";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -35,8 +34,6 @@ interface AsalSekolahProps {
   nilaiRaporError?: boolean;
   setValue: UseFormSetValue<BeasiswaFormData>;
   isFieldDisabled?: (fieldName: string) => boolean;
-  isFieldKoreksi?: (fieldName: string) => boolean;
-  getFieldCatatan?: (fieldName: string) => string | null;
 }
 
 const AsalSekolah = ({
@@ -51,8 +48,6 @@ const AsalSekolah = ({
   nilaiRaporError = false,
   setValue,
   isFieldDisabled = () => false,
-  isFieldKoreksi = () => false,
-  getFieldCatatan = () => null,
 }: AsalSekolahProps) => {
   const selectedProvinsi = useWatch({
     control,
@@ -101,7 +96,6 @@ const AsalSekolah = ({
     name: "jenjang_sekolah",
   });
 
-  // 👇 Mengecek apakah jenjang yang dipilih adalah SMK
   const isSmkSelected = selectedJenjangSekolah?.toLowerCase().includes("smk");
 
   // Fetch jurusan sekolah
@@ -156,7 +150,6 @@ const AsalSekolah = ({
     );
   }, [responseSekolah]);
 
-  // Generate opsi tahun lulus: tahun sekarang hingga 6 tahun ke belakang
   const existingTahunLulus = useWatch({ control, name: "tahun_lulus" });
 
   const tahunLulusOptions = useMemo(() => {
@@ -178,6 +171,7 @@ const AsalSekolah = ({
 
     return options;
   }, [existingTahunLulus]);
+
   const prevJenjangRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -190,8 +184,14 @@ const AsalSekolah = ({
     }
     prevJenjangRef.current = selectedJenjangSekolah;
   }, [selectedJenjangSekolah, setValue]);
+
   return (
-    <div className="space-y-6">
+    <div 
+      id="section-asal-sekolah" 
+      className={`space-y-6 transition-all duration-300 ${
+        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
+      }`}
+    >
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_pendidikan"
@@ -201,7 +201,7 @@ const AsalSekolah = ({
 
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          <div id="sekolah_provinsi">
             <CustSearchableSelect
               name="sekolah_provinsi"
               control={control}
@@ -211,15 +211,8 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.sekolah_provinsi}
             />
-            {isFieldKoreksi("sekolah_provinsi") &&
-              getFieldCatatan("sekolah_provinsi") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("sekolah_provinsi")}
-                </p>
-              )}
           </div>
-          <div>
+          <div id="sekolah_kabkot">
             <CustSearchableSelect
               name="sekolah_kabkot"
               control={control}
@@ -229,18 +222,11 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.sekolah_kabkot}
             />
-            {isFieldKoreksi("sekolah_kabkot") &&
-              getFieldCatatan("sekolah_kabkot") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("sekolah_kabkot")}
-                </p>
-              )}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          <div id="jenjang_sekolah">
             <CustSelect
               name="jenjang_sekolah"
               control={control}
@@ -250,15 +236,8 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.jenjang_sekolah}
             />
-            {isFieldKoreksi("jenjang_sekolah") &&
-              getFieldCatatan("jenjang_sekolah") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("jenjang_sekolah")}
-                </p>
-              )}
           </div>
-          <div>
+          <div id="sekolah">
             <CustSearchableSelect
               name="sekolah"
               control={control}
@@ -268,14 +247,8 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.sekolah}
             />
-            {isFieldKoreksi("sekolah") && getFieldCatatan("sekolah") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("sekolah")}
-              </p>
-            )}
           </div>
-          <div>
+          <div id="jurusan_sekolah">
             <CustSelect
               name="jurusan_sekolah"
               control={control}
@@ -285,16 +258,8 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.jurusan_sekolah}
             />
-            {isFieldKoreksi("jurusan_sekolah") &&
-              getFieldCatatan("jurusan_sekolah") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("jurusan_sekolah")}
-                </p>
-              )}
           </div>
 
-          {/* Hanya dirender jika jenjang sekolah adalah SMK */}
           {isSmkSelected && (
             <div>
               <CustInput
@@ -307,17 +272,10 @@ const AsalSekolah = ({
                 disabled={isFieldDisabled("nama_jurusan_sekolah")}
                 {...register("nama_jurusan_sekolah")}
               />
-              {isFieldKoreksi("nama_jurusan_sekolah") &&
-                getFieldCatatan("nama_jurusan_sekolah") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("nama_jurusan_sekolah")}
-                  </p>
-                )}
             </div>
           )}
 
-          <div>
+          <div id="tahun_lulus">
             <CustSelect
               name="tahun_lulus"
               control={control}
@@ -327,17 +285,9 @@ const AsalSekolah = ({
               isRequired={true}
               error={errors.tahun_lulus}
             />
-            {isFieldKoreksi("tahun_lulus") &&
-              getFieldCatatan("tahun_lulus") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("tahun_lulus")}
-                </p>
-              )}
           </div>
         </div>
 
-        {/* ✅ Teruskan showError ke NilaiRapor */}
         <NilaiRapor
           idTrxBeasiswa={idTrxBeasiswa}
           idRefBeasiswa={idRefBeasiswa}

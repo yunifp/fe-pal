@@ -80,6 +80,8 @@ export const beasiswaService = {
     idBeasiswa: number,
     page: number = 1,
     search: string = "",
+    idFlow?: string, 
+    idJalur?: string 
   ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/trx-seleksi-administrasi/${idBeasiswa}`,
@@ -87,11 +89,14 @@ export const beasiswaService = {
         params: {
           page,
           search,
+          ...(idFlow && { idFlow }), // ✅ Kirim ke backend jika ada
+          ...(idJalur && { idJalur }), // ✅ Kirim ke backend jika ada
         },
       },
     );
     return response.data;
   },
+
   getTransaksiBeasiswaByPaginationSeleksiAdministrasiDaerah: async (
     idBeasiswa: number,
     page: number = 1,

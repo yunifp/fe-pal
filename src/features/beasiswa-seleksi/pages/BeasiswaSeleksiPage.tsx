@@ -62,7 +62,8 @@ const BeasiswaSeleksiPage = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["trx-beasiswa", beasiswaAktif?.id, page, debouncedSearch],
+    // ✅ Tambahkan filter ke queryKey agar re-fetch saat filter berubah
+    queryKey: ["trx-beasiswa", beasiswaAktif?.id, page, debouncedSearch, filterIdFlow, filterIdJalur],
     retry: false,
     enabled: !!beasiswaAktif?.id,
     refetchOnWindowFocus: false,
@@ -71,24 +72,17 @@ const BeasiswaSeleksiPage = () => {
         beasiswaAktif?.id ?? 0,
         page,
         debouncedSearch,
+        // ✅ Kirim filter ke service
+        filterIdFlow !== "all" ? filterIdFlow : undefined,
+        filterIdJalur !== "all" ? filterIdJalur : undefined
       ),
     staleTime: STALE_TIME,
   });
 
+  // ✅ Langsung gunakan data dari response API (karena backend sudah memfilter)
   const allData: ITrxBeasiswa[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.total_pages ?? 0;
 
-  const filteredData = useMemo(() => {
-    return allData.filter((row) => {
-      const flowMatch =
-        filterIdFlow === "all" ? true : row.id_flow === Number(filterIdFlow);
-      const jalurMatch =
-        filterIdJalur === "all" ? true : row.id_jalur === Number(filterIdJalur);
-      return flowMatch && jalurMatch;
-    });
-  }, [allData, filterIdFlow, filterIdJalur]);
-
-  // Derived: count active filters for a visual indicator
   const activeFilterCount = [
     filterIdFlow !== "all",
     filterIdJalur !== "all",
@@ -100,6 +94,7 @@ const BeasiswaSeleksiPage = () => {
     }
   }, [isError, error]);
 
+  // ✅ Kembali ke halaman 1 saat filter atau search berubah
   useEffect(() => {
     setPage(1);
   }, [filterIdFlow, filterIdJalur, debouncedSearch]);
@@ -110,7 +105,6 @@ const BeasiswaSeleksiPage = () => {
     <div className="space-y-1">
       <CustBreadcrumb items={[{ name: "Seleksi Administratif" }]} />
 
-      {/* Page Header */}
       <div className="flex items-center gap-3 mt-4 mb-6">
         <div className="p-2 rounded-lg bg-primary/10">
           <ShieldCheck className="w-5 h-5 text-primary" />
@@ -130,13 +124,11 @@ const BeasiswaSeleksiPage = () => {
         </div>
       </div>
 
-      {/* No active beasiswa warning */}
       {!beasiswaAktif && !isLoading && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Tidak ada program beasiswa aktif yang ditemukan. Pastikan program
-            beasiswa sudah diaktifkan terlebih dahulu.
+            Tidak ada program beasiswa aktif yang ditemukan.
           </AlertDescription>
         </Alert>
       )}
@@ -145,7 +137,7 @@ const BeasiswaSeleksiPage = () => {
         <DataTable
           isLoading={isLoading}
           columns={columns}
-          data={filteredData}
+          data={allData} // ✅ Gunakan allData
           pageCount={totalPages}
           pageIndex={page - 1}
           onPageChange={(newPage) => setPage(newPage + 1)}
@@ -153,7 +145,6 @@ const BeasiswaSeleksiPage = () => {
           onSearchChange={(value) => setSearch(value)}
           leftHeaderContent={
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Filter Status / Flow */}
               <Select value={filterIdFlow} onValueChange={setFilterIdFlow}>
                 <SelectTrigger className="w-[160px] h-9 text-sm">
                   <SelectValue placeholder="Semua Status" />
@@ -165,10 +156,13 @@ const BeasiswaSeleksiPage = () => {
                       {opt.flow}
                     </SelectItem>
                   ))}
+                  <SelectItem value="4">Perlu Perbaikan</SelectItem>
+                  <SelectItem value="5">Seleksi Hasil Perbaikan</SelectItem>
+                  <SelectItem value="3">Tidak Lulus Administrasi</SelectItem>
+                  <SelectItem value="6">Lulus Administrasi</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Filter Jalur */}
               <Select value={filterIdJalur} onValueChange={setFilterIdJalur}>
                 <SelectTrigger className="w-[160px] h-9 text-sm">
                   <SelectValue placeholder="Semua Jalur" />
@@ -183,7 +177,6 @@ const BeasiswaSeleksiPage = () => {
                 </SelectContent>
               </Select>
 
-              {/* Active filter badge + reset */}
               {activeFilterCount > 0 && (
                 <button
                   className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"

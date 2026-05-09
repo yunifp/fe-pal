@@ -1,19 +1,17 @@
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { CustInput } from "@/components/CustInput";
 import { CustSelect } from "@/components/ui/CustSelect";
-// import { CustCurrencyInput } from "@/components/ui/CustCurrencyInput";
 import type { BeasiswaFormData } from "@/types/beasiswa";
 import {
   type Control,
   type FieldErrors,
   type UseFormRegister,
-  // Controller,
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@radix-ui/react-separator";
 import { useMemo } from "react";
-import { AlertCircle } from "lucide-react";
+
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
   catatan?: string | null;
@@ -25,8 +23,6 @@ interface DataOrtuProps {
   errors: FieldErrors<BeasiswaFormData>;
   sectionCatatan: SectionCatatan;
   isFieldDisabled?: (fieldName: string) => boolean;
-  isFieldKoreksi?: (fieldName: string) => boolean;
-  getFieldCatatan?: (fieldName: string) => string | null;
 }
 
 const DataOrtu = ({
@@ -35,8 +31,6 @@ const DataOrtu = ({
   errors,
   sectionCatatan,
   isFieldDisabled = () => false,
-  isFieldKoreksi = () => false,
-  getFieldCatatan = () => null,
 }: DataOrtuProps) => {
   const statusHidupOptions = useMemo(() => {
     return [
@@ -50,10 +44,7 @@ const DataOrtu = ({
       { value: "< 1.000.000", label: "< Rp 1.000.000" },
       { value: "1.000.000 - 3.000.000", label: "Rp 1.000.000 - Rp 3.000.000" },
       { value: "3.000.000 - 5.000.000", label: "Rp 3.000.000 - Rp 5.000.000" },
-      {
-        value: "5.000.000 - 10.000.000",
-        label: "Rp 5.000.000 - Rp 10.000.000",
-      },
+      { value: "5.000.000 - 10.000.000", label: "Rp 5.000.000 - Rp 10.000.000" },
       { value: "> 10.000.000", label: "> Rp 10.000.000" },
     ],
     [],
@@ -67,7 +58,12 @@ const DataOrtu = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div 
+      id="section-data-ortu" 
+      className={`space-y-6 transition-all duration-300 ${
+        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
+      }`}
+    >
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_orang_tua"
@@ -95,12 +91,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_nama")}
                 {...register("ayah_nama")}
               />
-              {isFieldKoreksi("ayah_nama") && getFieldCatatan("ayah_nama") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ayah_nama")}
-                </p>
-              )}
             </div>
             <div>
               <CustInput
@@ -116,12 +106,6 @@ const DataOrtu = ({
                 maxLength={16}
                 showCount={true}
               />
-              {isFieldKoreksi("ayah_nik") && getFieldCatatan("ayah_nik") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ayah_nik")}
-                </p>
-              )}
             </div>
           </div>
 
@@ -137,13 +121,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_jenjang_pendidikan")}
                 {...register("ayah_jenjang_pendidikan")}
               />
-              {isFieldKoreksi("ayah_jenjang_pendidikan") &&
-                getFieldCatatan("ayah_jenjang_pendidikan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_jenjang_pendidikan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -156,18 +133,11 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_pekerjaan")}
                 {...register("ayah_pekerjaan")}
               />
-              {isFieldKoreksi("ayah_pekerjaan") &&
-                getFieldCatatan("ayah_pekerjaan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_pekerjaan")}
-                  </p>
-                )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div id="ayah_penghasilan">
               <CustSelect
                 name="ayah_penghasilan"
                 control={control}
@@ -177,15 +147,8 @@ const DataOrtu = ({
                 isRequired
                 error={errors.ayah_penghasilan}
               />
-              {isFieldKoreksi("ayah_penghasilan") &&
-                getFieldCatatan("ayah_penghasilan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_penghasilan")}
-                  </p>
-                )}
             </div>
-            <div>
+            <div id="ayah_status_hidup">
               <CustSelect
                 name="ayah_status_hidup"
                 control={control}
@@ -195,13 +158,6 @@ const DataOrtu = ({
                 error={errors.ayah_status_hidup}
                 isRequired
               />
-              {isFieldKoreksi("ayah_status_hidup") &&
-                getFieldCatatan("ayah_status_hidup") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_status_hidup")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -217,13 +173,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_status_kekerabatan")}
                 {...register("ayah_status_kekerabatan")}
               />
-              {isFieldKoreksi("ayah_status_kekerabatan") &&
-                getFieldCatatan("ayah_status_kekerabatan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_status_kekerabatan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -236,13 +185,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_tempat_lahir")}
                 {...register("ayah_tempat_lahir")}
               />
-              {isFieldKoreksi("ayah_tempat_lahir") &&
-                getFieldCatatan("ayah_tempat_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_tempat_lahir")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -259,13 +201,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_tanggal_lahir")}
                 {...register("ayah_tanggal_lahir")}
               />
-              {isFieldKoreksi("ayah_tanggal_lahir") &&
-                getFieldCatatan("ayah_tanggal_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_tanggal_lahir")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -279,13 +214,6 @@ const DataOrtu = ({
                 {...register("ayah_no_hp")}
                 onKeyDown={onlyNumbers}
               />
-              {isFieldKoreksi("ayah_no_hp") &&
-                getFieldCatatan("ayah_no_hp") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_no_hp")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -300,13 +228,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_email")}
                 {...register("ayah_email")}
               />
-              {isFieldKoreksi("ayah_email") &&
-                getFieldCatatan("ayah_email") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_email")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -319,13 +240,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_alamat")}
                 {...register("ayah_alamat")}
               />
-              {isFieldKoreksi("ayah_alamat") &&
-                getFieldCatatan("ayah_alamat") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ayah_alamat")}
-                  </p>
-                )}
             </div>
           </div>
         </CardContent>
@@ -351,12 +265,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_nama")}
                 {...register("ibu_nama")}
               />
-              {isFieldKoreksi("ibu_nama") && getFieldCatatan("ibu_nama") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ibu_nama")}
-                </p>
-              )}
             </div>
             <div>
               <CustInput
@@ -372,12 +280,6 @@ const DataOrtu = ({
                 maxLength={16}
                 showCount={true}
               />
-              {isFieldKoreksi("ibu_nik") && getFieldCatatan("ibu_nik") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ibu_nik")}
-                </p>
-              )}
             </div>
           </div>
 
@@ -393,13 +295,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_jenjang_pendidikan")}
                 {...register("ibu_jenjang_pendidikan")}
               />
-              {isFieldKoreksi("ibu_jenjang_pendidikan") &&
-                getFieldCatatan("ibu_jenjang_pendidikan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_jenjang_pendidikan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -412,18 +307,11 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_pekerjaan")}
                 {...register("ibu_pekerjaan")}
               />
-              {isFieldKoreksi("ibu_pekerjaan") &&
-                getFieldCatatan("ibu_pekerjaan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_pekerjaan")}
-                  </p>
-                )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div id="ibu_penghasilan">
               <CustSelect
                 name="ibu_penghasilan"
                 control={control}
@@ -433,15 +321,8 @@ const DataOrtu = ({
                 isRequired
                 error={errors.ibu_penghasilan}
               />
-              {isFieldKoreksi("ibu_penghasilan") &&
-                getFieldCatatan("ibu_penghasilan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_penghasilan")}
-                  </p>
-                )}
             </div>
-            <div>
+            <div id="ibu_status_hidup">
               <CustSelect
                 name="ibu_status_hidup"
                 control={control}
@@ -451,13 +332,6 @@ const DataOrtu = ({
                 error={errors.ibu_status_hidup}
                 isRequired
               />
-              {isFieldKoreksi("ibu_status_hidup") &&
-                getFieldCatatan("ibu_status_hidup") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_status_hidup")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -473,13 +347,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_status_kekerabatan")}
                 {...register("ibu_status_kekerabatan")}
               />
-              {isFieldKoreksi("ibu_status_kekerabatan") &&
-                getFieldCatatan("ibu_status_kekerabatan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_status_kekerabatan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -492,13 +359,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_tempat_lahir")}
                 {...register("ibu_tempat_lahir")}
               />
-              {isFieldKoreksi("ibu_tempat_lahir") &&
-                getFieldCatatan("ibu_tempat_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_tempat_lahir")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -515,13 +375,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_tanggal_lahir")}
                 {...register("ibu_tanggal_lahir")}
               />
-              {isFieldKoreksi("ibu_tanggal_lahir") &&
-                getFieldCatatan("ibu_tanggal_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_tanggal_lahir")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -535,12 +388,6 @@ const DataOrtu = ({
                 {...register("ibu_no_hp")}
                 onKeyDown={onlyNumbers}
               />
-              {isFieldKoreksi("ibu_no_hp") && getFieldCatatan("ibu_no_hp") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ibu_no_hp")}
-                </p>
-              )}
             </div>
           </div>
 
@@ -555,12 +402,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_email")}
                 {...register("ibu_email")}
               />
-              {isFieldKoreksi("ibu_email") && getFieldCatatan("ibu_email") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("ibu_email")}
-                </p>
-              )}
             </div>
             <div>
               <CustInput
@@ -573,13 +414,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_alamat")}
                 {...register("ibu_alamat")}
               />
-              {isFieldKoreksi("ibu_alamat") &&
-                getFieldCatatan("ibu_alamat") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("ibu_alamat")}
-                  </p>
-                )}
             </div>
           </div>
         </CardContent>
@@ -604,12 +438,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_nama")}
                 {...register("wali_nama")}
               />
-              {isFieldKoreksi("wali_nama") && getFieldCatatan("wali_nama") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("wali_nama")}
-                </p>
-              )}
             </div>
             <div>
               <CustInput
@@ -623,12 +451,6 @@ const DataOrtu = ({
                 onKeyDown={onlyNumbers}
                 maxLength={16}
               />
-              {isFieldKoreksi("wali_nik") && getFieldCatatan("wali_nik") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("wali_nik")}
-                </p>
-              )}
             </div>
           </div>
 
@@ -643,13 +465,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_jenjang_pendidikan")}
                 {...register("wali_jenjang_pendidikan")}
               />
-              {isFieldKoreksi("wali_jenjang_pendidikan") &&
-                getFieldCatatan("wali_jenjang_pendidikan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_jenjang_pendidikan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -661,18 +476,11 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_pekerjaan")}
                 {...register("wali_pekerjaan")}
               />
-              {isFieldKoreksi("wali_pekerjaan") &&
-                getFieldCatatan("wali_pekerjaan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_pekerjaan")}
-                  </p>
-                )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div id="wali_penghasilan">
               <CustSelect
                 name="wali_penghasilan"
                 control={control}
@@ -681,15 +489,8 @@ const DataOrtu = ({
                 placeholder="Pilih range penghasilan"
                 error={errors.wali_penghasilan}
               />
-              {isFieldKoreksi("wali_penghasilan") &&
-                getFieldCatatan("wali_penghasilan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_penghasilan")}
-                  </p>
-                )}
             </div>
-            <div>
+            <div id="wali_status_hidup">
               <CustSelect
                 name="wali_status_hidup"
                 control={control}
@@ -698,13 +499,6 @@ const DataOrtu = ({
                 placeholder="Pilih status hidup"
                 error={errors.wali_status_hidup}
               />
-              {isFieldKoreksi("wali_status_hidup") &&
-                getFieldCatatan("wali_status_hidup") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_status_hidup")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -719,13 +513,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_status_kekerabatan")}
                 {...register("wali_status_kekerabatan")}
               />
-              {isFieldKoreksi("wali_status_kekerabatan") &&
-                getFieldCatatan("wali_status_kekerabatan") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_status_kekerabatan")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -737,13 +524,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_tempat_lahir")}
                 {...register("wali_tempat_lahir")}
               />
-              {isFieldKoreksi("wali_tempat_lahir") &&
-                getFieldCatatan("wali_tempat_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_tempat_lahir")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -759,13 +539,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_tanggal_lahir")}
                 {...register("wali_tanggal_lahir")}
               />
-              {isFieldKoreksi("wali_tanggal_lahir") &&
-                getFieldCatatan("wali_tanggal_lahir") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_tanggal_lahir")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -778,13 +551,6 @@ const DataOrtu = ({
                 {...register("wali_no_hp")}
                 onKeyDown={onlyNumbers}
               />
-              {isFieldKoreksi("wali_no_hp") &&
-                getFieldCatatan("wali_no_hp") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_no_hp")}
-                  </p>
-                )}
             </div>
           </div>
 
@@ -799,13 +565,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_email")}
                 {...register("wali_email")}
               />
-              {isFieldKoreksi("wali_email") &&
-                getFieldCatatan("wali_email") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_email")}
-                  </p>
-                )}
             </div>
             <div>
               <CustInput
@@ -817,13 +576,6 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_alamat")}
                 {...register("wali_alamat")}
               />
-              {isFieldKoreksi("wali_alamat") &&
-                getFieldCatatan("wali_alamat") && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {getFieldCatatan("wali_alamat")}
-                  </p>
-                )}
             </div>
           </div>
         </CardContent>

@@ -19,7 +19,7 @@ import { useEffect, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
 import { compressIfImage } from "@/utils/fileCompressor";
 import { toast } from "sonner";
-import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan ini
+import { SecureImage } from "@/components/SecureImage";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -41,8 +41,6 @@ interface Step1IdentitasPribadiProps {
   sukuOptions: RefOption[];
   onUmurChange?: (melebihi: boolean) => void;
   isFieldDisabled?: (fieldName: string) => boolean;
-  isFieldKoreksi?: (fieldName: string) => boolean;
-  getFieldCatatan?: (fieldName: string) => string | null;
 }
 
 interface RefOption {
@@ -77,8 +75,6 @@ const IdentitasPribadi = ({
   sukuOptions,
   onUmurChange,
   isFieldDisabled = () => false,
-  isFieldKoreksi = () => false,
-  getFieldCatatan = () => null,
 }: Step1IdentitasPribadiProps) => {
   
   const onFotoChange = async (file: File | null) => {
@@ -115,7 +111,12 @@ const IdentitasPribadi = ({
   }, [umurMelebihi]);
 
   return (
-    <div className="space-y-6">
+    <div 
+      id="section-data-pribadi" 
+      className={`space-y-6 transition-all duration-300 ${
+        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
+      }`}
+    >
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_pribadi"
@@ -128,7 +129,6 @@ const IdentitasPribadi = ({
           {existFoto && (
             <div className="space-y-1 text-center">
               <Label>Foto Profil Sekarang</Label>
-              {/* ✅ Ganti img dengan SecureImage */}
               <SecureImage
                 src={existFoto}
                 alt="Foto profil saat ini"
@@ -137,7 +137,7 @@ const IdentitasPribadi = ({
             </div>
           )}
 
-          <div className="w-full space-y-1.5">
+          <div className="w-full space-y-1.5" id="foto">
             <Label>{existFoto ? "Ubah" : "Pilih"} Foto Untuk Profile</Label>
             <DropAndCropRectangle
               name="foto"
@@ -176,13 +176,6 @@ const IdentitasPribadi = ({
                 },
               })}
             />
-            {isFieldKoreksi("nama_lengkap") &&
-              getFieldCatatan("nama_lengkap") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("nama_lengkap")}
-                </p>
-              )}
           </div>
           <div>
             <CustInput
@@ -199,25 +192,11 @@ const IdentitasPribadi = ({
               errorMessage={errors.nik?.message}
               disabled={isFieldDisabled("nik")}
               onKeyDown={(e) => {
-                const allowed = [
-                  "Backspace",
-                  "Delete",
-                  "ArrowLeft",
-                  "ArrowRight",
-                  "Tab",
-                  "Enter",
-                ];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                  e.preventDefault();
+                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
               }}
               {...register("nik")}
             />
-            {isFieldKoreksi("nik") && getFieldCatatan("nik") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("nik")}
-              </p>
-            )}
           </div>
         </div>
 
@@ -237,27 +216,13 @@ const IdentitasPribadi = ({
               errorMessage={errors.nkk?.message}
               disabled={isFieldDisabled("nkk")}
               onKeyDown={(e) => {
-                const allowed = [
-                  "Backspace",
-                  "Delete",
-                  "ArrowLeft",
-                  "ArrowRight",
-                  "Tab",
-                  "Enter",
-                ];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                  e.preventDefault();
+                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
               }}
               {...register("nkk")}
             />
-            {isFieldKoreksi("nkk") && getFieldCatatan("nkk") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("nkk")}
-              </p>
-            )}
           </div>
-          <div>
+          <div id="jenis_kelamin">
             <CustSelect
               name="jenis_kelamin"
               control={control}
@@ -284,12 +249,6 @@ const IdentitasPribadi = ({
               {...register("no_hp")}
               disabled={isFieldDisabled("no_hp")}
             />
-            {isFieldKoreksi("no_hp") && getFieldCatatan("no_hp") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("no_hp")}
-              </p>
-            )}
           </div>
           <div>
             <CustInput
@@ -302,12 +261,6 @@ const IdentitasPribadi = ({
               {...register("email")}
               disabled={isFieldDisabled("email")}
             />
-            {isFieldKoreksi("email") && getFieldCatatan("email") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("email")}
-              </p>
-            )}
           </div>
         </div>
 
@@ -324,13 +277,6 @@ const IdentitasPribadi = ({
               {...register("tanggal_lahir")}
               disabled={isFieldDisabled("tanggal_lahir")}
             />
-            {isFieldKoreksi("tanggal_lahir") &&
-              getFieldCatatan("tanggal_lahir") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("tanggal_lahir")}
-                </p>
-              )}
           </div>
           <div>
             <CustInput
@@ -343,13 +289,6 @@ const IdentitasPribadi = ({
               {...register("tempat_lahir")}
               disabled={isFieldDisabled("tempat_lahir")}
             />
-            {isFieldKoreksi("tempat_lahir") &&
-              getFieldCatatan("tempat_lahir") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("tempat_lahir")}
-                </p>
-              )}
           </div>
         </div>
         {umurMelebihi && (
@@ -360,7 +299,7 @@ const IdentitasPribadi = ({
           </div>
         )}
         <div className="grid grid-cols-2 gap-4 items-start">
-          <div>
+          <div id="agama">
             <CustSelect
               name="agama"
               control={control}
@@ -371,7 +310,7 @@ const IdentitasPribadi = ({
               error={errors.agama}
             />
           </div>
-          <div>
+          <div id="suku">
             <CustSelect
               name="suku"
               control={control}
@@ -395,12 +334,6 @@ const IdentitasPribadi = ({
               {...register("pekerjaan")}
               disabled={isFieldDisabled("pekerjaan")}
             />
-            {isFieldKoreksi("pekerjaan") && getFieldCatatan("pekerjaan") && (
-              <p className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                {getFieldCatatan("pekerjaan")}
-              </p>
-            )}
           </div>
           <div>
             <CustInput
@@ -412,13 +345,6 @@ const IdentitasPribadi = ({
               {...register("instansi_pekerjaan")}
               disabled={isFieldDisabled("instansi_pekerjaan")}
             />
-            {isFieldKoreksi("instansi_pekerjaan") &&
-              getFieldCatatan("instansi_pekerjaan") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("instansi_pekerjaan")}
-                </p>
-              )}
           </div>
         </div>
 
@@ -434,27 +360,12 @@ const IdentitasPribadi = ({
               error={!!errors.berat_badan}
               errorMessage={errors.berat_badan?.message}
               onKeyDown={(e) => {
-                const allowed = [
-                  "Backspace",
-                  "Delete",
-                  "ArrowLeft",
-                  "ArrowRight",
-                  "Tab",
-                  "Enter",
-                ];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                  e.preventDefault();
+                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
               }}
               {...register("berat_badan")}
               disabled={isFieldDisabled("berat_badan")}
             />
-            {isFieldKoreksi("berat_badan") &&
-              getFieldCatatan("berat_badan") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("berat_badan")}
-                </p>
-              )}
           </div>
           <div>
             <CustInput
@@ -467,27 +378,12 @@ const IdentitasPribadi = ({
               error={!!errors.tinggi_badan}
               errorMessage={errors.tinggi_badan?.message}
               onKeyDown={(e) => {
-                const allowed = [
-                  "Backspace",
-                  "Delete",
-                  "ArrowLeft",
-                  "ArrowRight",
-                  "Tab",
-                  "Enter",
-                ];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
-                  e.preventDefault();
+                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
               }}
               {...register("tinggi_badan")}
               disabled={isFieldDisabled("tinggi_badan")}
             />
-            {isFieldKoreksi("tinggi_badan") &&
-              getFieldCatatan("tinggi_badan") && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan("tinggi_badan")}
-                </p>
-              )}
           </div>
         </div>
       </div>

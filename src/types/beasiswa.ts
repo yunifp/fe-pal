@@ -315,6 +315,7 @@ export interface ITrxBeasiswa {
   berita_acara_verifikator_dinas?: string | null;
   status_hasil_analisa_rasio?: "Y" | "N" | null;
   file_rekomendasi_teknis?: string | null;
+  timestamp_lock_selektor?: string | null;
   status_undur_diri?: "Y" | "N" | null;
   status_akhir_kelulusan?: "Y" | "N" | null;
 

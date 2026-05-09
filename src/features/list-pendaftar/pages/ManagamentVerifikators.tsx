@@ -373,10 +373,10 @@ const ManajemenVerifikator = () => {
       // Catatan: Jika di DB Anda id_flow untuk "Perlu Perbaikan" BUKAN 4, silakan sesuaikan angkanya di bawah ini.
       const flowLabelMap = (idFlow: number): string => {
         if (idFlow === 3) return "Tidak Lulus Administrasi";
-        if (idFlow === 4) return "Perlu Perbaikan"; 
+        if (idFlow === 4) return "Perlu Perbaikan";
         if (idFlow === 5) return "Seleksi Hasil Perbaikan";
-        if (idFlow === 6 || idFlow > 6) return "Lulus Administrasi"; 
-        return "Seleksi Administrasi"; 
+        if (idFlow === 6 || idFlow > 6) return "Lulus Administrasi";
+        return "Seleksi Administrasi";
       };
 
       // Merge count per label
@@ -442,13 +442,12 @@ const ManajemenVerifikator = () => {
           {/* Status badge lock */}
           {!isLoadingPendaftar && totalBelumAssign > 0 && (
             <div
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${
-                totalLocked >= totalBelumAssign
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : totalLocked > 0
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-red-50 text-red-700 border-red-200"
-              }`}>
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${totalLocked >= totalBelumAssign
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : totalLocked > 0
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-red-50 text-red-700 border-red-200"
+                }`}>
               {totalLocked >= totalBelumAssign ? (
                 <Lock className="h-3 w-3" />
               ) : (
@@ -517,7 +516,7 @@ const ManajemenVerifikator = () => {
           </p>
         </div>
       )}
-      
+
       {/* Banner: belum ada yang di-lock */}
       {!isLoadingPendaftar && totalBelumAssign > 0 && totalLocked === 0 && (
         <div className="mt-2 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -600,20 +599,18 @@ const ManajemenVerifikator = () => {
                   setFilterAssign("filter-unassigned");
                   setFilterSelektor("all");
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
-                  filterAssign === "filter-unassigned"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}>
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-unassigned"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}>
                 Belum Ter-assign
               </button>
               <button
                 onClick={() => setFilterAssign("filter-assigned")}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
-                  filterAssign === "filter-assigned"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}>
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-assigned"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}>
                 Sudah Ter-assign
               </button>
             </div>
@@ -652,11 +649,16 @@ const ManajemenVerifikator = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Status</SelectItem>
+
+                    {/* 1. Render otomatis data yang dikirim dari API (ID 2, 3, 5, dll) */}
                     {(responseFlow?.data ?? []).map((opt) => (
                       <SelectItem key={opt.id} value={String(opt.id)}>
                         {opt.flow}
                       </SelectItem>
                     ))}
+
+                    {/* 2. Tambahkan manual HANYA status yang tidak dikirim oleh API */}
+                    <SelectItem value="4">Perlu Perbaikan</SelectItem>
                     <SelectItem value="lulus">Lulus Administrasi</SelectItem>
                   </SelectContent>
                 </Select>
@@ -715,11 +717,10 @@ const ManajemenVerifikator = () => {
           {/* Quota counter */}
           {hasAnyInput && (
             <div
-              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${
-                isOverQuota
-                  ? "bg-red-100 text-red-700 border border-red-200"
-                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              }`}>
+              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${isOverQuota
+                ? "bg-red-100 text-red-700 border border-red-200"
+                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                }`}>
               {totalDiInput.toLocaleString("id-ID")} /{" "}
               {totalBelumAssign.toLocaleString("id-ID")} pendaftar
             </div>
@@ -755,19 +756,17 @@ const ManajemenVerifikator = () => {
                     return (
                       <div
                         key={v.id}
-                        className={`rounded-lg border px-4 py-3.5 transition-colors ${
-                          hasInput
-                            ? "border-primary/30 bg-primary/5"
-                            : "border-border"
-                        }`}>
+                        className={`rounded-lg border px-4 py-3.5 transition-colors ${hasInput
+                          ? "border-primary/30 bg-primary/5"
+                          : "border-border"
+                          }`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                                hasInput
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-primary/10 text-primary"
-                              }`}>
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${hasInput
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-primary/10 text-primary"
+                                }`}>
                               {v.nama.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -989,12 +988,12 @@ const ManajemenVerifikator = () => {
                                 <BarChart3 className="h-3.5 w-3.5" />
                                 Grafik Status Seleksi Administrasi
                               </p>
-                              
+
                               <div className="space-y-4">
                                 {(rincianPerVerifikator[v.id] ?? []).map(({ status, count }) => {
                                   // Hitung persentase bar (relatif terhadap beban total verifikator)
                                   const pctStatus = v.total_beban > 0 ? ((count / v.total_beban) * 100) : 0;
-                                  
+
                                   // Warnai bar sesuai status agar mudah dibedakan
                                   let barColor = "bg-slate-400";
                                   if (status === "Lulus Administrasi") barColor = "bg-emerald-500";
@@ -1032,7 +1031,7 @@ const ManajemenVerifikator = () => {
                   );
                 })
             )}
-            
+
             {!isLoadingInfo && verifikatorList.length > 0 && (
               <div className="pt-1 border-t flex justify-between text-xs text-muted-foreground">
                 <span>

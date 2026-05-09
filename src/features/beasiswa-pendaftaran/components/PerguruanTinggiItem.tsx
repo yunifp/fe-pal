@@ -18,25 +18,13 @@ type Props = {
   index: number;
   control: Control<any>;
   remove: (index: number) => void;
-  onProdiReady?: (index: number) => void; // ← tambahkan
-  /**
-   * Hanya berisi PT yang punya prodi (sudah difilter di PilihanJurusan).
-   */
+  onProdiReady?: (index: number) => void;
   perguruanTinggiOptions: Array<{
     value: string;
     label: string;
     has_d1_d2?: boolean;
   }>;
-  /**
-   * Map idPT → array jenjang prodi yang tersedia.
-   * Digunakan untuk:
-   *   - menentukan apakah PT bisa dipilih 2× (harus punya D1/D2 dan non-D1/D2)
-   *   - memfilter prodi yang ditampilkan berdasarkan sibling slot
-   */
-  ptProdiMap: Map<string, string[]>;
-  /**
-   * Semua nilai pilihan saat ini, untuk menghitung sibling dan disable PT.
-   */
+  ptProdiMap: Map<string, any[]>; // ← Diperbarui jadi any array
   allPilihan: Array<{
     perguruan_tinggi?: string;
     program_studi?: string;
@@ -78,33 +66,26 @@ const PerguruanTinggiItem: FC<Props> = ({
   const selectedJurusanSekolah = selectedJurusanSekolahRaw?.split("#")[0];
   const idPt = selectedPT?.split("#")[0];
 
-  // ── Refs ─────────────────────────────────────────────────────
   const isProdiLoadedRef = useRef(false);
   const prevIdPtRef = useRef<string | undefined>(undefined);
   const pendingProdiValueRef = useRef<string | undefined>(undefined);
 
-  // Reset prodi saat user mengganti PT
   useEffect(() => {
     if (prevIdPtRef.current === undefined) {
-      // Mount pertama kali — simpan nilai existing, jangan reset
       prevIdPtRef.current = idPt;
       return;
     }
     if (prevIdPtRef.current === idPt) return;
 
-    // User mengganti PT secara aktif → reset prodi
     prevIdPtRef.current = idPt;
     isProdiLoadedRef.current = false;
-    pendingProdiValueRef.current = undefined; // ← bersihkan pending juga
+    pendingProdiValueRef.current = undefined; 
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
       shouldDirty: true,
       shouldValidate: true,
     });
   }, [idPt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Fetch prodi untuk PT yang dipilih ─────────────────────────
-  // Data ini sudah di-cache oleh React Query dari batch-fetch di PilihanJurusan,
-  // sehingga request ini hampir selalu gratis (tidak ada network trip baru).
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
     queryKey: ["program-studi", idPt, kondisiButaWarna, selectedJurusanSekolah],
     queryFn: () =>
@@ -117,27 +98,15 @@ const PerguruanTinggiItem: FC<Props> = ({
     refetchOnWindowFocus: false,
   });
 
-  /**
-   * Filter prodi yang ditampilkan:
-   *  1. Buta warna → hanya boleh_buta_warna = "Y"
-   *  2. Sibling slot memilih PT yang sama:
-   *       - Sibling sudah pilih D1/D2 → slot ini hanya tampilkan non-D1/D2
-   *       - Sibling sudah pilih non-D1/D2 → slot ini hanya tampilkan D1/D2
-   *
-   * Value prodi disimpan sebagai "idProdi#namaProdi#jenjang" agar parent
-   * bisa ekstrak jenjang tanpa fetch ulang.
-   */
   const filteredProdiOptions = useMemo(() => {
     if (!responseProdi?.data) return [];
 
     let list = responseProdi.data;
 
-    // Filter buta warna
     if (kondisiButaWarna === "Y") {
-      list = list.filter((ps) => ps.boleh_buta_warna === "Y");
+      list = list.filter((ps: any) => ps.boleh_buta_warna === "Y");
     }
 
-    // Filter berdasarkan sibling
     if (idPt) {
       const sibling = allPilihan.find((p, i) => {
         if (i === index) return false;
@@ -149,39 +118,26 @@ const PerguruanTinggiItem: FC<Props> = ({
           sibling.program_studi,
         );
         if (isJenjangD1D2(siblingJenjang)) {
-          list = list.filter((ps) => isJenjangNonD1D2(ps.jenjang));
+          list = list.filter((ps: any) => isJenjangNonD1D2(ps.jenjang));
         } else if (isJenjangNonD1D2(siblingJenjang)) {
-          list = list.filter((ps) => isJenjangD1D2(ps.jenjang));
+          list = list.filter((ps: any) => isJenjangD1D2(ps.jenjang));
         }
       }
     }
 
-    return list.map((ps) => ({
+    return list.map((ps: any) => ({
       value: `${ps.id_prodi}#${ps.nama_prodi}#${ps.jenjang}`,
       label: `${ps.nama_prodi} (${ps.jenjang})`,
       kuota: ps.kuota,
     }));
   }, [responseProdi, kondisiButaWarna, idPt, allPilihan, index]);
 
-  /**
-   * Disable PT yang tidak bisa dipilih di slot ini.
-   *
-   * PT di-disable jika:
-   *  a. PT biasa (tidak punya D1/D2 dan non-D1/D2 sekaligus) sudah dipilih
-   *     di slot lain.
-   *  b. PT yang layak 2× sudah dipilih 2× di slot lain.
-   *  c. PT yang layak 2× sudah dipilih 1× di slot lain dengan prodi D1/D2,
-   *     dan PT ini tidak punya prodi non-D1/D2 (atau sebaliknya) → tidak ada
-   *     kombinasi valid tersisa. Kondisi ini tercermin dari filteredProdiOptions
-   *     yang akan kosong, jadi kita tidak perlu disable di sini (user bisa pilih
-   *     PT, lalu lihat pesan "tidak ada prodi").
-   */
   const disabledPtIdSet = useMemo(() => {
     const disabled = new Set<string>();
 
     perguruanTinggiOptions.forEach((opt) => {
       const optIdPT = extractIdPT(opt.value);
-      if (optIdPT === idPt) return; // jangan disable PT yang sudah dipilih di slot ini
+      if (optIdPT === idPt) return; 
 
       const countInOtherSlots = allPilihan.filter((p, i) => {
         if (i === index) return false;
@@ -190,26 +146,27 @@ const PerguruanTinggiItem: FC<Props> = ({
 
       if (countInOtherSlots === 0) return;
 
-      // Cek apakah PT layak dipilih 2×
-      const prodiList = ptProdiMap.get(optIdPT) ?? [];
+      const rawProdiList = ptProdiMap.get(optIdPT) ?? [];
+      const prodiList = kondisiButaWarna === "Y" 
+        ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
+        : rawProdiList;
+
       const ptCanDouble =
-        prodiList.some((j) => isJenjangD1D2(j)) &&
-        prodiList.some((j) => isJenjangNonD1D2(j));
+        prodiList.some((j) => isJenjangD1D2(j.jenjang || j)) &&
+        prodiList.some((j) => isJenjangNonD1D2(j.jenjang || j));
 
       if (!ptCanDouble) {
-        // PT biasa: sudah dipilih 1× → disable
         disabled.add(optIdPT);
         return;
       }
 
       if (countInOtherSlots >= 2) {
-        // PT dengan D1/D2 sudah dipilih 2× → disable
         disabled.add(optIdPT);
       }
     });
 
     return disabled;
-  }, [perguruanTinggiOptions, allPilihan, index, idPt, ptProdiMap]);
+  }, [perguruanTinggiOptions, allPilihan, index, idPt, ptProdiMap, kondisiButaWarna]);
 
   const filteredPtOptions = useMemo(
     () =>
@@ -220,13 +177,12 @@ const PerguruanTinggiItem: FC<Props> = ({
     [perguruanTinggiOptions, disabledPtIdSet],
   );
 
-  // Mark prodi sudah ter-load
   useEffect(() => {
     if (!idPt) {
       onProdiReady?.(index);
       return;
     }
-    if (isFetchingProdi) return; // ← tunggu benar-benar selesai
+    if (isFetchingProdi) return; 
 
     isProdiLoadedRef.current = true;
     onProdiReady?.(index);
@@ -238,7 +194,6 @@ const PerguruanTinggiItem: FC<Props> = ({
     [filteredProdiOptions, selectedProdiValue],
   );
 
-  // Reset prodi jika tidak lagi valid setelah filter berubah
   useEffect(() => {
     if (isFetchingProdi) return;
     if (!isProdiLoadedRef.current) return;
@@ -264,7 +219,6 @@ const PerguruanTinggiItem: FC<Props> = ({
     setValue,
   ]);
 
-  // BARU: setelah prodi ter-load, cek apakah nilai existing perlu di-restore
   useEffect(() => {
     if (!isProdiLoadedRef.current) return;
     if (isFetchingProdi) return;
@@ -272,12 +226,10 @@ const PerguruanTinggiItem: FC<Props> = ({
     if (!selectedProdiValue) return;
     if (filteredProdiOptions.length === 0) return;
 
-    // Nilai sudah ada di options → tidak perlu apa-apa
     const alreadyValid = filteredProdiOptions.some(
       (opt) => opt.value === selectedProdiValue,
     );
 
-    // Jika tidak valid DAN ada di options dengan id yang sama (format berbeda) → coba exact match by id
     if (!alreadyValid) {
       const selectedId = selectedProdiValue.split("#")[0];
       const match = filteredProdiOptions.find(
@@ -303,7 +255,6 @@ const PerguruanTinggiItem: FC<Props> = ({
     });
   };
 
-  // ── Label slot dinamis ────────────────────────────────────────
   const slotLabel = useMemo(() => {
     if (!idPt) return `Pilihan ${index + 1}`;
     const hasSibling = allPilihan.some((p, i) => {

@@ -4,11 +4,39 @@ import { useNavigate } from "react-router-dom";
 import useHasAccess from "@/hooks/useHasAccess";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
-import { ShieldCheck, Eye, User, FileDown, Loader2 } from "lucide-react";
+import { ShieldCheck, Eye, User, FileDown, Loader2, Clock } from "lucide-react";
 import { useState } from "react";
 import { beasiswaService } from "@/services/beasiswaService";
 import { SecureImage } from "@/components/SecureImage";
 
+// ─── Helper Format Waktu ──────────────────────────────────────────────────
+const formatWaktuKunci = (dateString?: string | null) => {
+  if (!dateString) return "-";
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "-";
+
+  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  const dayName = days[date.getDay()];
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${dayName}, ${day} ${month} ${year} : ${hours}:${minutes}:${seconds}`;
+};
+// ──────────────────────────────────────────────────────────────────────────
+
+// ⚠️ Hooks (useNavigate, useHasAccess) must NOT be called inside cell renderers.
+// They belong in a wrapper component instead.
 const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");
@@ -152,6 +180,26 @@ export const getColumns = (): ColumnDef<ITrxBeasiswa>[] => [
         {row.original.jalur ?? "-"}
       </span>
     ),
+  },
+  {
+    id: "waktu_kunci",
+    header: () => (
+      <span className="text-xs font-semibold -foreground uppercase tracking-wide flex items-center gap-1.5">
+        <Clock className="w-3.5 h-3.5" />
+        Waktu Kunci
+      </span>
+    ),
+    cell: ({ row }) => {
+      const lockTime = row.original.timestamp_lock_selektor;
+      if (!lockTime) {
+        return <span className="text-muted-foreground text-xs italic">-</span>;
+      }
+      return (
+        <span className="text-xs font-medium text-slate-700 whitespace-nowrap">
+          {formatWaktuKunci(lockTime)}
+        </span>
+      );
+    },
   },
   {
     id: "status_pendaftaran",

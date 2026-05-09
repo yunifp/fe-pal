@@ -29,6 +29,8 @@ interface PilihanJurusanProps {
   idTrxBeasiswa?: number;
 }
 
+export type ProdiCacheItem = { jenjang: string; boleh_buta_warna?: string };
+
 // ── Konstanta jenjang ────────────────────────────────────────────────────────
 const D1D2_JENJANG = new Set(["D1", "D2"]);
 const NON_D1D2_JENJANG = new Set(["D3", "D4", "S1"]);
@@ -42,10 +44,6 @@ export const isJenjangNonD1D2 = (jenjang: string): boolean =>
 export const extractIdPT = (ptValue: string): string =>
   ptValue?.split("#")[0] ?? "";
 
-/**
- * Parse field has_d1_d2 dari API.
- * API bisa mengembalikan "Y", "1", 1, atau null/undefined.
- */
 export const parseHasD1D2 = (
   raw: string | number | null | undefined,
 ): boolean => {
@@ -54,11 +52,6 @@ export const parseHasD1D2 = (
   return s === "Y" || s === "1";
 };
 
-/**
- * Ekstrak jenjang dari nilai program_studi yang disimpan di form.
- * Format: "idProdi#namaProdi#jenjang"  → ambil bagian ke-3
- * Fallback: cari dalam kurung di akhir string → "(D1)"
- */
 export const extractJenjangFromProdiValue = (value: string): string => {
   if (!value) return "";
   const parts = value.split("#");
@@ -67,37 +60,31 @@ export const extractJenjangFromProdiValue = (value: string): string => {
   return match ? match[1].trim() : "";
 };
 
-/**
- * Hitung total slot yang harus ditampilkan.
- *
- * Total = jumlah PT yang punya prodi
- * + jumlah PT yang punya prodi D1/D2 (slot ekstra)
- *
- * "Punya prodi" artinya ada di ptProdiMap (sudah di-fetch dan tidak kosong).
- * PT yang tidak punya prodi sama sekali → tidak ditampilkan, tidak diberi slot.
- *
- * @param ptList          - daftar PT dari API
- * @param ptProdiMap      - Map idPT → array prodi yang tersedia (sudah filter buta warna)
- * @param kondisiButaWarna - "Y" | "N" | ""
- */
 export const buildSlotCount = (
   ptList: Array<{
     id_pt: number;
     has_d1_d2?: string | number | null;
   }>,
-  ptProdiMap: Map<string, string[]>,
+  ptProdiMap: Map<string, ProdiCacheItem[]>,
+  kondisiButaWarna: string = ""
 ): number => {
   let total = 0;
   ptList.forEach((pt) => {
     const idPT = String(pt.id_pt);
-    const prodiList = ptProdiMap.get(idPT);
-    if (!prodiList || prodiList.length === 0) return; // PT tanpa prodi → skip
+    const rawProdiList = ptProdiMap.get(idPT);
+    if (!rawProdiList || rawProdiList.length === 0) return;
 
-    total += 1; // slot biasa
+    // Filter by buta warna
+    const prodiList = kondisiButaWarna === "Y" 
+      ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
+      : rawProdiList;
 
-    // Slot ekstra hanya jika PT punya KEDUANYA: prodi D1/D2 dan non-D1/D2
-    const hasD1D2Prodi = prodiList.some((j) => isJenjangD1D2(j));
-    const hasNonD1D2Prodi = prodiList.some((j) => isJenjangNonD1D2(j));
+    if (prodiList.length === 0) return; // skip this PT if no valid prodi left
+
+    total += 1;
+
+    const hasD1D2Prodi = prodiList.some((j) => isJenjangD1D2(j.jenjang));
+    const hasNonD1D2Prodi = prodiList.some((j) => isJenjangNonD1D2(j.jenjang));
     if (hasD1D2Prodi && hasNonD1D2Prodi) {
       total += 1;
     }
@@ -105,23 +92,13 @@ export const buildSlotCount = (
   return total;
 };
 
-/**
- * Validasi semua pilihan sebelum lanjut ke step berikutnya.
- *
- * Aturan:
- * 1. Setiap slot wajib diisi (PT + prodi).
- * 2. Jika PT yang sama dipilih di 2 slot:
- * a. PT tersebut wajib memiliki prodi D1/D2 dan non-D1/D2 di ptProdiMap.
- * b. Satu slot harus prodi D1/D2, satu slot harus prodi non-D1/D2.
- * 3. PT tanpa D1/D2 tidak boleh dipilih lebih dari 1×.
- * 4. Tidak ada PT yang dipilih lebih dari 2×.
- */
 export const validatePilihan = (
   pilihan: Array<{
     perguruan_tinggi?: string;
     program_studi?: string;
   }>,
-  ptProdiMap: Map<string, string[]>,
+  ptProdiMap: Map<string, any[]>,
+  kondisiButaWarna: string = ""
 ): string[] => {
   const errs: string[] = [];
 
@@ -157,21 +134,13 @@ export const validatePilihan = (
       return;
     }
 
-    // Tepat 2×
-    const prodiList = ptProdiMap.get(idPT) ?? [];
-    const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j));
-    const ptHasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j));
+    const rawProdiList = ptProdiMap.get(idPT) ?? [];
+    const prodiList = kondisiButaWarna === "Y" 
+      ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
+      : rawProdiList;
 
-    if (!ptHasD1D2 || !ptHasNonD1D2) {
-      // errs.push(
-      //   `Perguruan tinggi pada pilihan ${rows
-      //     .map((r) => r.rowIndex + 1)
-      //     .join(
-      //       " dan ",
-      //     )} tidak memiliki program D1/D2 dan non-D1/D2 sekaligus, sehingga tidak dapat dipilih dua kali.`,
-      // );
-      // return;
-    }
+    const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j.jenjang || j));
+    const ptHasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j.jenjang || j));
 
     const jenjangList = rows.map((r) => r.jenjang.trim().toUpperCase());
     const hasD1D2Slot = jenjangList.some((j) => D1D2_JENJANG.has(j));
@@ -205,26 +174,12 @@ const PilihanJurusan = ({
   ];
 
   const [isPopulating, setIsPopulating] = useState(false);
-
-  /**
-   * Map idPT → array jenjang prodi yang tersedia untuk jurusan sekolah ini.
-   * Diisi dari batch-fetch prodi semua PT setelah daftar PT ter-load.
-   * Digunakan untuk:
-   * 1. Menentukan totalSlot (PT tanpa prodi → tidak masuk slot)
-   * 2. Menentukan apakah PT layak mendapat slot ekstra (harus punya D1/D2 + non-D1/D2)
-   * 3. Validasi saat handleNext
-   * 4. Filter PT yang ditampilkan ke user (hanya PT dengan prodi)
-   */
-  const [ptProdiMap, setPtProdiMap] = useState<Map<string, string[]>>(
+  const [ptProdiMap, setPtProdiMap] = useState<Map<string, ProdiCacheItem[]>>(
     new Map(),
   );
   const [isFetchingAllProdi, setIsFetchingAllProdi] = useState(false);
 
-  // Ref untuk mencegah double-populate
   const hasPopulatedRef = useRef(false);
-  // Ref menyimpan totalSlot terakhir yang digunakan untuk replace()
-  // Bila totalSlot berubah (mis. karena buta warna berubah → prodi berubah),
-  // kita perlu populate ulang.
   const lastTotalSlotRef = useRef(0);
 
   const { fields, replace } = useFieldArray({
@@ -247,7 +202,6 @@ const PilihanJurusan = ({
     return id && id !== "" ? id : undefined;
   }, [selectedIdJurusanSekolahRaw]);
 
-  // ── Fetch daftar PT ──────────────────────────────────────────
   const {
     data: responsePerguruanTinggi,
     isLoading: isLoadingPT,
@@ -264,7 +218,6 @@ const PilihanJurusan = ({
     staleTime: STALE_TIME,
   });
 
-  // ── Fetch pilihan yang sudah tersimpan (edit mode) ────────────
   const { data: responseExistingPilihan, isLoading: isLoadingExisting } =
     useQuery({
       queryKey: ["pilihan-program-studi-existing", idTrxBeasiswa],
@@ -278,17 +231,6 @@ const PilihanJurusan = ({
 
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
 
-  /**
-   * Batch-fetch semua prodi untuk setiap PT setelah daftar PT ter-load
-   * dan jurusan sekolah tersedia.
-   *
-   * Menggunakan Promise.allSettled agar satu PT yang gagal tidak menghentikan lainnya.
-   * Hasil disimpan di ptProdiMap sebagai Map<idPT, jenjang[]>.
-   *
-   * Re-fetch dilakukan ketika:
-   * - jurusan sekolah berubah
-   * - daftar PT berubah (responsePerguruanTinggi berubah)
-   */
   useEffect(() => {
     if (!responsePerguruanTinggi?.data?.length) return;
     if (!selectedIdJurusanSekolah) return;
@@ -308,13 +250,16 @@ const PilihanJurusan = ({
           .then((res) => ({
             idPT: String(pt.id_pt),
             jenjangList: (res?.data ?? []).map(
-              (ps: { jenjang: string }) => ps.jenjang,
+              (ps: any) => ({
+                jenjang: ps.jenjang,
+                boleh_buta_warna: ps.boleh_buta_warna,
+              }),
             ),
           })),
       ),
     ).then((results) => {
       if (cancelled) return;
-      const map = new Map<string, string[]>();
+      const map = new Map<string, ProdiCacheItem[]>();
       results.forEach((r) => {
         if (r.status === "fulfilled") {
           map.set(r.value.idPT, r.value.jenjangList);
@@ -322,7 +267,6 @@ const PilihanJurusan = ({
       });
       setPtProdiMap(map);
       setIsFetchingAllProdi(false);
-      // Reset populate flag agar slot di-rebuild dengan data baru
       hasPopulatedRef.current = false;
     });
 
@@ -331,54 +275,51 @@ const PilihanJurusan = ({
     };
   }, [responsePerguruanTinggi, selectedIdJurusanSekolah]);
 
-  /**
-   * PT yang ditampilkan ke user = hanya PT yang punya prodi di ptProdiMap.
-   * PT tanpa prodi tidak ditampilkan di select dan tidak diberi slot.
-   */
   const perguruanTinggiOptions = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return [];
     return responsePerguruanTinggi.data
       .filter((pt) => {
         const prodiList = ptProdiMap.get(String(pt.id_pt));
-        return prodiList && prodiList.length > 0;
+        if (!prodiList || prodiList.length === 0) return false;
+
+        // 🔥 HIDE PT jika pendaftar buta warna & tidak ada prodi yang mengizinkan
+        if (selectedKondisiButaWarna === "Y") {
+          const hasValidProdi = prodiList.some((p) => p.boleh_buta_warna === "Y");
+          if (!hasValidProdi) return false;
+        }
+
+        return true;
       })
       .map((pt) => ({
         value: String(pt.id_pt + "#" + pt.nama_pt),
         label: pt.nama_pt,
         has_d1_d2: parseHasD1D2(pt.has_d1_d2),
       }));
-  }, [responsePerguruanTinggi, ptProdiMap]);
+  }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
   const hasPerguruanTinggi = perguruanTinggiOptions.length > 0;
 
-  /**
-   * Total slot dihitung ulang setiap kali ptProdiMap berubah
-   * (setelah batch-fetch prodi selesai).
-   *
-   * Logika slot ekstra: PT mendapat slot ekstra HANYA jika punya prodi D1/D2
-   * dan prodi non-D1/D2 sekaligus → user bisa pilih PT yang sama dua kali
-   * dengan kombinasi berbeda.
-   */
   const totalSlot = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
     if (ptProdiMap.size === 0) return 0;
-    return buildSlotCount(responsePerguruanTinggi.data, ptProdiMap);
-  }, [responsePerguruanTinggi, ptProdiMap]);
+    return buildSlotCount(responsePerguruanTinggi.data, ptProdiMap, selectedKondisiButaWarna);
+  }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
   const extraSlotCount = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
     return responsePerguruanTinggi.data.filter((pt) => {
-      const prodiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
+      const rawProdiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
+      const prodiList = selectedKondisiButaWarna === "Y" 
+        ? rawProdiList.filter(p => p.boleh_buta_warna === "Y")
+        : rawProdiList;
+
       return (
-        prodiList.some((j) => isJenjangD1D2(j)) &&
-        prodiList.some((j) => isJenjangNonD1D2(j))
+        prodiList.some((j) => isJenjangD1D2(j.jenjang)) &&
+        prodiList.some((j) => isJenjangNonD1D2(j.jenjang))
       );
     }).length;
-  }, [responsePerguruanTinggi, ptProdiMap]);
+  }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
-  // ── Inisialisasi / populate slot ─────────────────────────────
-  // Dipicu ulang setiap kali totalSlot berubah (lastTotalSlotRef berbeda)
-  // agar slot di-rebuild ketika prodi selesai di-fetch.
   useEffect(() => {
     if (!selectedKondisiButaWarna) return;
     if (!hasPerguruanTinggi) return;
@@ -387,7 +328,6 @@ const PilihanJurusan = ({
     if (idTrxBeasiswa && isLoadingExisting) return;
     if (totalSlot === 0) return;
 
-    // Jika totalSlot sama dengan sebelumnya dan sudah populate → skip
     if (hasPopulatedRef.current && lastTotalSlotRef.current === totalSlot)
       return;
 
@@ -413,8 +353,7 @@ const PilihanJurusan = ({
       );
     }
 
-    // setTimeout(() => setIsPopulating(false), 600);
-    setIsPopulating(false); // langsung, tanpa delay
+    setIsPopulating(false);
   }, [
     selectedKondisiButaWarna,
     hasPerguruanTinggi,
@@ -424,7 +363,6 @@ const PilihanJurusan = ({
     totalSlot,
   ]);
   
-  // ── BARU: track slot mana yang prodinya sudah siap ──────────
   const [readySet, setReadySet] = useState<Set<number>>(new Set());
 
   const handleProdiReady = useCallback((index: number) => {
@@ -438,9 +376,6 @@ const PilihanJurusan = ({
 
   const allProdiReady = fields.length === 0 || readySet.size >= fields.length;
   
-  // ── FIX BUG: Pemisahan reset flag saat jurusan / buta warna berubah ──────────
-  
-  // 1. Reset SEMUA (termasuk cache prodi) HANYA ketika Jurusan Sekolah berubah
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
@@ -448,14 +383,12 @@ const PilihanJurusan = ({
     setReadySet(new Set()); 
   }, [selectedIdJurusanSekolah]);
 
-  // 2. Reset flag populasi saja ketika Kondisi Buta Warna berubah (TIDAK menghapus data prodi)
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
     setReadySet(new Set()); 
   }, [selectedKondisiButaWarna]);
 
-  // ── Reset satu slot ──────────────────────────────────────────
   const handleResetSlot = (index: number) => {
     const current = (allPilihan as any[]) ?? [];
     replace(
@@ -472,7 +405,6 @@ const PilihanJurusan = ({
     });
   };
 
-  // ── Status kelengkapan ───────────────────────────────────────
   const emptyProdiCount = ((allPilihan as any[]) ?? []).filter(
     (p) => p?.perguruan_tinggi && !p?.program_studi,
   ).length;
@@ -496,7 +428,6 @@ const PilihanJurusan = ({
     if (allProdiReady) return;
     if (fields.length === 0) return;
 
-    // Fallback: paksa selesai setelah 5 detik
     const timer = setTimeout(() => {
       setReadySet(new Set(Array.from({ length: fields.length }, (_, i) => i)));
     }, 5000);
@@ -531,42 +462,6 @@ const PilihanJurusan = ({
 
   return (
     <div className="space-y-6">
-      {/* Info Card */}
-      {/* <Card className="shadow-none border-blue-200 bg-blue-50">
-        <CardContent className="pt-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="space-y-2 text-sm text-blue-900">
-              <p className="font-medium">Informasi Penting:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>
-                  Pilihan perguruan tinggi akan muncul setelah jurusan sekolah
-                  dipilih
-                </li>
-                <li>
-                  Lakukan tes buta warna untuk melihat program studi yang sesuai
-                </li>
-                <li>
-                  Perguruan tinggi yang memiliki program D1/D2{" "}
-                  <strong>dan</strong> D3/D4/S1 sekaligus mendapat{" "}
-                  <strong>slot tambahan</strong> — Anda dapat memilih PT yang
-                  sama dua kali: satu slot pilih prodi D1/D2, satu slot pilih
-                  prodi D3/D4/S1
-                </li>
-                <li>
-                  Perguruan tinggi yang hanya memiliki satu jenis jenjang hanya
-                  dapat dipilih satu kali
-                </li>
-                <li>
-                  <strong>Semua slot wajib diisi</strong> sebelum dapat
-                  melanjutkan ke tahap berikutnya
-                </li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card> */}
-
       {!selectedIdJurusanSekolah && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -609,45 +504,6 @@ const PilihanJurusan = ({
           {!selectedKondisiButaWarna && (
             <TesButaWarna onResult={handleResult} />
           )}
-
-          {/* {selectedKondisiButaWarna && (
-            <div
-              className={`flex items-start gap-3 p-4 rounded-lg border ${
-                selectedKondisiButaWarna === "N"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              }`}>
-              <div className="flex-shrink-0 mt-0.5">
-                {selectedKondisiButaWarna === "N" ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h4
-                  className={`font-medium ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-900"
-                      : "text-red-900"
-                  }`}>
-                  {selectedKondisiButaWarna === "N"
-                    ? "Penglihatan Normal"
-                    : "Terdeteksi Buta Warna"}
-                </h4>
-                <p
-                  className={`text-sm mt-1 ${
-                    selectedKondisiButaWarna === "N"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}>
-                  {selectedKondisiButaWarna === "N"
-                    ? "Hasil tes menunjukkan tidak ada indikasi buta warna."
-                    : "Hasil tes menunjukkan adanya indikasi buta warna."}
-                </p>
-              </div>
-            </div>
-          )} */}
 
           {selectedKondisiButaWarna && (
             <div className="grid grid-cols-1 gap-4">
@@ -710,7 +566,7 @@ const PilihanJurusan = ({
                         !(allPilihan as any[])?.[index]?.program_studi
                       }
                       onResetSlot={() => handleResetSlot(index)}
-                      onProdiReady={handleProdiReady} // ← tambahkan
+                      onProdiReady={handleProdiReady} 
                     />
                   ))}
 

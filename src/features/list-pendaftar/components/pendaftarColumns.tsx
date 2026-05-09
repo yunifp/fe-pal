@@ -1,6 +1,33 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import { Badge } from "@/components/ui/badge";
+import { Clock } from "lucide-react";
+
+// ─── Helper Format Waktu ──────────────────────────────────────────────────
+const formatWaktuKunci = (dateString?: string | null) => {
+  if (!dateString) return "-";
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "-";
+
+  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  const dayName = days[date.getDay()];
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${dayName}, ${day} ${month} ${year} : ${hours}:${minutes}:${seconds}`;
+};
+// ──────────────────────────────────────────────────────────────────────────
 
 export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
   {
@@ -108,6 +135,22 @@ export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
           }>
           {flow}
         </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "timestamp_lock_selektor",
+    header: "Waktu Kunci Selektor",
+    cell: ({ row }) => {
+      const lockTime = row.original.timestamp_lock_selektor;
+      if (!lockTime) {
+        return <span className="text-muted-foreground text-xs italic">-</span>;
+      }
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-slate-700 whitespace-nowrap">
+          <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+          <span>{formatWaktuKunci(lockTime)}</span>
+        </div>
       );
     },
   },

@@ -5,15 +5,13 @@ import { useForm, useWatch } from "react-hook-form";
 import { CustInput } from "@/components/CustInput";
 import { beasiswaService } from "@/services/beasiswaService";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface NilaiRaporProps {
   idTrxBeasiswa: number;
   idRefBeasiswa: number;
   onChange?: (values: NilaiRaporForm) => void;
   showError?: boolean;
-  isFieldKoreksi?: (fieldName: string) => boolean;
-  getFieldCatatan?: (fieldName: string) => string | null;
 }
 
 export type NilaiRaporForm = {
@@ -36,8 +34,6 @@ const NilaiRapor: FC<NilaiRaporProps> = ({
   idTrxBeasiswa,
   onChange,
   showError = false,
-  isFieldKoreksi = () => false,
-  getFieldCatatan = () => null,
 }) => {
   const { register, reset, control, setValue, watch } = useForm<NilaiRaporForm>(
     {
@@ -79,10 +75,7 @@ const NilaiRapor: FC<NilaiRaporProps> = ({
     onChange?.(watched as NilaiRaporForm);
   }, [watched, onChange]);
 
-  // ✅ Ambil nilai saat ini untuk cek field mana yang kosong
   const currentValues = watch();
-  // Di dalam NilaiRapor.tsx
-  // Tambahkan computed rata-rata setelah deklarasi `currentValues`
 
   const rataRata = useMemo(() => {
     const semesterKeys = [
@@ -122,7 +115,6 @@ const NilaiRapor: FC<NilaiRaporProps> = ({
         <p className="text-sm font-semibold text-gray-700">
           Rata-Rata Nilai Rapor
         </p>
-        {/* ✅ Label wajib */}
         <span className="text-xs text-destructive font-medium">
           * Semua semester wajib diisi
         </span>
@@ -195,17 +187,10 @@ const NilaiRapor: FC<NilaiRaporProps> = ({
                   },
                 })}
               />
-              {isFieldKoreksi(key) && getFieldCatatan(key) && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {getFieldCatatan(key)}
-                </p>
-              )}
             </div>
           );
         })}
       </div>
-      {/* Card rata-rata */}
       {rataRata !== null && (
         <div className="flex items-center justify-between border-t pt-3 mt-1">
           <div>
