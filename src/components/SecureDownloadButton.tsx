@@ -27,7 +27,8 @@ export const SecureDownloadButton = ({
 
       const response = await axios.get(cleanUrl, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          // [UPDATE DI SINI] Menggunakan custom header untuk bypass Nginx
+          "X-Palma-Auth": `Bearer ${accessToken}`,
         },
         responseType: "blob", // Tarik sebagai biner
       });

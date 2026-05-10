@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import {
   Archive,
@@ -18,11 +19,12 @@ import { FOTO_FIELDS } from "./Constants";
 import type { DocCategory, PendaftarWithDocs } from "./Types";
 import {
   buildZipFilename,
-  downloadPublicUrl,
   formatBytes,
   getStatusColor,
   writeBlobToDisk,
 } from "./Utils";
+// [PERBAIKAN 1]: Import helper secure download
+import { downloadSecureFile } from "@/utils/fileHelper";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PendaftarRow
@@ -84,7 +86,7 @@ export function PendaftarRow({
     }
   };
 
-  // ── File individual (public URL) ──────────────────────────────────────────
+  // ── File individual (Secure Download) ──────────────────────────────────
   const handleSingle = async (
     fileUrl: string,
     filename: string,
@@ -92,8 +94,11 @@ export function PendaftarRow({
   ) => {
     setDlDoc(key);
     try {
-      await downloadPublicUrl(fileUrl, filename);
+      // [PERBAIKAN 2]: Gunakan helper yang mengirimkan header X-Palma-Auth
+      await downloadSecureFile(fileUrl, filename);
       toast.success(`Berhasil mengunduh ${filename}`);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal mengunduh file. Pastikan Anda memiliki akses.");
     } finally {
       setDlDoc(null);
     }
@@ -192,7 +197,8 @@ export function PendaftarRow({
               fotoList.map((f) => {
                 const url = item[f.key as keyof ITrxBeasiswa] as string;
                 if (!url) return null;
-                const ext = url.split(".").pop() ?? "jpg";
+                // [PERBAIKAN 3]: Bersihkan parameter &t= atau &token= dari ekstensi
+                const ext = url.split(".").pop()?.split("&")[0] ?? "jpg";
                 const filename = `${f.key}_${item.kode_pendaftaran ?? item.id_trx_beasiswa}.${ext}`;
                 const key = `foto_${f.key}`;
                 return (
@@ -219,7 +225,8 @@ export function PendaftarRow({
             {/* Dokumen Umum */}
             {(filterCategory === "all" || filterCategory === "dokumen_umum") &&
               dokUmum.map((d) => {
-                const ext = d.file?.split(".").pop() ?? "pdf";
+                // [PERBAIKAN 4]: Bersihkan parameter &t= atau &token= dari ekstensi
+                const ext = d.file?.split(".").pop()?.split("&")[0] ?? "pdf";
                 const filename = `umum_${d.id}_${item.kode_pendaftaran ?? item.id_trx_beasiswa}.${ext}`;
                 const key = `umum_${d.id}`;
                 return (
@@ -255,7 +262,8 @@ export function PendaftarRow({
             {(filterCategory === "all" ||
               filterCategory === "dokumen_khusus") &&
               dokKhusus.map((d) => {
-                const ext = d.file?.split(".").pop() ?? "pdf";
+                // [PERBAIKAN 5]: Bersihkan parameter &t= atau &token= dari ekstensi
+                const ext = d.file?.split(".").pop()?.split("&")[0] ?? "pdf";
                 const filename = `khusus_${d.id}_${item.kode_pendaftaran ?? item.id_trx_beasiswa}.${ext}`;
                 const key = `khusus_${d.id}`;
                 return (

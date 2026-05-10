@@ -3,7 +3,8 @@ import axios from "axios";
 import { useAuthStore } from "@/stores/authStore";
 import { User } from "lucide-react";
 
-interface SecureImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+// [PERBAIKAN 1]: Gunakan Omit untuk membuang 'src' bawaan React, lalu definisikan ulang
+interface SecureImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
   src: string | null | undefined;
   alt: string;
   className?: string;
@@ -55,7 +56,7 @@ export const SecureImage = ({
 
         const response = await axios.get(cleanSrc, {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            "X-Palma-Auth": `Bearer ${accessToken}`,
           },
           responseType: "blob",
         });
@@ -69,7 +70,8 @@ export const SecureImage = ({
           setImgSrc(objectUrl);
           setIsError(false);
         }
-      } catch (error) {
+      // [PERBAIKAN 2]: Hapus deklarasi variabel (error) karena tidak digunakan
+      } catch {
         if (isMounted) setIsError(true);
       } finally {
         if (isMounted) setIsLoading(false);

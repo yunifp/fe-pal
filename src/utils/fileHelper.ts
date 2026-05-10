@@ -10,7 +10,8 @@ export const downloadSecureFile = async (fileUrl: string, fileName: string) => {
   try {
     const response = await axios.get(cleanUrl, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        // [UPDATE DI SINI] Menggunakan custom header untuk bypass Nginx
+        "X-Palma-Auth": `Bearer ${token}`,
       },
       responseType: "blob",
     });
