@@ -62,7 +62,6 @@ const BeasiswaSeleksiPage = () => {
     isError,
     error,
   } = useQuery({
-    // ✅ Tambahkan filter ke queryKey agar re-fetch saat filter berubah
     queryKey: ["trx-beasiswa", beasiswaAktif?.id, page, debouncedSearch, filterIdFlow, filterIdJalur],
     retry: false,
     enabled: !!beasiswaAktif?.id,
@@ -72,14 +71,12 @@ const BeasiswaSeleksiPage = () => {
         beasiswaAktif?.id ?? 0,
         page,
         debouncedSearch,
-        // ✅ Kirim filter ke service
         filterIdFlow !== "all" ? filterIdFlow : undefined,
         filterIdJalur !== "all" ? filterIdJalur : undefined
       ),
     staleTime: STALE_TIME,
   });
 
-  // ✅ Langsung gunakan data dari response API (karena backend sudah memfilter)
   const allData: ITrxBeasiswa[] = response?.data?.result ?? [];
   const totalPages: number = response?.data?.total_pages ?? 0;
 
@@ -94,12 +91,14 @@ const BeasiswaSeleksiPage = () => {
     }
   }, [isError, error]);
 
-  // ✅ Kembali ke halaman 1 saat filter atau search berubah
   useEffect(() => {
     setPage(1);
   }, [filterIdFlow, filterIdJalur, debouncedSearch]);
 
-  const columns = useMemo(() => getColumns(), []);
+  // ─── PERBAIKAN DI SINI: Kirim state page dan limit (10) ke getColumns ────
+  // Setiap kali halaman berubah, fungsi ini akan menghitung ulang nomor urut
+  const columns = useMemo(() => getColumns(page, 10), [page]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-1">
@@ -137,7 +136,7 @@ const BeasiswaSeleksiPage = () => {
         <DataTable
           isLoading={isLoading}
           columns={columns}
-          data={allData} // ✅ Gunakan allData
+          data={allData}
           pageCount={totalPages}
           pageIndex={page - 1}
           onPageChange={(newPage) => setPage(newPage + 1)}

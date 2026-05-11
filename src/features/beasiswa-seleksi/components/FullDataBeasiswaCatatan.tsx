@@ -1,9 +1,8 @@
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-useless-escape */
- 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type FC, useState, useEffect } from "react";
+import { type FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +51,6 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 import { KesesuaianDokumen } from "./KesesuaianDokumen";
-import { type KoreksiFieldItem } from "@/constants/koreksiFields";
 import KoreksiInfoItem from "@/components/beasiswa/KoreksiInfoItem";
 import { SecureImage } from "@/components/SecureImage";
 import { downloadSecureFile } from "@/utils/fileHelper";
@@ -67,9 +65,6 @@ interface FullDataBeasiswaCatatanProps {
   setValue: UseFormSetValue<VerifikasiFormData>;
 }
 
-// ─────────────────────────────────────────────────────────────
-// FotoGallery — foto profil + 4 foto sisi dengan lightbox
-// ─────────────────────────────────────────────────────────────
 interface FotoItem {
   url: string;
   label: string;
@@ -101,7 +96,6 @@ const FotoGallery: FC<{
   return (
     <div className="mb-6">
       <div className="flex flex-col md:flex-row gap-3">
-        {/* Foto Profil - lebih besar di kiri */}
         <div
           className="relative group cursor-pointer flex-shrink-0 md:w-52"
           onClick={() => setLightboxIndex(0)}>
@@ -122,7 +116,6 @@ const FotoGallery: FC<{
           </div>
         </div>
 
-        {/* 4 Foto Sisi - grid 2x2 di kanan */}
         <div className="grid grid-cols-2 gap-2 flex-1">
           {thumbFotos.map((item, idx) => (
             <div
@@ -147,7 +140,6 @@ const FotoGallery: FC<{
             </div>
           ))}
 
-          {/* Placeholder jika foto sisi kurang dari 4 */}
           {Array.from({ length: Math.max(0, 4 - thumbFotos.length) }).map(
             (_, idx) => (
               <div
@@ -161,30 +153,25 @@ const FotoGallery: FC<{
         </div>
       </div>
 
-      {/* Hint klik */}
       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
         <ZoomIn className="w-3 h-3" />
         Klik foto untuk memperbesar
       </p>
 
-      {/* Lightbox */}
       {lightboxIndex !== null && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
           onClick={closeLightbox}>
-          {/* Tombol tutup */}
           <button
             className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/25 rounded-full p-2 transition-colors z-10"
             onClick={closeLightbox}>
             <X className="w-5 h-5" />
           </button>
 
-          {/* Counter */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-1 rounded-full select-none">
             {lightboxIndex + 1} / {allFotos.length}
           </div>
 
-          {/* Prev */}
           {allFotos.length > 1 && (
             <button
               className="absolute left-4 text-white bg-white/10 hover:bg-white/25 rounded-full p-2.5 transition-colors z-10"
@@ -196,7 +183,6 @@ const FotoGallery: FC<{
             </button>
           )}
 
-          {/* Gambar utama */}
           <div
             className="flex flex-col items-center gap-3 max-w-[90vw] max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}>
@@ -210,7 +196,6 @@ const FotoGallery: FC<{
             </span>
           </div>
 
-          {/* Next */}
           {allFotos.length > 1 && (
             <button
               className="absolute right-4 text-white bg-white/10 hover:bg-white/25 rounded-full p-2.5 transition-colors z-10"
@@ -222,7 +207,6 @@ const FotoGallery: FC<{
             </button>
           )}
 
-          {/* Thumbnail strip di bawah */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
             {allFotos.map((f, i) => (
               <button
@@ -271,10 +255,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   register,
   control,
   errors,
-  showKoreksi = false,
-  setValue,
 }) => {
-  const [koreksiFields, setKoreksiFields] = useState<KoreksiFieldItem[]>([]);
   const { data, isLoading } = useQuery({
     queryKey: ["full-data-beasiswa", idTrxBeasiswa],
     queryFn: () => beasiswaService.getFullDataBeasiswa(idTrxBeasiswa),
@@ -293,10 +274,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
   const nilaiRapor = nilaiRaporData?.data ?? null;
 
-  useEffect(() => {
-    setValue("koreksi_fields", koreksiFields);
-  }, [koreksiFields, setValue]);
-
   if (isLoading) {
     return (
       <Card className="shadow-none">
@@ -312,20 +289,6 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   if (!data || !data.data) return null;
 
   const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data;
-
-  const toggleKoreksiField = (field: string, label: string) => {
-    setKoreksiFields((prev) => {
-      const exists = prev.find((k) => k.field === field);
-      if (exists) return prev.filter((k) => k.field !== field);
-      return [...prev, { field, label, catatan: "" }];
-    });
-  };
-
-  const updateCatatanKoreksi = (field: string, catatan: string) => {
-    setKoreksiFields((prev) =>
-      prev.map((k) => (k.field === field ? { ...k, catatan } : k)),
-    );
-  };
 
   const findDokumenFile = (keyword: string): string | null => {
     if (!persyaratan_umum?.length) return null;
@@ -435,40 +398,29 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               label="ID Pendaftaran"
               value={data_beasiswa.kode_pendaftaran}
             />
-
             <KoreksiInfoItem
               icon={User}
               label="Nama Lengkap"
               value={data_beasiswa.nama_lengkap}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="nama_lengkap"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={IdCard}
               label="NIK"
               value={data_beasiswa.nik}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="nik"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
               fileUrl={ktpFile}
             />
             <KoreksiInfoItem
               icon={IdCard}
               label="No Kartu Keluarga"
               value={data_beasiswa.nkk}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="nkk"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
               fileUrl={nkkFile}
             />
-
             <KoreksiInfoItem
               icon={User}
               label="Jenis Kelamin"
@@ -479,11 +431,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                     ? "Perempuan"
                     : null
               }
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="jenis_kelamin"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={MapPin}
@@ -495,71 +444,50 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                     )}`
                   : null
               }
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="tempat_tanggal_lahir"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Building2}
               label="Agama"
               value={data_beasiswa.agama}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="agama"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Users}
               label="Suku"
               value={data_beasiswa.suku}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="suku"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Phone}
               label="No. HP"
               value={data_beasiswa.no_hp}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="no_hp"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Mail}
               label="Email"
               value={data_beasiswa.email}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="email"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Briefcase}
               label="Pekerjaan"
               value={data_beasiswa.pekerjaan}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="pekerjaan"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Building2}
               label="Instansi Tempat Bekerja"
               value={data_beasiswa.instansi_pekerjaan}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="instansi_pekerjaan"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Ruler}
@@ -569,11 +497,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   ? `${data_beasiswa.tinggi_badan} cm`
                   : null
               }
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="tinggi_badan"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Weight}
@@ -583,11 +508,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   ? `${data_beasiswa.berat_badan} kg`
                   : null
               }
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="berat_badan"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
           </div>
 
@@ -711,91 +633,64 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 icon={MapPin}
                 label="Provinsi"
                 value={data_beasiswa.tinggal_prov}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_prov"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={MapPin}
                 label="Kabupaten / Kota"
                 value={data_beasiswa.tinggal_kab_kota}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_kab_kota"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={MapPin}
                 label="Kecamatan"
                 value={data_beasiswa.tinggal_kec}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_kec"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={MapPin}
                 label="Kelurahan"
                 value={data_beasiswa.tinggal_kel}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_kel"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Home}
                 label="Dusun"
                 value={data_beasiswa.tinggal_dusun}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_dusun"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="Kode Pos"
                 value={data_beasiswa.tinggal_kode_pos}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_kode_pos"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="RT"
                 value={data_beasiswa.tinggal_rt}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_rt"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="RW"
                 value={data_beasiswa.tinggal_rw}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_rw"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Map}
                 label="Alamat Lengkap"
                 value={data_beasiswa.tinggal_alamat}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="tinggal_alamat"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
             </div>
           </div>
@@ -811,91 +706,64 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 icon={Briefcase}
                 label="Provinsi"
                 value={data_beasiswa.kerja_prov}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_prov"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Briefcase}
                 label="Kabupaten / Kota"
                 value={data_beasiswa.kerja_kab_kota}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_kab_kota"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Briefcase}
                 label="Kecamatan"
                 value={data_beasiswa.kerja_kec}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_kec"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Briefcase}
                 label="Kelurahan"
                 value={data_beasiswa.kerja_kel}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_kel"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Home}
                 label="Dusun"
                 value={data_beasiswa.kerja_dusun}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_dusun"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="Kode Pos"
                 value={data_beasiswa.kerja_kode_pos}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_kode_pos"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="RT"
                 value={data_beasiswa.kerja_rt}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_rt"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Hash}
                 label="RW"
                 value={data_beasiswa.kerja_rw}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_rw"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
               <KoreksiInfoItem
                 icon={Map}
                 label="Alamat Lengkap"
                 value={data_beasiswa.kerja_alamat}
-                showKoreksi={showKoreksi}
+                showKoreksi={false}
                 fieldKey="kerja_alamat"
-                koreksiFields={koreksiFields}
-                onToggle={toggleKoreksiField}
-                onCatatanChange={updateCatatanKoreksi}
               />
             </div>
             <KesesuaianSection
@@ -935,121 +803,85 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   icon={User}
                   label="Nama Ayah"
                   value={data_beasiswa.ayah_nama}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_nama"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={IdCard}
                   label="NIK Ayah"
                   value={data_beasiswa.ayah_nik}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_nik"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={GraduationCap}
                   label="Pendidikan Terakhir"
                   value={data_beasiswa.ayah_jenjang_pendidikan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_jenjang_pendidikan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Briefcase}
                   label="Pekerjaan"
                   value={data_beasiswa.ayah_pekerjaan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_pekerjaan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Wallet}
                   label="Penghasilan"
                   value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_penghasilan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={HeartPulse}
                   label="Status Hidup"
                   value={data_beasiswa.ayah_status_hidup}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_status_hidup"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Users}
                   label="Status Kekerabatan"
                   value={data_beasiswa.ayah_status_kekerabatan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_status_kekerabatan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={MapPin}
                   label="Tempat Lahir"
                   value={data_beasiswa.ayah_tempat_lahir}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_tempat_lahir"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Calendar}
                   label="Tanggal Lahir"
                   value={formatTanggalIndo(data_beasiswa.ayah_tanggal_lahir)}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_tanggal_lahir"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Phone}
                   label="No. HP"
                   value={data_beasiswa.ayah_no_hp}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_no_hp"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Mail}
                   label="Email"
                   value={data_beasiswa.ayah_email}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_email"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Map}
                   label="Alamat"
                   value={data_beasiswa.ayah_alamat}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ayah_alamat"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
               </div>
             </div>
@@ -1064,121 +896,85 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   icon={User}
                   label="Nama Ibu"
                   value={data_beasiswa.ibu_nama}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_nama"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={IdCard}
                   label="NIK Ibu"
                   value={data_beasiswa.ibu_nik}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_nik"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={GraduationCap}
                   label="Pendidikan Terakhir"
                   value={data_beasiswa.ibu_jenjang_pendidikan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_jenjang_pendidikan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Briefcase}
                   label="Pekerjaan"
                   value={data_beasiswa.ibu_pekerjaan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_pekerjaan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Wallet}
                   label="Penghasilan"
                   value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_penghasilan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={HeartPulse}
                   label="Status Hidup"
                   value={data_beasiswa.ibu_status_hidup}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_status_hidup"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Users}
                   label="Status Kekerabatan"
                   value={data_beasiswa.ibu_status_kekerabatan}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_status_kekerabatan"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={MapPin}
                   label="Tempat Lahir"
                   value={data_beasiswa.ibu_tempat_lahir}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_tempat_lahir"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Calendar}
                   label="Tanggal Lahir"
                   value={formatTanggalIndo(data_beasiswa.ibu_tanggal_lahir)}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_tanggal_lahir"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Phone}
                   label="No. HP"
                   value={data_beasiswa.ibu_no_hp}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_no_hp"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Mail}
                   label="Email"
                   value={data_beasiswa.ibu_email}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_email"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
                 <KoreksiInfoItem
                   icon={Map}
                   label="Alamat"
                   value={data_beasiswa.ibu_alamat}
-                  showKoreksi={showKoreksi}
+                  showKoreksi={false}
                   fieldKey="ibu_alamat"
-                  koreksiFields={koreksiFields}
-                  onToggle={toggleKoreksiField}
-                  onCatatanChange={updateCatatanKoreksi}
                 />
               </div>
             </div>
@@ -1199,121 +995,85 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                     icon={User}
                     label="Nama Wali"
                     value={data_beasiswa.wali_nama}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_nama"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={IdCard}
                     label="NIK Wali"
                     value={data_beasiswa.wali_nik}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_nik"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={GraduationCap}
                     label="Pendidikan Terakhir"
                     value={data_beasiswa.wali_jenjang_pendidikan}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_jenjang_pendidikan"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Briefcase}
                     label="Pekerjaan"
                     value={data_beasiswa.wali_pekerjaan}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_pekerjaan"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Wallet}
                     label="Penghasilan"
                     value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_penghasilan"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={HeartPulse}
                     label="Status Hidup"
                     value={data_beasiswa.wali_status_hidup}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_status_hidup"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Users}
                     label="Status Kekerabatan"
                     value={data_beasiswa.wali_status_kekerabatan}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_status_kekerabatan"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={MapPin}
                     label="Tempat Lahir"
                     value={data_beasiswa.wali_tempat_lahir}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_tempat_lahir"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Calendar}
                     label="Tanggal Lahir"
                     value={formatTanggalIndo(data_beasiswa.wali_tanggal_lahir)}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_tanggal_lahir"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Phone}
                     label="No. HP"
                     value={data_beasiswa.wali_no_hp}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_no_hp"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Mail}
                     label="Email"
                     value={data_beasiswa.wali_email}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_email"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                   <KoreksiInfoItem
                     icon={Map}
                     label="Alamat"
                     value={data_beasiswa.wali_alamat}
-                    showKoreksi={showKoreksi}
+                    showKoreksi={false}
                     fieldKey="wali_alamat"
-                    koreksiFields={koreksiFields}
-                    onToggle={toggleKoreksiField}
-                    onCatatanChange={updateCatatanKoreksi}
                   />
                 </div>
               </div>
@@ -1347,81 +1107,57 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               icon={GraduationCap}
               label="Nama Beasiswa"
               value={data_beasiswa.nama_beasiswa}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="nama_beasiswa"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={GraduationCap}
               label="Jalur"
               value={data_beasiswa.jalur}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="jalur"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={GraduationCap}
               label="Jenjang Sekolah"
               value={data_beasiswa.jenjang_sekolah}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="jenjang_sekolah"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={GraduationCap}
               label="Nama Sekolah"
               value={data_beasiswa.sekolah}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="sekolah"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Map}
               label="Provinsi Sekolah"
               value={data_beasiswa.sekolah_prov}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="sekolah_prov"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={Map}
               label="Kabupaten / Kota Sekolah"
               value={data_beasiswa.sekolah_kab_kota}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="sekolah_kab_kota"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={BookOpen}
               label="Jurusan Sekolah"
               value={data_beasiswa.jurusan}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="jurusan"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
             <KoreksiInfoItem
               icon={CalendarCheck}
               label="Tahun Lulus Sekolah"
               value={data_beasiswa.tahun_lulus}
-              showKoreksi={showKoreksi}
+              showKoreksi={false}
               fieldKey="tahun_lulus"
-              koreksiFields={koreksiFields}
-              onToggle={toggleKoreksiField}
-              onCatatanChange={updateCatatanKoreksi}
             />
           </div>
 
@@ -1490,11 +1226,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                           icon={BookOpen}
                           label={label}
                           value={value != null ? String(value) : null}
-                          showKoreksi={showKoreksi}
+                          showKoreksi={false}
                           fieldKey={fieldKey}
-                          koreksiFields={koreksiFields}
-                          onToggle={toggleKoreksiField}
-                          onCatatanChange={updateCatatanKoreksi}
                         />
                       ))}
                       <div className="col-span-2 md:col-span-3 border-t pt-2 mt-1">
@@ -1502,11 +1235,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                           icon={Award}
                           label="Rata-Rata Semester 1–5"
                           value={rata2 ?? "-"}
-                          showKoreksi={showKoreksi}
+                          showKoreksi={false}
                           fieldKey="nilai_rata_rata"
-                          koreksiFields={koreksiFields}
-                          onToggle={toggleKoreksiField}
-                          onCatatanChange={updateCatatanKoreksi}
                         />
                       </div>
                     </>

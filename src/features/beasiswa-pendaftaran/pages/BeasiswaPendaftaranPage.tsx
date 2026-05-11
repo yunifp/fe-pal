@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
@@ -59,8 +58,6 @@ const BeasiswaPendaftaranPage = () => {
     insertedRef.current = true;
   }, [beasiswaAktif]);
 
-  // console.log(existBeasiswa);
-
   return (
     <div className="container mx-auto w-full space-y-4">
       {/* Loading Dialog */}
@@ -114,14 +111,29 @@ const BeasiswaPendaftaranPage = () => {
           {/* Flow 4: Perlu Perbaikan - Alert Perbaikan + Form */}
           {existBeasiswa.id_flow === 4 && (
             <>
-              <AlertPerbaikan 
-                catatan={
-                  existBeasiswa.id_flow === 4
-                    ? existBeasiswa.verifikator_catatan!!
-                    : existBeasiswa.verifikator_dinas_catatan!!
-                }
+              <AlertPerbaikan
+                catatanUmum={existBeasiswa.verifikator_catatan}
+                sectionData={existBeasiswa.catatan_data_section}
+                onNavigateToStep={(targetStepIndex) => {
+                  // Karena kontrol stepper ada di dalam BeasiswaForm, 
+                  // kita trigger custom event/klik atau scroll halus ke formnya
+                  window.dispatchEvent(
+                    new CustomEvent("PALMA_NAVIGATE_STEP", {
+                      detail: { step: targetStepIndex },
+                    })
+                  );
+
+                  // Scroll halus ke area form pendaftaran
+                  document
+                    .getElementById("form-pendaftaran-anchor")
+                    ?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                }}
               />
-              <BeasiswaForm existBeasiswa={existBeasiswa} />
+              <div id="form-pendaftaran-anchor">
+                <BeasiswaForm existBeasiswa={existBeasiswa} />
+              </div>
             </>
           )}
         </>

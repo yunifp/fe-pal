@@ -178,15 +178,11 @@ const BeasiswaSeleksiDetailPage = () => {
   });
 
   const onSubmit = (data: VerifikasiFormData) => {
-    // Guard flow 4: wajib ada field koreksi
-    if (
-      data.selectedStatus === 4 &&
-      (!data.koreksi_fields || data.koreksi_fields.length === 0)
-    ) {
-      toast.error("Pilih minimal 1 field yang perlu dikoreksi");
+    if (data.selectedStatus === 4 && !data.catatan) {
+      toast.error("Mohon isi catatan umum perbaikan terlebih dahulu");
       return;
     }
-    mutation.mutate(data); // kirim data lengkap, selectedStatus dibaca di mutationFn
+    mutation.mutate(data); 
   };
 
   return (

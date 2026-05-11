@@ -139,6 +139,21 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     resolver: zodResolver(getSchema() as any),
   });
 
+  // ── [+] EVENT LISTENER: Menangkap perintah navigasi stepper dari alert ──
+  useEffect(() => {
+    const handleNavigationEvent = (event: any) => {
+      if (event.detail && typeof event.detail.step === "number") {
+        setCurrentStep(event.detail.step);
+      }
+    };
+
+    window.addEventListener("PALMA_NAVIGATE_STEP", handleNavigationEvent);
+    return () => {
+      window.removeEventListener("PALMA_NAVIGATE_STEP", handleNavigationEvent);
+    };
+  }, []);
+  // ────────────────────────────────────────────────────────────────────────
+
   const { data: responseAgama } = useQuery({
     queryKey: ["ref-agama"],
     queryFn: () => masterService.getAgama(),
@@ -482,7 +497,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         return;
       }
 
-      // ── PENGECEKAN NIK (hanya di step 0) ─────────────────────────────────
       if (currentStep === 0) {
         const nikValue = getValues("nik");
 
@@ -522,7 +536,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           return;
         }
       }
-      // ─────────────────────────────────────────────────────────────────────
 
       if (currentStep === 5) {
         try {
@@ -1027,10 +1040,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     }, 0);
   };
 
-  useEffect(() => {
-    console.log("Full existBeasiswa:", JSON.stringify(existBeasiswa, null, 2));
-  }, [existBeasiswa]);
-
   const handleKonfirmasiGantiJalur = async () => {
     if (!pendingJalurValue) return;
     setIsResettingJalur(true);
@@ -1077,29 +1086,30 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     setShowGantiJalurDialog(true);
   }, [selectedJalur]);
 
-  // 2. Gunakan hook — hanya aktif jika flow = 4
   const { isDisabled } = useKoreksiFields(
     existBeasiswa.id_trx_beasiswa,
     existBeasiswa.id_flow === 4,
   );
 
+  // ── [+] VARIABEL PENGAMAN: Cek apakah formulir dalam proses perbaikan ──
+  const isPerbaikan = existBeasiswa.id_flow === 4;
+  const sectionValid = existBeasiswa.catatan_data_section;
+  // ───────────────────────────────────────────────────────────────────────
+
   return (
     <>
       {!isPreviewOpen && (
         <div className="flex flex-col md:flex-row gap-6 items-start">
-          {/* 1. Stepper Sekarang Selalu Muncul di Samping */}
           <div className="w-full md:w-fit sticky top-4 z-10">
             <VerticalStepper steps={steps} currentStep={currentStep} />
           </div>
 
           <div className="flex-1 w-full space-y-4">
-            {/* 2. Alert Perbaikan muncul di atas Card Form jika statusnya Perlu Perbaikan (Flow 4) */}
             {existBeasiswa.id_flow === 4 && (
               <KoreksiPendaftarAlert
                 idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                 onGoToStep={(step, fieldName) => {
                   setCurrentStep(step);
-                  // Logika Smooth Scroll & Highlight
                   setTimeout(() => {
                     const el = document.getElementById(fieldName);
                     if (el) {
@@ -1114,83 +1124,166 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
               />
             )}
 
-            {/* 3. Card Utama Form */}
             <Card className="shadow-none border-slate-200">
               <CardContent className="pt-6">
                 <div>
+                  {/* ── [+] PENGUNCIAN FORM: Menonaktifkan form per step via fieldset ── */}
                   {currentStep === 0 && (
-                    <IdentitasPribadi
-                      sectionCatatan={{
-                        isValid: existBeasiswa.catatan_data_section?.data_pribadi_is_valid,
-                        catatan: existBeasiswa.catatan_data_section?.data_pribadi_catatan,
-                      }}
-                      existFoto={existBeasiswa.foto}
-                      existFotoDepan={existBeasiswa.foto_depan}
-                      existFotoSampingKiri={existBeasiswa.foto_samping_kiri}
-                      existFotoSampingKanan={existBeasiswa.foto_samping_kanan}
-                      existFotoBelakang={existBeasiswa.foto_belakang}
-                      setValue={setValue}
-                      register={register}
-                      control={control}
-                      errors={errors}
-                      agamaOptions={agamaOptions}
-                      sukuOptions={sukuOptions}
-                      onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
-                      isFieldDisabled={isDisabled}
-                    />
+                    isPerbaikan && sectionValid?.data_pribadi_is_valid === "Y" ? (
+                      <fieldset disabled className="w-full border-0 p-0 m-0">
+                        <IdentitasPribadi
+                          sectionCatatan={{
+                            isValid: sectionValid?.data_pribadi_is_valid,
+                            catatan: sectionValid?.data_pribadi_catatan,
+                          }}
+                          existFoto={existBeasiswa.foto}
+                          existFotoDepan={existBeasiswa.foto_depan}
+                          existFotoSampingKiri={existBeasiswa.foto_samping_kiri}
+                          existFotoSampingKanan={existBeasiswa.foto_samping_kanan}
+                          existFotoBelakang={existBeasiswa.foto_belakang}
+                          setValue={setValue}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          agamaOptions={agamaOptions}
+                          sukuOptions={sukuOptions}
+                          onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
+                          isFieldDisabled={isDisabled}
+                        />
+                      </fieldset>
+                    ) : (
+                      <IdentitasPribadi
+                        sectionCatatan={{
+                          isValid: sectionValid?.data_pribadi_is_valid,
+                          catatan: sectionValid?.data_pribadi_catatan,
+                        }}
+                        existFoto={existBeasiswa.foto}
+                        existFotoDepan={existBeasiswa.foto_depan}
+                        existFotoSampingKiri={existBeasiswa.foto_samping_kiri}
+                        existFotoSampingKanan={existBeasiswa.foto_samping_kanan}
+                        existFotoBelakang={existBeasiswa.foto_belakang}
+                        setValue={setValue}
+                        register={register}
+                        control={control}
+                        errors={errors}
+                        agamaOptions={agamaOptions}
+                        sukuOptions={sukuOptions}
+                        onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
+                        isFieldDisabled={isDisabled}
+                      />
+                    )
                   )}
 
                   {currentStep === 1 && (
-                    <Alamat
-                      sectionCatatanTempatTinggal={{
-                        isValid: existBeasiswa.catatan_data_section?.data_tempat_tinggal_is_valid,
-                        catatan: existBeasiswa.catatan_data_section?.data_tempat_tinggal_catatan,
-                      }}
-                      sectionCatatanTempatBekerja={{
-                        isValid: existBeasiswa.catatan_data_section?.data_tempat_bekerja_is_valid,
-                        catatan: existBeasiswa.catatan_data_section?.data_tempat_bekerja_catatan,
-                      }}
-                      register={register}
-                      control={control}
-                      errors={errors}
-                      provinsiOptions={provinsiOptions}
-                      setValue={setValue}
-                      isFieldDisabled={isDisabled}
-                    />
+                    isPerbaikan && sectionValid?.data_tempat_tinggal_bekerja_is_valid === "Y" ? (
+                      <fieldset disabled className="w-full border-0 p-0 m-0">
+                        <Alamat
+                          sectionCatatanTempatTinggal={{
+                            isValid: sectionValid?.data_tempat_tinggal_is_valid,
+                            catatan: sectionValid?.data_tempat_tinggal_catatan,
+                          }}
+                          sectionCatatanTempatBekerja={{
+                            isValid: sectionValid?.data_tempat_bekerja_is_valid,
+                            catatan: sectionValid?.data_tempat_bekerja_catatan,
+                          }}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          provinsiOptions={provinsiOptions}
+                          setValue={setValue}
+                          isFieldDisabled={isDisabled}
+                        />
+                      </fieldset>
+                    ) : (
+                      <Alamat
+                        sectionCatatanTempatTinggal={{
+                          isValid: sectionValid?.data_tempat_tinggal_is_valid,
+                          catatan: sectionValid?.data_tempat_tinggal_catatan,
+                        }}
+                        sectionCatatanTempatBekerja={{
+                          isValid: sectionValid?.data_tempat_bekerja_is_valid,
+                          catatan: sectionValid?.data_tempat_bekerja_catatan,
+                        }}
+                        register={register}
+                        control={control}
+                        errors={errors}
+                        provinsiOptions={provinsiOptions}
+                        setValue={setValue}
+                        isFieldDisabled={isDisabled}
+                      />
+                    )
                   )}
 
                   {currentStep === 2 && (
-                    <DataOrtu
-                      sectionCatatan={{
-                        isValid: existBeasiswa.catatan_data_section?.data_orang_tua_is_valid,
-                        catatan: existBeasiswa.catatan_data_section?.data_orang_tua_catatan,
-                      }}
-                      register={register}
-                      control={control}
-                      errors={errors}
-                      isFieldDisabled={isDisabled}
-                    />
+                    isPerbaikan && sectionValid?.data_orang_tua_is_valid === "Y" ? (
+                      <fieldset disabled className="w-full border-0 p-0 m-0">
+                        <DataOrtu
+                          sectionCatatan={{
+                            isValid: sectionValid?.data_orang_tua_is_valid,
+                            catatan: sectionValid?.data_orang_tua_catatan,
+                          }}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          isFieldDisabled={isDisabled}
+                        />
+                      </fieldset>
+                    ) : (
+                      <DataOrtu
+                        sectionCatatan={{
+                          isValid: sectionValid?.data_orang_tua_is_valid,
+                          catatan: sectionValid?.data_orang_tua_catatan,
+                        }}
+                        register={register}
+                        control={control}
+                        errors={errors}
+                        isFieldDisabled={isDisabled}
+                      />
+                    )
                   )}
 
                   {currentStep === 3 && (
-                    <AsalSekolah
-                      sectionCatatan={{
-                        isValid: existBeasiswa.catatan_data_section?.data_pendidikan_is_valid,
-                        catatan: existBeasiswa.catatan_data_section?.data_pendidikan_catatan,
-                      }}
-                      register={register}
-                      control={control}
-                      errors={errors}
-                      provinsiOptions={provinsiOptions}
-                      setValue={setValue}
-                      idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
-                      idRefBeasiswa={existBeasiswa.id_ref_beasiswa}
-                      onNilaiRaporChange={(values) => {
-                        nilaiRaporRef.current = values;
-                      }}
-                      isFieldDisabled={isDisabled}
-                    />
+                    isPerbaikan && sectionValid?.data_pendidikan_is_valid === "Y" ? (
+                      <fieldset disabled className="w-full border-0 p-0 m-0">
+                        <AsalSekolah
+                          sectionCatatan={{
+                            isValid: sectionValid?.data_pendidikan_is_valid,
+                            catatan: sectionValid?.data_pendidikan_catatan,
+                          }}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          provinsiOptions={provinsiOptions}
+                          setValue={setValue}
+                          idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
+                          idRefBeasiswa={existBeasiswa.id_ref_beasiswa}
+                          onNilaiRaporChange={(values) => {
+                            nilaiRaporRef.current = values;
+                          }}
+                          isFieldDisabled={isDisabled}
+                        />
+                      </fieldset>
+                    ) : (
+                      <AsalSekolah
+                        sectionCatatan={{
+                          isValid: sectionValid?.data_pendidikan_is_valid,
+                          catatan: sectionValid?.data_pendidikan_catatan,
+                        }}
+                        register={register}
+                        control={control}
+                        errors={errors}
+                        provinsiOptions={provinsiOptions}
+                        setValue={setValue}
+                        idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
+                        idRefBeasiswa={existBeasiswa.id_ref_beasiswa}
+                        onNilaiRaporChange={(values) => {
+                          nilaiRaporRef.current = values;
+                        }}
+                        isFieldDisabled={isDisabled}
+                      />
+                    )
                   )}
+                  {/* ───────────────────────────────────────────────────────────────── */}
 
                   {currentStep === 4 && (
                     <PilihanJurusan
@@ -1229,7 +1322,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                   )}
                 </div>
 
-                {/* Tombol Navigasi Bawah */}
                 <div className="flex justify-between mt-8 border-t pt-6">
                   <Button
                     variant="outline"
@@ -1304,7 +1396,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         />
       )}
 
-      {/* Error Dialog */}
       <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
         <DialogContent className="sm:max-w-md font-inter">
           <DialogHeader>
@@ -1333,7 +1424,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Konfirmasi Ganti Jalur */}
       <Dialog
         open={showGantiJalurDialog}
         onOpenChange={(open) => {

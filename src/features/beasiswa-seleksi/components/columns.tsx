@@ -35,8 +35,6 @@ const formatWaktuKunci = (dateString?: string | null) => {
 };
 // ──────────────────────────────────────────────────────────────────────────
 
-// ⚠️ Hooks (useNavigate, useHasAccess) must NOT be called inside cell renderers.
-// They belong in a wrapper component instead.
 const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");
@@ -108,7 +106,8 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
   );
 };
 
-export const getColumns = (): ColumnDef<ITrxBeasiswa>[] => [
+// ─── PERBAIKAN DI SINI: Tambahkan parameter page dan limit dengan default value
+export const getColumns = (page: number = 1, limit: number = 10): ColumnDef<ITrxBeasiswa>[] => [
   {
     id: "no",
     header: () => (
@@ -116,11 +115,15 @@ export const getColumns = (): ColumnDef<ITrxBeasiswa>[] => [
         No
       </span>
     ),
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground font-mono">
-        {String(row.index + 1).padStart(2, "0")}
-      </span>
-    ),
+    cell: ({ row }) => {
+      // Rumus menghitung nomor absolut: (halaman_sekarang - 1) * jumlah_per_halaman + index_baris + 1
+      const absoluteIndex = (page - 1) * limit + row.index + 1;
+      return (
+        <span className="text-sm text-muted-foreground font-mono">
+          {String(absoluteIndex).padStart(2, "0")}
+        </span>
+      );
+    },
     size: 50,
   },
   {

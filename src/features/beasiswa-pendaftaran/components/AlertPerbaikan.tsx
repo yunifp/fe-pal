@@ -1,41 +1,101 @@
+import { AlertCircle, ArrowRight, User, MapPin, Users, GraduationCap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AlertPerbaikanProps {
-  catatan?: string;
+  catatanUmum?: string | null;
+  sectionData?: {
+    data_pribadi_is_valid?: "Y" | "N" | null;
+    data_tempat_tinggal_bekerja_is_valid?: "Y" | "N" | null;
+    data_orang_tua_is_valid?: "Y" | "N" | null;
+    data_pendidikan_is_valid?: "Y" | "N" | null;
+  } | null;
+  onNavigateToStep: (stepIndex: number) => void;
 }
 
-const AlertPerbaikan = ({ catatan }: AlertPerbaikanProps) => {
-  return (
-    <Alert className="border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50">
-      <AlertCircle className="h-5 w-5 text-amber-600" strokeWidth={2.5} />
-      <AlertTitle className="font-semibold text-amber-900 text-base">
-        Perlu Perbaikan
-      </AlertTitle>
-      <AlertDescription className="text-amber-800 space-y-3">
-        <p className="leading-relaxed">
-          Pengajuan beasiswa Anda memerlukan perbaikan. Silakan periksa catatan
-          verifikator dan lakukan perbaikan sesuai dengan arahan yang diberikan.
-        </p>
+const AlertPerbaikan = ({
+  catatanUmum,
+  sectionData,
+  onNavigateToStep,
+}: AlertPerbaikanProps) => {
+  // Mapping section mana saja yang dinyatakan "N" (Perlu Diperbaiki)
+  const sections = [
+    {
+      key: "pribadi",
+      title: "Data Pribadi",
+      isInvalid: sectionData?.data_pribadi_is_valid === "N",
+      step: 0, // Indeks array stepper (Step 1)
+      icon: User,
+    },
+    {
+      key: "alamat",
+      title: "Alamat & Tempat Kerja",
+      isInvalid: sectionData?.data_tempat_tinggal_bekerja_is_valid === "N",
+      step: 1, // Indeks array stepper (Step 2)
+      icon: MapPin,
+    },
+    {
+      key: "ortu",
+      title: "Data Orang Tua",
+      isInvalid: sectionData?.data_orang_tua_is_valid === "N",
+      step: 2, // Indeks array stepper (Step 3)
+      icon: Users,
+    },
+    {
+      key: "pendidikan",
+      title: "Data Pendidikan",
+      isInvalid: sectionData?.data_pendidikan_is_valid === "N",
+      step: 3, // Indeks array stepper (Step 4)
+      icon: GraduationCap,
+    },
+  ];
 
-        {catatan && (
-          <div className="mt-3 pt-3 border-t border-amber-200">
-            <p className="font-medium text-amber-900 mb-2 text-sm">
-              Catatan Verifikator:
-            </p>
-            <div className="bg-white/60 rounded-lg p-3 border border-amber-200">
-              <p className="text-sm text-amber-900 whitespace-pre-wrap leading-relaxed">
-                {catatan}
-              </p>
-            </div>
+  const invalidSections = sections.filter((s) => s.isInvalid);
+
+  return (
+    <Alert variant="destructive" className="bg-amber-50 border-amber-300 text-amber-900 shadow-sm font-inter">
+      <AlertCircle className="h-5 w-5 text-amber-700 mt-0.5" />
+      <AlertTitle className="text-amber-950 font-bold text-base">
+        Pendaftaran Dikembalikan (Perlu Perbaikan)
+      </AlertTitle>
+      
+      <AlertDescription className="mt-2 space-y-4">
+        {catatanUmum && (
+          <div className="bg-white/70 border border-amber-200 rounded-lg p-3 text-sm leading-relaxed text-amber-900">
+            <p className="font-semibold text-xs text-amber-800 mb-1">Catatan Umum Verifikator:</p>
+            <p className="whitespace-pre-wrap">{catatanUmum}</p>
           </div>
         )}
 
-        <div className="flex items-start gap-2 mt-3 pt-3 border-t border-amber-200">
-          <div className="flex-shrink-0 w-1 h-1 rounded-full bg-amber-500 mt-2"></div>
-          <p className="text-sm text-amber-700">
-            Setelah melakukan perbaikan, silakan submit ulang pengajuan Anda.
+        <div>
+          <p className="font-semibold text-xs text-amber-900 mb-2">
+            {invalidSections.length > 0 
+              ? "Silakan periksa dan perbaiki section berikut:" 
+              : "Silakan periksa formulir pendaftaran Anda kembali."}
           </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {invalidSections.map((sec) => {
+              const Icon = sec.icon;
+              return (
+                <Button
+                  key={sec.key}
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-between bg-white hover:bg-amber-100 hover:text-amber-950 border-amber-300 text-left font-medium text-xs py-5 transition-all shadow-none group"
+                  onClick={() => onNavigateToStep(sec.step)}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <Icon className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                    <span className="truncate">{sec.title}</span>
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-amber-700 group-hover:translate-x-0.5 transition-transform flex-shrink-0">
+                    Ke Form <ArrowRight className="w-3 h-3" />
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
         </div>
       </AlertDescription>
     </Alert>
