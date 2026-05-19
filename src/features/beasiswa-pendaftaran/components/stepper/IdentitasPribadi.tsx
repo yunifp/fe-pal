@@ -138,7 +138,7 @@ const IdentitasPribadi = ({
           )}
 
           <div className="w-full space-y-1.5" id="foto">
-            <Label>{existFoto ? "Ubah" : "Pilih"} Foto Untuk Profile</Label>
+            <Label>{existFoto ? "Ubah" : "Pilih"} Pas Foto</Label>
             <DropAndCropRectangle
               name="foto"
               onChange={onFotoChange}
@@ -239,14 +239,23 @@ const IdentitasPribadi = ({
           <div>
             <CustInput
               label="No. Telepon"
-              type="number"
+              type="text" // <-- Diubah menjadi text agar maxLength didukung semua browser
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={13} // <-- Tambahan batasan di UI
               id="no_hp"
               placeholder="Cth: 08123456789"
               isRequired={true}
               error={!!errors.no_hp}
               errorMessage={errors.no_hp?.message}
               onKeyDown={onlyNumbers}
-              {...register("no_hp")}
+              {...register("no_hp", {
+                onChange: (e) => {
+                  // Memastikan input mentok di 13 karakter saat mengetik
+                  const value = e.target.value.slice(0, 13);
+                  setValue("no_hp", value);
+                },
+              })}
               disabled={isFieldDisabled("no_hp")}
             />
           </div>

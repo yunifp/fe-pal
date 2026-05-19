@@ -95,10 +95,8 @@ const BeasiswaSeleksiPage = () => {
     setPage(1);
   }, [filterIdFlow, filterIdJalur, debouncedSearch]);
 
-  // ─── PERBAIKAN DI SINI: Kirim state page dan limit (10) ke getColumns ────
   // Setiap kali halaman berubah, fungsi ini akan menghitung ulang nomor urut
   const columns = useMemo(() => getColumns(page, 10), [page]);
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-1">
@@ -150,15 +148,15 @@ const BeasiswaSeleksiPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Status</SelectItem>
-                  {(responseFlow?.data ?? []).map((opt) => (
-                    <SelectItem key={opt.id} value={String(opt.id)}>
-                      {opt.flow}
-                    </SelectItem>
-                  ))}
+
+                  {/* Sesuai dengan ID di Database */}
+                  <SelectItem value="2">Seleksi Administrasi</SelectItem>
+                  <SelectItem value="3">Tidak Lulus Administrasi</SelectItem>
                   <SelectItem value="4">Perlu Perbaikan</SelectItem>
                   <SelectItem value="5">Seleksi Hasil Perbaikan</SelectItem>
-                  <SelectItem value="3">Tidak Lulus Administrasi</SelectItem>
-                  <SelectItem value="6">Lulus Administrasi</SelectItem>
+
+                  {/* Gunakan ID 13 jika yang dimaksud Lulus Administrasi adalah ini */}
+                  <SelectItem value="13">Lulus Administrasi - Pembagian Wilayah</SelectItem>                 
                 </SelectContent>
               </Select>
 

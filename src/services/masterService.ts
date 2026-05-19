@@ -216,6 +216,16 @@ export const masterService = {
     );
     return response.data;
   },
+  updateTanggalBeasiswa: async (
+    idBeasiswa: number,
+    data: { tanggal_mulai: string; tanggal_selesai: string },
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.put(
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/set-tanggal/${idBeasiswa}`,
+      data,
+    );
+    return response.data;
+  },
   getJenjangSekolahByPagination: async (
     page: number = 1,
     search: string = "",

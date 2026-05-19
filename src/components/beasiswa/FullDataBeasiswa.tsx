@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,21 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
     staleTime: STALE_TIME,
   });
 
+  // Pengecekan data untuk notifikasi jika ada format yang tidak sesuai
+  useEffect(() => {
+    if (data?.data?.data_beasiswa) {
+      const { email, no_hp } = data.data.data_beasiswa;
+      
+      if (email && !email.includes("@")) {
+        toast.error("Email belum sesuai format (harus mengandung karakter @)");
+      }
+      
+      if (no_hp && no_hp.length > 13) {
+        toast.error("Nomor HP belum sesuai format (maksimal 13 digit)");
+      }
+    }
+  }, [data]);
+
   if (isLoading) {
     return (
       <Card className="shadow-none">
@@ -69,27 +84,28 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
 
   const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data!!;
 
-  console.log(data_beasiswa);
-
   const InfoItem = ({
     icon: Icon,
     label,
     value,
+    isWarning = false,
   }: {
     icon: any;
     label: string;
     value?: string | null;
+    isWarning?: boolean;
   }) => (
     <div className="flex items-start gap-3 py-2">
       <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-sm mt-1 break-words">{value || "-"}</p>
+        <p className={`text-sm mt-1 break-words ${isWarning ? "text-red-500 font-medium" : ""}`}>
+          {value || "-"}
+        </p>
       </div>
     </div>
   );
 
-  // ✅ Sesuaikan DokumenItem
   const DokumenItem = ({ dokumen, index }: { dokumen: any; index: number }) => {
     const [isDownloading, setIsDownloading] = useState(false);
 
@@ -168,7 +184,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <p className="text-sm font-medium text-muted-foreground">
                   Foto Profil
                 </p>
-                {/* ✅ Ganti img dengan SecureImage */}
                 <SecureImage
                   src={data_beasiswa.foto!!}
                   alt="Foto Profil"
@@ -258,8 +273,18 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
               value={data_beasiswa.agama}
             />
             <InfoItem icon={Users} label="Suku" value={data_beasiswa.suku} />
-            <InfoItem icon={Phone} label="No. HP" value={data_beasiswa.no_hp} />
-            <InfoItem icon={Mail} label="Email" value={data_beasiswa.email} />
+            <InfoItem 
+              icon={Phone} 
+              label="No. HP" 
+              value={data_beasiswa.no_hp} 
+              isWarning={!!data_beasiswa.no_hp && data_beasiswa.no_hp.length > 13}
+            />
+            <InfoItem 
+              icon={Mail} 
+              label="Email" 
+              value={data_beasiswa.email} 
+              isWarning={!!data_beasiswa.email && !data_beasiswa.email.includes("@")}
+            />
             <InfoItem
               icon={Briefcase}
               label="Pekerjaan"

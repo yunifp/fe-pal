@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
-import Navbar from "@/features/landing-alt/components/pendaftaran-beasiswa/Navbar";
+import Navbar from "@/features/landing-alt/components/landing-page/NavbarLanding";
 import Footer from "@/features/landing-alt/components/Footer";
 import { ForgotPinDialog } from "../components/ForgotPinDialog";
 import { RefreshCcw } from "lucide-react";
@@ -168,7 +168,7 @@ const LoginPenerimaBeasiswaPage = () => {
                     />
 
                     <CustPassword
-                      label="Password"
+                      label="PIN"
                       id="pin"
                       placeholder="Masukkan Password"
                       autoComplete="pin"

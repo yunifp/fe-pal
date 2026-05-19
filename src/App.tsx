@@ -97,6 +97,7 @@ import CmsKontakPage from "./features/cms-landing/pages/CmsKontakPage";
 import CmsTentangPage from "./features/cms-landing/pages/CmsTentangPage";
 import MappingProdiByPtPage from "./features/setting-jurusan-prodi/pages/MappingProdiByPtPage";
 import NikCekalPage from "./features/nik-cekal/pages/NikCekalPage";
+import SettingWaktuPage from "./features/beasiswa/pages/SettingWaktuPage";
 
 const queryClient = new QueryClient();
 
@@ -266,6 +267,10 @@ function App() {
               <Route
                 path="/beasiswa_seleksi"
                 element={<BeasiswaSeleksiPage />}
+              />
+              <Route
+                path="/setting_waktu_pendaftaran"
+                element={<SettingWaktuPage />}
               />
               <Route
                 path="/beasiswa_seleksi/detail/:idTrxBeasiswa"

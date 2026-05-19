@@ -18,7 +18,7 @@ import { authService } from "../services/authService";
 import UserCredentialsDialog from "../components/UserCredentialsDialog";
 import { beasiswaService } from "@/services/beasiswaService";
 import { TidakAdaBeasiswaAktif } from "../components/TidakAdaBeasiswaAktif";
-import Navbar from "@/features/landing-alt/components/pendaftaran-beasiswa/Navbar";
+import Navbar from "@/features/landing-alt/components/landing-page/NavbarLanding";
 import Footer from "@/features/landing-alt/components/Footer";
 import { toUpperCase } from "@/utils/stringFormatter";
 import { RefreshCcw } from "lucide-react"; // Icon untuk refresh captcha
@@ -39,8 +39,8 @@ const registerSchema = z.object({
   noHp: z
     .string()
     .min(8, "No HP minimal 8 digit")
-    .max(15, "No HP maksimal 15 digit")
-    .regex(/^(\+62|62|0)8[1-9][0-9]{6,12}$/, "Format nomor HP tidak valid"),
+    .max(13, "No HP maksimal 13 digit") // <-- Diubah menjadi limit 13
+    .regex(/^(\+62|62|0)8[1-9][0-9]{4,10}$/, "Format nomor HP tidak valid"), // Disesuaikan untuk panjang 13
 
   captchaAnswer: z.string().min(1, "Jawaban keamanan wajib diisi"),
 });
@@ -195,9 +195,16 @@ const RegisterPenerimaBeasiswaPage = () => {
                         type="text"
                         id="noHp"
                         placeholder="Masukkan no HP"
+                        maxLength={13} // <-- Tambahan batasan di UI
                         error={!!errors.noHp}
                         errorMessage={errors.noHp?.message}
-                        {...register("noHp")}
+                        {...register("noHp", {
+                          onChange: (e) => {
+                            // Memastikan input mentok di 13 karakter saat mengetik
+                            const value = e.target.value.slice(0, 13);
+                            setValue("noHp", value);
+                          },
+                        })}
                       />
 
                       {/* 5. UI Input Captcha */}

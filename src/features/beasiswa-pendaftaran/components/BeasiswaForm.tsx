@@ -161,7 +161,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
   });
-  
+
   const agamaOptions = useMemo(() => {
     return (
       responseAgama?.data?.map((item: { id: number; nama_agama: string }) => ({
@@ -199,8 +199,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         email: existBeasiswa.email ?? user?.email ?? "",
         tanggal_lahir: existBeasiswa.tanggal_lahir ?? "",
         tempat_lahir: existBeasiswa.tempat_lahir ?? "",
-        agama: agamaOptions.find((opt) => opt.label === existBeasiswa.agama)?.value ?? existBeasiswa.agama ?? "",
-        suku: sukuOptions.find((opt) => opt.label === existBeasiswa.suku)?.value ?? existBeasiswa.suku ?? "",
+        agama: agamaOptions.find((opt: { value: string; label: string }) => opt.label === existBeasiswa.agama)?.value ?? existBeasiswa.agama ?? "",
+        suku: sukuOptions.find((opt: { value: string; label: string }) => opt.label === existBeasiswa.suku)?.value ?? existBeasiswa.suku ?? "",
         pekerjaan: existBeasiswa.pekerjaan ?? "",
         instansi_pekerjaan: existBeasiswa.instansi_pekerjaan ?? "",
         berat_badan: existBeasiswa.berat_badan?.toString(),
@@ -216,7 +216,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         tinggal_rt: existBeasiswa.tinggal_rt ?? "",
         tinggal_rw: existBeasiswa.tinggal_rw ?? "",
         tinggal_alamat: existBeasiswa.tinggal_alamat ?? "",
-        
+
         kerja_provinsi: (existBeasiswa.kerja_kode_prov ?? "") + "#" + (existBeasiswa.kerja_prov ?? ""),
         kerja_kabkot: (existBeasiswa.kerja_kode_kab ?? "") + "#" + (existBeasiswa.kerja_kab_kota ?? ""),
         kerja_kecamatan: (existBeasiswa.kerja_kode_kec ?? "") + "#" + (existBeasiswa.kerja_kec ?? ""),
@@ -269,11 +269,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         sekolah_provinsi: (existBeasiswa.sekolah_kode_prov ?? "") + "#" + (existBeasiswa.sekolah_prov ?? ""),
         sekolah_kabkot: (existBeasiswa.sekolah_kode_kab ?? "") + "#" + (existBeasiswa.sekolah_kab_kota ?? ""),
         jenjang_sekolah: existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
-            ? existBeasiswa.id_jenjang_sekolah + "#" + existBeasiswa.jenjang_sekolah
-            : "",
+          ? existBeasiswa.id_jenjang_sekolah + "#" + existBeasiswa.jenjang_sekolah
+          : "",
         sekolah: existBeasiswa.sekolah && existBeasiswa.nisn_sekolah
-            ? `${existBeasiswa.sekolah}#NPSN:${existBeasiswa.nisn_sekolah}`
-            : (existBeasiswa.sekolah ?? ""),
+          ? `${existBeasiswa.sekolah}#NPSN:${existBeasiswa.nisn_sekolah}`
+          : (existBeasiswa.sekolah ?? ""),
         jurusan_sekolah: existBeasiswa.jurusan ?? "",
         tahun_lulus: existBeasiswa.tahun_lulus ?? "",
         nama_jurusan_sekolah: existBeasiswa.nama_jurusan_sekolah ?? "",
@@ -382,7 +382,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           pilihanToSave = [];
         }
       }
-      
+
       const [namaSekolah, npsn] = (data.sekolah ?? "").split("#NPSN:");
       const formData = new FormData();
       formData.append("is_draft", "true");
@@ -489,8 +489,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       if (currentStep >= steps.length - 1) return;
 
       const isValid = fieldsToValidate.length > 0
-          ? await trigger(fieldsToValidate as any)
-          : true;
+        ? await trigger(fieldsToValidate as any)
+        : true;
 
       if (!isValid) {
         setShowErrorDialog(true);
@@ -602,8 +602,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
               ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
             });
           }
-        } catch {}
-        
+        } catch { }
+
         const ptProdiMap = new Map<string, string[]>();
         const validationErrors = validatePilihan(pilihanUntukValidasi, ptProdiMap);
 
@@ -612,7 +612,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           return;
         }
       }
-      
+
       if (currentStep === 3) {
         const getKode = (val: string | undefined) => (val ?? "").split("#")[0].trim();
         const asalSekolahChecks: { label: string; valid: boolean }[] = [
@@ -687,7 +687,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
             id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
             ...nilaiRaporRef.current,
           });
-        } catch {}
+        } catch { }
       }
 
       if (currentStep === 1) {
@@ -814,7 +814,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       if (data.foto_samping_kiri instanceof File) formData.append("foto_samping_kiri", data.foto_samping_kiri);
       if (data.foto_samping_kanan instanceof File) formData.append("foto_samping_kanan", data.foto_samping_kanan);
       if (data.foto_belakang instanceof File) formData.append("foto_belakang", data.foto_belakang);
-      
+
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
       formData.append("nkk", data.nkk ?? "");
@@ -887,7 +887,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       formData.append("sekolah_provinsi", data.sekolah_provinsi ?? "");
       formData.append("sekolah_kabkot", data.sekolah_kabkot ?? "");
       formData.append("jenjang_sekolah", data.jenjang_sekolah ?? "");
-      
+
       const sekolahRaw = data.sekolah ?? "";
       const npsn = sekolahRaw.match(/\((\d+)\)$/)?.[1] ?? "";
       const namaSekolah = sekolahRaw.replace(/\s*-\(\d+\)$/, "").trim();
@@ -1116,7 +1116,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                       el.scrollIntoView({ behavior: "smooth", block: "center" });
                       el.style.transition = "all 0.5s";
                       const originalShadow = el.style.boxShadow;
-                      el.style.boxShadow = "0 0 0 4px rgba(251, 191, 36, 0.6)"; 
+                      el.style.boxShadow = "0 0 0 4px rgba(251, 191, 36, 0.6)";
                       setTimeout(() => { el.style.boxShadow = originalShadow; }, 2500);
                     }
                   }, 300);

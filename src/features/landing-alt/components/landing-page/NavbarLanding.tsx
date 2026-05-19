@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
+import { useNavigate, useLocation } from "react-router-dom"; // Tambahkan useLocation
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ const S = {
     display: "flex",
     alignItems: "center",
     flexShrink: 0,
-    cursor: "pointer", // Tambahan agar terlihat bisa diklik
+    cursor: "pointer",
   }),
   logoImg: (): React.CSSProperties => ({
     height: 40,
@@ -191,7 +191,8 @@ const NavbarLanding = ({
 }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const navigate = useNavigate(); // ✅ Inisialisasi useNavigate
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -199,14 +200,31 @@ const NavbarLanding = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Helper untuk navigasi tanpa full reload
+  // Menangani scroll otomatis setelah navigasi terjadi (jika ada hash di URL)
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => element.scrollIntoView({ behavior: "smooth" }), 100);
+      }
+    }
+  }, [location]);
+
+  // Cerdas menavigasi, menjaga root link jika ada hash
   const handleNavigate = (path: string) => (e: React.MouseEvent) => {
-    e.preventDefault(); // Mencegah reload halaman
-    setMenuOpen(false); // Tutup menu mobile jika sedang terbuka
+    e.preventDefault();
+    setMenuOpen(false);
+
+    // Jika user mengklik link beranda ("/") saat sudah berada di halaman beranda
+    if (path === "/" && location.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      navigate("/");
+      return;
+    }
+
+    // Navigasi normal (Termasuk rute dengan /#hash)
     navigate(path);
   };
-
-  const handleLinkClick = () => setMenuOpen(false);
 
   if (isBeasiswaLoading) {
     return (
@@ -240,20 +258,23 @@ const NavbarLanding = ({
             <a href="/" onClick={handleNavigate("/")} style={S.navLink()}>
               Beranda
             </a>
-            {/* Hash link (#) biarkan tetap normal agar bisa scroll */}
+            {/* Perhatikan penambahan "/" sebelum "#" agar kembali ke root lebih dulu */}
             <a
-              href="#jalur-pendaftaran"
-              onClick={handleLinkClick}
-              style={S.mobileLink()}>
+              href="/#jalur-pendaftaran"
+              onClick={handleNavigate("/#jalur-pendaftaran")}
+              style={S.navLink()}>
               Jalur Pendaftaran
             </a>
             <a
               href="/cek-status"
               onClick={handleNavigate("/cek-status")}
-              style={S.mobileLink()}>
+              style={S.navLink()}>
               Cek Status
             </a>
-            <a href="#kontak" onClick={handleLinkClick} style={S.navLink()}>
+            <a 
+              href="/#kontak" 
+              onClick={handleNavigate("/#kontak")} 
+              style={S.navLink()}>
               Kontak
             </a>
           </div>
@@ -320,10 +341,16 @@ const NavbarLanding = ({
           style={S.mobileLink()}>
           Beasiswa
         </a>
-        <a href="#kontak" onClick={handleLinkClick} style={S.mobileLink()}>
+        <a 
+          href="/#kontak" 
+          onClick={handleNavigate("/#kontak")} 
+          style={S.mobileLink()}>
           Kontak
         </a>
-        <a href="#tentang" onClick={handleLinkClick} style={S.mobileLink()}>
+        <a 
+          href="/#tentang" 
+          onClick={handleNavigate("/#tentang")} 
+          style={S.mobileLink()}>
           Tentang
         </a>
         <div style={S.mobileAuth()}>

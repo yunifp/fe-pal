@@ -1,14 +1,24 @@
-const Footer = () => {
-  return (
-    <footer className="bg-primary py-8">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <p className="text-white font-medium mb-2">© 2026 AKSARA</p>
-        <p className="text-white/90 text-sm">
-          Badan Pengelola Dana Perkebunan Kelapa Sawit (BPDPKS)
-        </p>
-      </div>
-    </footer>
-  );
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const S = {
+  footer: (): React.CSSProperties => ({
+    background: "#2e7d32",
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
+    padding: "28px 24px",
+    fontSize: "0.85rem",
+    lineHeight: 1.9,
+  }),
 };
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+const Footer = () => (
+  <footer style={S.footer()}>
+    <p></p>
+    <p></p>
+    <p>© 2025. Official Website Beasiswa SDM Sawit</p>
+  </footer>
+);
 
 export default Footer;

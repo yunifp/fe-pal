@@ -1,8 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import type { IBeasiswa } from "@/types/beasiswa";
-import { GraduationCap, Lock, AlertTriangle } from "lucide-react";
+import { GraduationCap, Lock, AlertTriangle, Calendar } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
@@ -23,6 +32,12 @@ const BeasiswaAktifAksi = ({
   const [showMore, setShowMore] = useState<boolean>(false);
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
 
+  // State untuk Modal Atur Tanggal
+  const [showSetTanggal, setShowSetTanggal] = useState<boolean>(false);
+  const [tanggalMulai, setTanggalMulai] = useState<string>("");
+  const [tanggalSelesai, setTanggalSelesai] = useState<string>("");
+
+  // Mutation untuk Tutup Beasiswa
   const tutupMutation = useMutation({
     mutationFn: async (data: number) => {
       return await masterService.tutupBeasiswa(data);
@@ -40,6 +55,35 @@ const BeasiswaAktifAksi = ({
         toast.error(error.response.data.message);
       } else {
         toast.error("Terjadi kesalahan saat menyimpan data");
+      }
+    },
+  });
+
+  // Mutation untuk Set Tanggal Beasiswa
+  const updateTanggalMutation = useMutation({
+    mutationFn: async ({
+      idBeasiswa,
+      data,
+    }: {
+      idBeasiswa: number;
+      data: { tanggal_mulai: string; tanggal_selesai: string };
+    }) => {
+      return await masterService.updateTanggalBeasiswa(idBeasiswa, data);
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success(res.message);
+        setShowSetTanggal(false);
+        queryClient.invalidateQueries({ queryKey: ["beasiswa-aktif"] });
+      } else {
+        toast.error(res.message);
+      }
+    },
+    onError: (error: any) => {
+      if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Terjadi kesalahan saat memperbarui tanggal");
       }
     },
   });
@@ -70,6 +114,59 @@ const BeasiswaAktifAksi = ({
     onTutupPendaftaran?.();
     tutupMutation.mutate(beasiswa.id);
     setShowConfirm(false);
+  };
+
+  // Handler membuka modal dan memformat tanggal yang sudah ada (jika ada)
+  const handleOpenAturTanggal = () => {
+    if (beasiswa?.tanggal_mulai) {
+      const dateObj = new Date(beasiswa.tanggal_mulai);
+      if (!isNaN(dateObj.getTime())) {
+        const localIso = new Date(
+          dateObj.getTime() - dateObj.getTimezoneOffset() * 60000,
+        )
+          .toISOString()
+          .slice(0, 16);
+        setTanggalMulai(localIso);
+      }
+    } else {
+      setTanggalMulai("");
+    }
+
+    if (beasiswa?.tanggal_selesai) {
+      const dateObj = new Date(beasiswa.tanggal_selesai);
+      if (!isNaN(dateObj.getTime())) {
+        const localIso = new Date(
+          dateObj.getTime() - dateObj.getTimezoneOffset() * 60000,
+        )
+          .toISOString()
+          .slice(0, 16);
+        setTanggalSelesai(localIso);
+      }
+    } else {
+      setTanggalSelesai("");
+    }
+
+    setShowSetTanggal(true);
+  };
+
+  // Submit perubahan tanggal
+  const handleSubmitTanggal = () => {
+    if (!tanggalMulai || !tanggalSelesai) {
+      toast.error("Tanggal mulai dan tanggal selesai wajib diisi");
+      return;
+    }
+
+    // Mengubah format "YYYY-MM-DDTHH:mm" menjadi "YYYY-MM-DD HH:mm:ss" untuk backend
+    const formattedMulai = tanggalMulai.replace("T", " ") + ":00";
+    const formattedSelesai = tanggalSelesai.replace("T", " ") + ":00";
+
+    updateTanggalMutation.mutate({
+      idBeasiswa: beasiswa.id,
+      data: {
+        tanggal_mulai: formattedMulai,
+        tanggal_selesai: formattedSelesai,
+      },
+    });
   };
 
   return (
@@ -107,7 +204,7 @@ const BeasiswaAktifAksi = ({
           </p>
         </div>
 
-        {/* Confirmation Box */}
+        {/* Confirmation Box Tutup */}
         {showConfirm && (
           <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex gap-3">
@@ -145,22 +242,76 @@ const BeasiswaAktifAksi = ({
           </div>
         )}
 
-        {/* Action Section */}
+        {/* Action Section (Tutup Pendaftaran & Atur Tanggal) */}
         <div className="pt-8 border-t border-slate-200">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-4">
             {!showConfirm && (
-              <Button
-                variant="destructive"
-                size="default"
-                onClick={handleTutupClick}
-                disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 shadow-md">
-                <Lock className="h-4 w-4 mr-2" />
-                Tutup Pendaftaran
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handleOpenAturTanggal}
+                  disabled={isLoading || updateTanggalMutation.isPending}
+                  className="border-primary text-primary hover:bg-primary/10 shadow-sm">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Atur Tanggal
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  size="default"
+                  onClick={handleTutupClick}
+                  disabled={isLoading}
+                  className="bg-red-600 hover:bg-red-700 shadow-md">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Tutup Pendaftaran
+                </Button>
+              </>
             )}
           </div>
         </div>
+
+        {/* Modal Dialog Atur Tanggal */}
+        <Dialog open={showSetTanggal} onOpenChange={setShowSetTanggal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Atur Tanggal Pendaftaran</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="tanggal_mulai">Tanggal Mulai</Label>
+                <Input
+                  id="tanggal_mulai"
+                  type="datetime-local"
+                  value={tanggalMulai}
+                  onChange={(e) => setTanggalMulai(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tanggal_selesai">Tanggal Selesai</Label>
+                <Input
+                  id="tanggal_selesai"
+                  type="datetime-local"
+                  value={tanggalSelesai}
+                  onChange={(e) => setTanggalSelesai(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowSetTanggal(false)}
+                disabled={updateTanggalMutation.isPending}>
+                Batal
+              </Button>
+              <Button
+                onClick={handleSubmitTanggal}
+                disabled={updateTanggalMutation.isPending}>
+                {updateTanggalMutation.isPending ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

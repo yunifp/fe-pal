@@ -11,7 +11,7 @@ import { useAuthStore, type AuthUser } from "@/stores/authStore";
 import { useMenuStore } from "@/stores/menuStore";
 import type { LoginRequest } from "../types/auth";
 import { CustInput } from "@/components/CustInput";
-import Navbar from "@/features/landing-alt/components/landing-page/Navbar";
+import Navbar from "@/features/landing-alt/components/landing-page/NavbarLanding";
 import Footer from "@/features/landing-alt/components/Footer";
 import { CustPassword } from "@/components/CustPassword";
 import { useEffect, useState } from "react";
@@ -124,7 +124,7 @@ const LoginInstansiPage = () => {
 
   return (
     <>
-      <Navbar />
+      <Navbar hasBeasiswaAktif={false} isBeasiswaLoading={false} />
       <div className="relative overflow-hidden">
         <div
           className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
