@@ -93,12 +93,11 @@ const BeasiswaPendaftaranPage = () => {
             existBeasiswa.id_flow === 10 ||
             existBeasiswa.id_flow === 1 ||
             existBeasiswa.id_flow === 7) && (
-            <>
-              <AlertSudahSubmit />
-              {/* <FlowBeasiswaStepper currentIdFlow={existBeasiswa.id_flow!!} /> */}
-              <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
-            </>
-          )}
+              <>
+                <AlertSudahSubmit idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />              {/* <FlowBeasiswaStepper currentIdFlow={existBeasiswa.id_flow!!} /> */}
+                <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
+              </>
+            )}
 
           {/* Flow 3: Ditolak - Alert Tolak + Full Data */}
           {existBeasiswa.id_flow === 3 && (

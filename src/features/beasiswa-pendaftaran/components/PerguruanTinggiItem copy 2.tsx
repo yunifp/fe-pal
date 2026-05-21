@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CustSearchableSelect } from "@/components/CustSearchableSelect";
 import { Card, CardContent } from "@/components/ui/card";
 import { masterService } from "@/services/masterService";

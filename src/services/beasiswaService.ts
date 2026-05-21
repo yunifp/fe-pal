@@ -1168,4 +1168,23 @@ export const beasiswaService = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
+  downloadPdfBuktiPendaftaran: async (idTrxBeasiswa: number): Promise<void> => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-pdf-bukti-pendaftaran/${idTrxBeasiswa}`,
+      {
+        responseType: "blob",
+      },
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Bukti_Pendaftaran_${idTrxBeasiswa}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };
+
+

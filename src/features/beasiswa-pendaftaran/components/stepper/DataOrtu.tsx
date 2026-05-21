@@ -213,6 +213,7 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ayah_no_hp")}
                 {...register("ayah_no_hp")}
                 onKeyDown={onlyNumbers}
+                maxLength={13}
               />
             </div>
           </div>
@@ -222,6 +223,7 @@ const DataOrtu = ({
               <CustInput
                 label="Email"
                 id="ayah_email"
+                type="email"
                 placeholder="Masukkan email ayah"
                 error={!!errors.ayah_email}
                 errorMessage={errors.ayah_email?.message}
@@ -387,6 +389,7 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("ibu_no_hp")}
                 {...register("ibu_no_hp")}
                 onKeyDown={onlyNumbers}
+                maxLength={13}
               />
             </div>
           </div>
@@ -396,6 +399,7 @@ const DataOrtu = ({
               <CustInput
                 label="Email"
                 id="ibu_email"
+                type="email"
                 placeholder="Masukkan email ibu"
                 error={!!errors.ibu_email}
                 errorMessage={errors.ibu_email?.message}
@@ -550,6 +554,7 @@ const DataOrtu = ({
                 disabled={isFieldDisabled("wali_no_hp")}
                 {...register("wali_no_hp")}
                 onKeyDown={onlyNumbers}
+                maxLength={13}
               />
             </div>
           </div>
@@ -559,6 +564,7 @@ const DataOrtu = ({
               <CustInput
                 label="Email"
                 id="wali_email"
+                type="email"
                 placeholder="Masukkan email wali"
                 error={!!errors.wali_email}
                 errorMessage={errors.wali_email?.message}
