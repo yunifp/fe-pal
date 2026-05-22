@@ -70,8 +70,7 @@ const LNavbar: React.FC = () => {
     <header
       className={`w-full fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? "bg-yellow-400 shadow-lg" : "bg-transparent"
-      }`}
-    >
+      }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           {/* Brand */}
@@ -79,8 +78,7 @@ const LNavbar: React.FC = () => {
             <div
               className={`p-2 rounded-lg transition-colors ${
                 isScrolled ? "bg-yellow-500" : "bg-white/10"
-              }`}
-            >
+              }`}>
               <img
                 src="/images/logo.png"
                 alt="KPU Logo"
@@ -95,8 +93,7 @@ const LNavbar: React.FC = () => {
               />
               <div
                 className="h-8 w-8 bg-white rounded flex items-center justify-center font-bold text-yellow-600"
-                style={{ display: "none" }}
-              >
+                style={{ display: "none" }}>
                 K
               </div>
             </div>
@@ -104,16 +101,14 @@ const LNavbar: React.FC = () => {
               <h1
                 className={`text-lg font-bold transition-colors ${
                   isScrolled ? "text-gray-900" : "text-white"
-                }`}
-              >
+                }`}>
                 PALMA
               </h1>
 
               <p
                 className={`text-sm transition-colors ${
                   isScrolled ? "text-gray-700" : "text-white/90"
-                }`}
-              >
+                }`}>
                 Platform SDM Perkebunan Kelapa Sawit
               </p>
             </div>
@@ -132,8 +127,7 @@ const LNavbar: React.FC = () => {
                             isScrolled
                               ? "text-gray-900 hover:bg-yellow-500 data-[state=open]:bg-yellow-500"
                               : "text-white hover:bg-white/10 data-[state=open]:bg-white/10"
-                          } bg-transparent`}
-                        >
+                          } bg-transparent`}>
                           {item.label}
                         </NavigationMenuTrigger>
                         <NavigationMenuContent>
@@ -143,8 +137,7 @@ const LNavbar: React.FC = () => {
                                 <NavigationMenuLink asChild>
                                   <a
                                     href={subitem.href}
-                                    className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-yellow-50 hover:text-yellow-600 focus:bg-yellow-50"
-                                  >
+                                    className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-yellow-50 hover:text-yellow-600 focus:bg-yellow-50">
                                     {subitem.label}
                                   </a>
                                 </NavigationMenuLink>
@@ -161,8 +154,7 @@ const LNavbar: React.FC = () => {
                             isScrolled
                               ? "text-gray-900 hover:bg-yellow-500"
                               : "text-white hover:bg-white/10"
-                          }`}
-                        >
+                          }`}>
                           {item.label}
                         </a>
                       </NavigationMenuLink>
@@ -184,8 +176,7 @@ const LNavbar: React.FC = () => {
                     isScrolled
                       ? "text-gray-900 hover:bg-yellow-500"
                       : "text-white hover:bg-white/10"
-                  }`}
-                >
+                  }`}>
                   {isMobileMenuOpen ? (
                     <X className="w-6 h-6" />
                   ) : (
@@ -200,13 +191,11 @@ const LNavbar: React.FC = () => {
                       {item.submenu ? (
                         <Collapsible
                           open={openSubmenu === item.label}
-                          onOpenChange={() => toggleSubmenu(item.label)}
-                        >
+                          onOpenChange={() => toggleSubmenu(item.label)}>
                           <CollapsibleTrigger asChild>
                             <Button
                               variant="ghost"
-                              className="w-full justify-between font-medium"
-                            >
+                              className="w-full justify-between font-medium">
                               {item.label}
                               <ChevronDown
                                 className={`w-4 h-4 transition-transform ${
@@ -221,8 +210,7 @@ const LNavbar: React.FC = () => {
                                 key={subitem.label}
                                 href={subitem.href}
                                 className="block py-2 px-4 text-sm text-gray-600 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                              >
+                                onClick={() => setIsMobileMenuOpen(false)}>
                                 {subitem.label}
                               </a>
                             ))}
@@ -232,12 +220,10 @@ const LNavbar: React.FC = () => {
                         <Button
                           variant="ghost"
                           className="w-full justify-start font-medium"
-                          asChild
-                        >
+                          asChild>
                           <a
                             href={item.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
+                            onClick={() => setIsMobileMenuOpen(false)}>
                             {item.label}
                           </a>
                         </Button>

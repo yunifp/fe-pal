@@ -82,8 +82,19 @@ const S = {
     fontSize: "0.88rem",
     fontWeight: 600,
     color: "#1a1a1a",
-    flex: 1,
     lineHeight: 1.4,
+  }),
+  // Rich-text deskripsi preview — clamped to 3 lines
+  cardDesc: (): React.CSSProperties => ({
+    fontSize: "0.8rem",
+    color: "#555",
+    lineHeight: 1.55,
+    flex: 1,
+    // CSS line-clamp via WebkitLineClamp
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   }),
   cardLink: (): React.CSSProperties => ({
     display: "inline-block",
@@ -98,6 +109,7 @@ const S = {
     transition: "background 0.2s, color 0.2s",
     background: "none",
     cursor: "pointer",
+    marginTop: "auto",
   }),
   // Skeleton
   skeletonCard: (): React.CSSProperties => ({
@@ -139,6 +151,29 @@ const S = {
   }),
 };
 
+// ─── Wysiwyg preview CSS (injected once) ─────────────────────────────────────
+// Scoped to .jalur-desc-preview so it doesn't bleed into surrounding layout.
+// Strips most spacing to keep the 3-line clamp tight.
+
+const PREVIEW_CSS = `
+  .jalur-desc-preview * { margin: 0; padding: 0; }
+  .jalur-desc-preview p  { display: inline; }
+  .jalur-desc-preview p + p::before { content: " "; }
+  .jalur-desc-preview h2,
+  .jalur-desc-preview h3 { font-size: inherit; font-weight: 600; display: inline; }
+  .jalur-desc-preview ul,
+  .jalur-desc-preview ol { list-style: none; display: inline; }
+  .jalur-desc-preview li { display: inline; }
+  .jalur-desc-preview li + li::before { content: ", "; }
+  .jalur-desc-preview a  { color: #1b5e20; text-decoration: underline; pointer-events: none; }
+  .jalur-desc-preview img { display: none; }
+  .jalur-desc-preview strong { font-weight: 700; }
+  .jalur-desc-preview em     { font-style: italic; }
+  .jalur-desc-preview code   { font-family: monospace; font-size: 0.85em; }
+  .jalur-desc-preview blockquote { display: inline; color: #666; }
+  .jalur-desc-preview hr { display: none; }
+`;
+
 // ─── Skeleton Card ────────────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
@@ -146,6 +181,7 @@ const SkeletonCard = () => (
     <div style={S.skeletonImg()} />
     <div style={S.skeletonText("70%")} />
     <div style={S.skeletonText("90%")} />
+    <div style={S.skeletonText("60%")} />
     <div style={S.skeletonBtn()} />
   </div>
 );
@@ -178,6 +214,7 @@ const JalurPendaftaran = () => {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
+        ${PREVIEW_CSS}
       `}</style>
 
       <section style={S.section()} id="jalur-pendaftaran">
@@ -220,6 +257,7 @@ const JalurPendaftaran = () => {
             <div style={S.grid()}>
               {jalurList.map((jalur) => (
                 <div key={jalur.id} style={S.card()}>
+                  {/* Gambar */}
                   <div style={S.cardImg()}>
                     {jalur.gambar_url ? (
                       <img
@@ -234,7 +272,20 @@ const JalurPendaftaran = () => {
                       <div style={S.cardImgPlaceholder()}>🌴</div>
                     )}
                   </div>
+
+                  {/* Judul */}
                   <p style={S.cardTitle()}>{jalur.judul}</p>
+
+                  {/* Deskripsi — render HTML dari WYSIWYG, clamped 3 baris */}
+                  {jalur.deskripsi && (
+                    <div
+                      className="jalur-desc-preview"
+                      style={S.cardDesc()}
+                      dangerouslySetInnerHTML={{ __html: jalur.deskripsi }}
+                    />
+                  )}
+
+                  {/* CTA */}
                   <button
                     style={S.cardLink()}
                     onClick={() => setActiveJalur(jalur)}>

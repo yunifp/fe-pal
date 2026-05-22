@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
 import { STALE_TIME } from "@/constants/reactQuery";
@@ -19,11 +19,27 @@ import {
   ClipboardList,
   Search,
   ImageIcon,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Heading2,
+  Heading3,
+  Link,
+  Unlink,
+  Undo,
+  Redo,
+  Code,
+  Quote,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,6 +69,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+// Tiptap imports
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import UnderlineExtension from "@tiptap/extension-underline";
+import LinkExtension from "@tiptap/extension-link";
+import ImageExtension from "@tiptap/extension-image";
+import TextAlign from "@tiptap/extension-text-align";
+import Placeholder from "@tiptap/extension-placeholder";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,7 +105,534 @@ const EMPTY_FORM: ICmsJalurFormData = {
   dokumen: [],
 };
 
-// ─── Sub-component: Item List Editor (untuk syarat / dokumen) ─────────────────
+// ─── WYSIWYG Toolbar Button ───────────────────────────────────────────────────
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  tooltip: string;
+  children: React.ReactNode;
+}
+
+const ToolbarButton = ({
+  onClick,
+  isActive,
+  disabled,
+  tooltip,
+  children,
+}: ToolbarButtonProps) => (
+  <Tooltip delayDuration={400}>
+    <TooltipTrigger asChild>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          "inline-flex h-7 w-7 items-center justify-center rounded-sm text-sm transition-colors",
+          "hover:bg-muted disabled:pointer-events-none disabled:opacity-40",
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:text-foreground",
+        )}>
+        {children}
+      </button>
+    </TooltipTrigger>
+    <TooltipContent side="top" className="text-xs">
+      {tooltip}
+    </TooltipContent>
+  </Tooltip>
+);
+
+// ─── Insert Link Modal ────────────────────────────────────────────────────────
+
+interface LinkModalProps {
+  open: boolean;
+  initialUrl: string;
+  onConfirm: (url: string, openInNewTab: boolean) => void;
+  onRemove: () => void;
+  onClose: () => void;
+  isEditing: boolean;
+}
+
+const LinkModal = ({
+  open,
+  initialUrl,
+  onConfirm,
+  onRemove,
+  onClose,
+  isEditing,
+}: LinkModalProps) => {
+  const [url, setUrl] = useState(initialUrl);
+  const [newTab, setNewTab] = useState(true);
+
+  // Reset when opened
+  const prevOpen = useState(open)[0];
+  if (open && !prevOpen) {
+    // will re-render with fresh state on next open via key trick below
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            {isEditing ? "Edit Tautan" : "Sisipkan Tautan"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="link-url">URL Tautan</Label>
+            <Input
+              id="link-url"
+              placeholder="https://contoh.com"
+              value={url}
+              autoFocus
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && url.trim()) {
+                  e.preventDefault();
+                  onConfirm(url.trim(), newTab);
+                }
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+            <Label htmlFor="link-newtab" className="text-sm cursor-pointer">
+              Buka di tab baru
+            </Label>
+            <Switch
+              id="link-newtab"
+              checked={newTab}
+              onCheckedChange={setNewTab}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          <div>
+            {isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive gap-1.5"
+                onClick={onRemove}>
+                <Unlink className="h-3.5 w-3.5" />
+                Hapus Tautan
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              disabled={!url.trim()}
+              onClick={() => onConfirm(url.trim(), newTab)}
+              className="gap-1.5">
+              <Link className="h-3.5 w-3.5" />
+              {isEditing ? "Simpan" : "Sisipkan"}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Insert Image Modal ───────────────────────────────────────────────────────
+
+interface ImageModalProps {
+  open: boolean;
+  onConfirm: (src: string, alt: string) => void;
+  onClose: () => void;
+}
+
+const ImageModal = ({ open, onConfirm, onClose }: ImageModalProps) => {
+  const [src, setSrc] = useState("");
+  const [alt, setAlt] = useState("");
+  const [preview, setPreview] = useState(false);
+
+  // Reset state on open
+  const handleOpenChange = (v: boolean) => {
+    if (!v) {
+      onClose();
+      setSrc("");
+      setAlt("");
+      setPreview(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ImageIcon className="h-4 w-4" />
+            Sisipkan Gambar
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="img-src">URL Gambar</Label>
+            <div className="flex gap-2">
+              <Input
+                id="img-src"
+                placeholder="https://contoh.com/gambar.jpg"
+                value={src}
+                autoFocus
+                onChange={(e) => {
+                  setSrc(e.target.value);
+                  setPreview(false);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!src.trim()}
+                onClick={() => setPreview(true)}
+                className="flex-shrink-0">
+                Preview
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="img-alt">Teks Alt (opsional)</Label>
+            <Input
+              id="img-alt"
+              placeholder="Deskripsi gambar untuk aksesibilitas"
+              value={alt}
+              onChange={(e) => setAlt(e.target.value)}
+            />
+          </div>
+
+          {/* Preview area */}
+          {preview && src && (
+            <div className="rounded-md border bg-muted/30 p-2 flex items-center justify-center min-h-[100px]">
+              <img
+                src={src}
+                alt={alt || "preview"}
+                className="max-h-48 max-w-full rounded object-contain"
+                onError={() => setPreview(false)}
+              />
+            </div>
+          )}
+          {preview && !src && (
+            <p className="text-xs text-destructive">URL gambar tidak valid.</p>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Batal
+          </Button>
+          <Button
+            size="sm"
+            disabled={!src.trim()}
+            onClick={() => {
+              onConfirm(src.trim(), alt.trim());
+              setSrc("");
+              setAlt("");
+              setPreview(false);
+            }}
+            className="gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" />
+            Sisipkan Gambar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── WYSIWYG Editor Component ─────────────────────────────────────────────────
+
+interface WysiwygEditorProps {
+  value: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+  minHeight?: number;
+}
+
+const WysiwygEditor = ({
+  value,
+  onChange,
+  placeholder = "Tulis deskripsi di sini...",
+  minHeight = 160,
+}: WysiwygEditorProps) => {
+  // ── Modal state ──
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+      }),
+      UnderlineExtension,
+      LinkExtension.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-primary underline underline-offset-2 cursor-pointer",
+        },
+      }),
+      ImageExtension.configure({
+        HTMLAttributes: {
+          class: "max-w-full rounded-md my-2",
+        },
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      Placeholder.configure({
+        placeholder,
+        emptyEditorClass:
+          "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:h-0 before:pointer-events-none",
+      }),
+    ],
+    content: value,
+    onUpdate: ({ editor }) => {
+      const html = editor.isEmpty ? "" : editor.getHTML();
+      onChange(html);
+    },
+    editorProps: {
+      attributes: {
+        class: cn(
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none px-3 py-2",
+          "prose-headings:font-semibold prose-headings:text-foreground",
+          "prose-p:text-sm prose-p:leading-relaxed prose-p:my-1",
+          "prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5",
+          "prose-blockquote:border-l-primary/40 prose-blockquote:text-muted-foreground",
+          "prose-code:bg-muted prose-code:rounded prose-code:px-1 prose-code:text-xs",
+          "prose-a:text-primary",
+          "prose-img:rounded-md prose-img:my-2",
+        ),
+      },
+    },
+  });
+
+  // Sync external value when form resets
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    editor?.commands.setContent(value || "", { emitUpdate: false });
+  }
+
+  // ── Link handlers ──
+  const handleLinkConfirm = useCallback(
+    (url: string, openInNewTab: boolean) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("link")
+        .setLink({ href: url, target: openInNewTab ? "_blank" : null })
+        .run();
+      setLinkModalOpen(false);
+    },
+    [editor],
+  );
+
+  const handleLinkRemove = useCallback(() => {
+    editor?.chain().focus().extendMarkRange("link").unsetLink().run();
+    setLinkModalOpen(false);
+  }, [editor]);
+
+  // ── Image handler ──
+  const handleImageConfirm = useCallback(
+    (src: string, alt: string) => {
+      if (!editor) return;
+      editor.chain().focus().setImage({ src, alt }).run();
+      setImageModalOpen(false);
+    },
+    [editor],
+  );
+
+  if (!editor) return null;
+
+  const currentLinkUrl = editor.getAttributes("link").href ?? "";
+
+  return (
+    <>
+      <div className="rounded-md border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring transition-shadow">
+        {/* ── Toolbar ── */}
+        <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b bg-muted/40">
+          {/* History */}
+          <ToolbarButton
+            tooltip="Undo (Ctrl+Z)"
+            onClick={() => editor.chain().focus().undo().run()}
+            disabled={!editor.can().undo()}>
+            <Undo className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Redo (Ctrl+Y)"
+            onClick={() => editor.chain().focus().redo().run()}
+            disabled={!editor.can().redo()}>
+            <Redo className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Headings */}
+          <ToolbarButton
+            tooltip="Heading 2"
+            isActive={editor.isActive("heading", { level: 2 })}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }>
+            <Heading2 className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Heading 3"
+            isActive={editor.isActive("heading", { level: 3 })}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }>
+            <Heading3 className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Inline marks */}
+          <ToolbarButton
+            tooltip="Bold (Ctrl+B)"
+            isActive={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}>
+            <Bold className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Italic (Ctrl+I)"
+            isActive={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}>
+            <Italic className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Underline (Ctrl+U)"
+            isActive={editor.isActive("underline")}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}>
+            <Underline className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Inline Code"
+            isActive={editor.isActive("code")}
+            onClick={() => editor.chain().focus().toggleCode().run()}>
+            <Code className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Lists */}
+          <ToolbarButton
+            tooltip="Bullet List"
+            isActive={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}>
+            <List className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Ordered List"
+            isActive={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+            <ListOrdered className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Blockquote"
+            isActive={editor.isActive("blockquote")}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+            <Quote className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Horizontal Rule"
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+            <Minus className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Alignment */}
+          <ToolbarButton
+            tooltip="Align Left"
+            isActive={editor.isActive({ textAlign: "left" })}
+            onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+            <AlignLeft className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Align Center"
+            isActive={editor.isActive({ textAlign: "center" })}
+            onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+            <AlignCenter className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Align Right"
+            isActive={editor.isActive({ textAlign: "right" })}
+            onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+            <AlignRight className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Link */}
+          <ToolbarButton
+            tooltip={
+              editor.isActive("link") ? "Edit Tautan" : "Sisipkan Tautan"
+            }
+            isActive={editor.isActive("link")}
+            onClick={() => setLinkModalOpen(true)}>
+            <Link className="h-3.5 w-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            tooltip="Hapus Tautan"
+            disabled={!editor.isActive("link")}
+            onClick={() =>
+              editor.chain().focus().extendMarkRange("link").unsetLink().run()
+            }>
+            <Unlink className="h-3.5 w-3.5" />
+          </ToolbarButton>
+
+          <Separator orientation="vertical" className="mx-1 h-5" />
+
+          {/* Image */}
+          <ToolbarButton
+            tooltip="Sisipkan Gambar"
+            onClick={() => setImageModalOpen(true)}>
+            <ImageIcon className="h-3.5 w-3.5" />
+          </ToolbarButton>
+        </div>
+
+        {/* ── Editor Area ── */}
+        <EditorContent
+          editor={editor}
+          style={{ minHeight }}
+          className="overflow-y-auto"
+        />
+      </div>
+
+      {/* ── Link Modal ── */}
+      <LinkModal
+        open={linkModalOpen}
+        initialUrl={currentLinkUrl}
+        isEditing={editor.isActive("link")}
+        onConfirm={handleLinkConfirm}
+        onRemove={handleLinkRemove}
+        onClose={() => setLinkModalOpen(false)}
+      />
+
+      {/* ── Image Modal ── */}
+      <ImageModal
+        open={imageModalOpen}
+        onConfirm={handleImageConfirm}
+        onClose={() => setImageModalOpen(false)}
+      />
+    </>
+  );
+};
+
+// ─── Sub-component: Item List Editor ─────────────────────────────────────────
 
 interface ItemListEditorProps {
   label: string;
@@ -115,7 +674,6 @@ const ItemListEditor = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium">{label}</Label>
 
-      {/* Existing items */}
       {items.length > 0 && (
         <div className="space-y-1.5">
           {items.map((item, idx) => (
@@ -142,7 +700,6 @@ const ItemListEditor = ({
         </div>
       )}
 
-      {/* Add new */}
       <div className="flex gap-2">
         <Input
           placeholder={placeholder}
@@ -200,7 +757,6 @@ const JalurDetailRow = ({
   return (
     <>
       <TableRow className="cursor-pointer hover:bg-muted/50">
-        {/* Expand toggle */}
         <TableCell className="w-10 pr-0">
           <button
             onClick={() => setExpanded((v) => !v)}
@@ -221,9 +777,13 @@ const JalurDetailRow = ({
           <div className="space-y-0.5">
             <p className="font-medium text-sm">{jalur.judul}</p>
             {jalur.deskripsi && (
-              <p className="text-xs text-muted-foreground line-clamp-1">
-                {jalur.deskripsi}
-              </p>
+              /* Render HTML preview from WYSIWYG safely */
+              <p
+                className="text-xs text-muted-foreground line-clamp-1 [&_*]:inline"
+                dangerouslySetInnerHTML={{
+                  __html: jalur.deskripsi,
+                }}
+              />
             )}
           </div>
         </TableCell>
@@ -282,12 +842,10 @@ const JalurDetailRow = ({
         </TableCell>
       </TableRow>
 
-      {/* Expanded detail row */}
       {expanded && (
         <TableRow className="bg-muted/20 hover:bg-muted/20">
           <TableCell colSpan={6} className="py-3 px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Syarat */}
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   <ClipboardList className="h-3.5 w-3.5" />
@@ -311,7 +869,6 @@ const JalurDetailRow = ({
                 )}
               </div>
 
-              {/* Dokumen */}
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" />
@@ -335,7 +892,6 @@ const JalurDetailRow = ({
                 )}
               </div>
 
-              {/* Gambar URL jika ada */}
               {jalur.gambar_url && (
                 <div className="md:col-span-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-1">
@@ -345,6 +901,19 @@ const JalurDetailRow = ({
                   <p className="text-xs text-muted-foreground">
                     {jalur.gambar_url}
                   </p>
+                </div>
+              )}
+
+              {/* Rich-text deskripsi preview */}
+              {jalur.deskripsi && (
+                <div className="md:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    Deskripsi
+                  </p>
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                    dangerouslySetInnerHTML={{ __html: jalur.deskripsi }}
+                  />
                 </div>
               )}
             </div>
@@ -360,7 +929,6 @@ const JalurDetailRow = ({
 const JalurPendaftaranPage = () => {
   const queryClient = useQueryClient();
 
-  // ── State ──
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ICmsJalurPendaftaran | null>(
@@ -370,12 +938,9 @@ const JalurPendaftaranPage = () => {
     null,
   );
   const [formData, setFormData] = useState<ICmsJalurFormData>(EMPTY_FORM);
-
-  // Local item arrays for the form (convert from/to ICmsJalurFormData)
   const [syaratItems, setSyaratItems] = useState<ItemRow[]>([]);
   const [dokumenItems, setDokumenItems] = useState<ItemRow[]>([]);
 
-  // ── Query ──
   const {
     data: jalurResponse,
     isLoading,
@@ -390,7 +955,6 @@ const JalurPendaftaranPage = () => {
 
   const jalurList: ICmsJalurPendaftaran[] = jalurResponse?.data ?? [];
 
-  // ── Mutations ──
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["cms-jalur-all"] });
     queryClient.invalidateQueries({ queryKey: ["cms-jalur-aktif"] });
@@ -426,7 +990,6 @@ const JalurPendaftaranPage = () => {
     onSuccess: () => invalidate(),
   });
 
-  // ── Helpers ──
   const openCreate = () => {
     setEditTarget(null);
     setFormData(EMPTY_FORM);
@@ -479,8 +1042,6 @@ const JalurPendaftaranPage = () => {
 
   const isMutating = createMutation.isPending || updateMutation.isPending;
 
-  // ─────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="container mx-auto w-full space-y-6 py-6">
       {/* ── Header ── */}
@@ -505,7 +1066,6 @@ const JalurPendaftaranPage = () => {
       {/* ── Search + Table ── */}
       <Card>
         <CardContent className="pt-4 px-4 pb-0">
-          {/* Search */}
           <div className="relative mb-4 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -588,7 +1148,7 @@ const JalurPendaftaranPage = () => {
                 Informasi Jalur
               </TabsTrigger>
               <TabsTrigger value="syarat" className="flex-1">
-                Persyaratan
+                Dokumen Umum
                 {syaratItems.length > 0 && (
                   <Badge
                     variant="secondary"
@@ -598,7 +1158,7 @@ const JalurPendaftaranPage = () => {
                 )}
               </TabsTrigger>
               <TabsTrigger value="dokumen" className="flex-1">
-                Dokumen
+                Dokumen Khusus
                 {dokumenItems.length > 0 && (
                   <Badge
                     variant="secondary"
@@ -625,17 +1185,20 @@ const JalurPendaftaranPage = () => {
                 />
               </div>
 
+              {/* ── WYSIWYG Deskripsi ── */}
               <div className="space-y-1.5">
-                <Label htmlFor="deskripsi">Deskripsi</Label>
-                <Textarea
-                  id="deskripsi"
-                  placeholder="Deskripsi singkat jalur pendaftaran ini..."
-                  rows={3}
+                <Label>Deskripsi</Label>
+                <WysiwygEditor
                   value={formData.deskripsi ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, deskripsi: e.target.value }))
+                  onChange={(html) =>
+                    setFormData((p) => ({ ...p, deskripsi: html }))
                   }
+                  placeholder="Deskripsi singkat jalur pendaftaran ini..."
+                  minHeight={160}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Nilai disimpan sebagai HTML dan akan dirender di landing page.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

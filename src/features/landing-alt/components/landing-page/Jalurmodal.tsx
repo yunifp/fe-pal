@@ -79,11 +79,6 @@ const S = {
     flexDirection: "column",
     gap: 16,
   }),
-  desc: (): React.CSSProperties => ({
-    fontSize: "0.92rem",
-    color: "#444",
-    lineHeight: 1.65,
-  }),
   cols: (): React.CSSProperties => ({
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -171,6 +166,80 @@ const S = {
   }),
 };
 
+// ─── Prose CSS (scoped to .jm-prose) ─────────────────────────────────────────
+
+const PROSE_CSS = `
+  .jm-prose {
+    font-size: 0.92rem;
+    color: #444;
+    line-height: 1.65;
+  }
+  .jm-prose h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1b5e20;
+    margin: 12px 0 6px;
+  }
+  .jm-prose h3 {
+    font-size: 0.93rem;
+    font-weight: 700;
+    color: #2e7d32;
+    margin: 10px 0 4px;
+  }
+  .jm-prose p  { margin: 0 0 8px; }
+  .jm-prose p:last-child { margin-bottom: 0; }
+  .jm-prose strong { font-weight: 700; }
+  .jm-prose em     { font-style: italic; }
+  .jm-prose u      { text-decoration: underline; }
+  .jm-prose code {
+    font-family: monospace;
+    font-size: 0.83em;
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .jm-prose ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 6px 0 8px;
+  }
+  .jm-prose ol {
+    list-style: decimal;
+    padding-left: 20px;
+    margin: 6px 0 8px;
+  }
+  .jm-prose li { margin-bottom: 3px; }
+  .jm-prose blockquote {
+    border-left: 3px solid #a5d6a7;
+    padding-left: 12px;
+    margin: 8px 0;
+    color: #666;
+    font-style: italic;
+  }
+  .jm-prose hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 12px 0;
+  }
+  .jm-prose a {
+    color: #1b5e20;
+    text-decoration: underline;
+  }
+  .jm-prose a:hover { color: #2e7d32; }
+  .jm-prose img {
+    max-width: 100%;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    margin: 8px 0;
+    display: block;
+  }
+  /* Text-align from Tiptap inline styles */
+  .jm-prose [style*="text-align: center"],
+  .jm-prose [style*="text-align:center"] { text-align: center; }
+  .jm-prose [style*="text-align: right"],
+  .jm-prose [style*="text-align:right"]  { text-align: right; }
+`;
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface JalurModalProps {
@@ -193,7 +262,6 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
     };
   }, [onClose]);
 
-  // Sorted by urutan
   const syaratList = [...(jalur.syarat ?? [])].sort(
     (a, b) => a.urutan - b.urutan,
   );
@@ -206,6 +274,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        ${PROSE_CSS}
       `}</style>
 
       <div style={S.overlay()} onClick={onClose}>
@@ -232,8 +301,13 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
 
           {/* ── Body ── */}
           <div style={S.body()}>
-            {/* Deskripsi */}
-            {jalur.deskripsi && <p style={S.desc()}>{jalur.deskripsi}</p>}
+            {/* Deskripsi — render HTML dari WYSIWYG */}
+            {jalur.deskripsi && (
+              <div
+                className="jm-prose"
+                dangerouslySetInnerHTML={{ __html: jalur.deskripsi }}
+              />
+            )}
 
             <div style={S.cols()}>
               {/* Persyaratan */}
@@ -249,7 +323,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
                     <polyline points="9 11 12 14 22 4" />
                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                   </svg>
-                  Persyaratan
+                  Dokumen Umum
                 </h4>
                 {syaratList.length > 0 ? (
                   <ul style={S.list()}>
@@ -278,7 +352,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
-                  Dokumen yang Dibutuhkan
+                  Dokumen Khusus
                 </h4>
                 {dokumenList.length > 0 ? (
                   <ul style={S.list()}>
