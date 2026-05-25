@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { 
   Search, ShieldAlert, User, CheckCircle2, 
   FileText, Users, Award, MapPin, GraduationCap, RefreshCw 
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { publicService } from "@/services/publicService";
 
-// Enhanced Status Translator with Icons and Modern Colors
+// Enhanced Status Translator
 const getStatusTheme = (id_flow: number) => {
   if (id_flow <= 3) return { 
     label: "Seleksi Administrasi", 
@@ -43,6 +44,10 @@ const CekStatusWidget = () => {
   const [nikInput, setNikInput] = useState("");
   const [searchNik, setSearchNik] = useState("");
   
+  // State untuk menyimpan hasil pencarian
+  const [searchResult, setSearchResult] = useState<any[] | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
   // State Captcha
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaData, setCaptchaData] = useState<{captchaId: string, question: string} | null>(null);
@@ -58,19 +63,50 @@ const CekStatusWidget = () => {
 
   useEffect(() => { loadCaptcha(); }, []);
 
-  const { data: response, isLoading, isError, refetch } = useQuery({
-    queryKey: ["cek-status-public", searchNik, captchaAnswer],
-    queryFn: () => publicService.cekStatusPendaftar(searchNik, captchaData?.captchaId || "", captchaAnswer),
-    enabled: false, 
+  const { isPending, mutate } = useMutation({
+    mutationFn: (payload: {nik: string, captchaId: string, answer: string}) => 
+      publicService.cekStatusPendaftar(payload.nik, payload.captchaId, payload.answer),
+    onMutate: () => {
+      // Saat loading mulai, bersihkan hasil dan error lama
+      setSearchResult(null);
+      setErrorMessage(null);
+    },
+    onSuccess: (res) => {
+      // TANGKAP SOFT ERROR DARI BACKEND (HTTP 200, tapi success: false)
+      if (res && res.success === false) {
+        setErrorMessage(res.message || "Gagal memproses data.");
+        return; // Hentikan fungsi di sini
+      }
+
+      // Jika proses normal (data ditemukan atau kosong)
+      const data = res.data || res || [];
+      setSearchResult(Array.isArray(data) ? data : []);
+    },
+    onError: (err: any) => {
+      // Menangkap pure error (seperti 500 Internal Server Error)
+      const msg = err.response?.data?.message || "Terjadi kesalahan sistem.";
+      setErrorMessage(msg);
+    },
+    onSettled: () => {
+      // Apapun yang terjadi (Sukses atau Error), form captcha wajib di-reset
+      setCaptchaAnswer("");
+      loadCaptcha();
+    }
   });
 
-  const rawData = response?.data || [];
-
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (nikInput.trim() && nikInput.length >= 10 && captchaAnswer !== "") {
-      setSearchNik(nikInput.trim());
-      setTimeout(() => refetch(), 0);
+    const cleanedNik = nikInput.trim();
+    
+    if (cleanedNik.length >= 10 && captchaAnswer !== "") {
+      setSearchNik(cleanedNik); 
+      
+      // Tembak API secara imperatif menggunakan data lokal yang pasti fresh
+      mutate({
+        nik: cleanedNik,
+        captchaId: captchaData?.captchaId || "",
+        answer: captchaAnswer
+      });
     }
   };
 
@@ -87,7 +123,7 @@ const CekStatusWidget = () => {
         </p>
       </div>
 
-      {/* Search Bar - Modern Floating Style */}
+      {/* Search Bar */}
       <form 
         onSubmit={handleSearch} 
         className="relative group w-full max-w-2xl mx-auto mb-12"
@@ -108,10 +144,10 @@ const CekStatusWidget = () => {
             />
             <Button 
               type="submit" 
-              disabled={isLoading || nikInput.length < 10 || !captchaAnswer}
+              disabled={isPending || nikInput.length < 10 || !captchaAnswer}
               className="h-12 px-6 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-bold tracking-wide shadow-lg border-0 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
-              {isLoading ? (
+              {isPending ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 "Cek Sekarang"
@@ -140,31 +176,39 @@ const CekStatusWidget = () => {
 
       {/* Result Section */}
       <div className="w-full max-w-3xl mx-auto transition-all duration-500">
-        {isLoading && (
+        
+        {/* Loading State */}
+        {isPending && (
           <div className="flex flex-col items-center justify-center py-12 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl animate-pulse">
             <div className="w-12 h-12 border-4 border-orange-400/30 border-t-orange-400 rounded-full animate-spin mb-4" />
             <p className="text-white/70 font-medium animate-pulse">Mencari data pendaftar...</p>
           </div>
         )}
-        {isError && (
+        
+        {/* Error State (Ditampilkan saat Soft Error atau Error asli) */}
+        {errorMessage && !isPending && (
           <div className="p-6 bg-red-500/10 backdrop-blur-xl border border-red-500/30 text-white rounded-3xl flex items-center justify-center gap-4 shadow-2xl">
             <div className="p-3 bg-red-500/20 rounded-full"><ShieldAlert className="w-8 h-8 text-red-400" /></div>
             <div>
-              <h4 className="font-bold text-lg text-red-200">Sistem Sibuk</h4>
-              <p className="text-sm text-red-200/80">Terjadi kesalahan atau Captcha salah. Silakan coba kembali.</p>
+              <h4 className="font-bold text-lg text-red-200">Gagal Memproses</h4>
+              <p className="text-sm text-red-200/80">{errorMessage}</p>
             </div>
           </div>
         )}
-        {searchNik && !isLoading && !isError && rawData.length === 0 && (
+
+        {/* Empty State */}
+        {searchResult !== null && !isPending && !errorMessage && searchResult.length === 0 && (
           <div className="p-10 text-center border border-white/10 rounded-3xl bg-white/5 backdrop-blur-xl shadow-2xl flex flex-col items-center">
             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4"><Search className="w-10 h-10 text-white/40" /></div>
             <h4 className="text-xl font-bold text-white mb-2">Data Tidak Ditemukan</h4>
             <p className="text-white/60 max-w-md">Tidak ada data pendaftar dengan NIK <span className="font-bold text-orange-400">{searchNik}</span>.</p>
           </div>
         )}
-        {rawData.length > 0 && (
+
+        {/* Success State */}
+        {searchResult !== null && !isPending && !errorMessage && searchResult.length > 0 && (
           <div className="space-y-6">
-            {rawData.map((data: any, idx: number) => {
+            {searchResult.map((data: any, idx: number) => {
               const { label, style, Icon } = getStatusTheme(data.id_flow);
               return (
                 <div key={idx} className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-2xl border border-white/40 relative overflow-hidden group hover:shadow-3xl transition-all duration-300">
