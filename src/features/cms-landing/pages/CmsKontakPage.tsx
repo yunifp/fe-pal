@@ -249,6 +249,22 @@ const KontakDetailRow = ({
                         <p className="text-xs font-mono break-all">{value}</p>
                       </div>
                     ))}
+                    
+                    {/* Render Map Embed di Tabel */}
+                    {kontak.maps_embed_url && (
+                      <div className="mt-3 w-full h-[200px] rounded-md overflow-hidden border">
+                        <iframe
+                          src={kontak.maps_embed_url}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          className="bg-muted"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground italic">
@@ -598,8 +614,24 @@ const CmsKontakPage = () => {
                   onChange={field("maps_embed_url")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  URL dari Google Maps → Share → Embed a map → salin src iframe.
+                  URL dari Google Maps → Share → Embed a map → salin HANYA link di dalam src="..."
                 </p>
+
+                {/* Live Preview Embed Map */}
+                {formData.maps_embed_url && (
+                  <div className="mt-2 w-full h-[250px] rounded-md overflow-hidden border">
+                    <iframe
+                      src={formData.maps_embed_url}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="bg-muted"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

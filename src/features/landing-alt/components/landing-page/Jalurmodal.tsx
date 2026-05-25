@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
 import type { ICmsJalurPendaftaran } from "@/types/master";
 
@@ -88,7 +89,7 @@ const S = {
     display: "flex",
     alignItems: "center",
     gap: 6,
-    fontSize: "0.85rem",
+    fontSize: "0.95rem",
     fontWeight: 700,
     color: "#1b5e20",
     marginBottom: 10,
@@ -99,7 +100,7 @@ const S = {
     listStyle: "none",
     display: "flex",
     flexDirection: "column",
-    gap: 7,
+    gap: 12,
     padding: 0,
     margin: 0,
   }),
@@ -111,21 +112,19 @@ const S = {
     color: "#444",
     lineHeight: 1.45,
   }),
+  listItemContent: (): React.CSSProperties => ({
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+    textAlign: "justify", /* <-- Ditambahkan untuk rata kanan kiri di list */
+  }),
   dotGreen: (): React.CSSProperties => ({
     flexShrink: 0,
-    width: 7,
-    height: 7,
+    width: 6,
+    height: 6,
     borderRadius: "50%",
     background: "#2e7d32",
-    marginTop: 5,
-  }),
-  dotOrange: (): React.CSSProperties => ({
-    flexShrink: 0,
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-    background: "#ff9800",
-    marginTop: 5,
+    marginTop: 6,
   }),
   emptyList: (): React.CSSProperties => ({
     fontSize: "0.82rem",
@@ -166,78 +165,41 @@ const S = {
   }),
 };
 
-// ─── Prose CSS (scoped to .jm-prose) ─────────────────────────────────────────
+// ─── Prose & Link CSS ─────────────────────────────────────────────────────────
 
 const PROSE_CSS = `
   .jm-prose {
     font-size: 0.92rem;
     color: #444;
     line-height: 1.65;
+    text-align: justify; /* <-- Ditambahkan untuk rata kanan kiri di deskripsi */
   }
-  .jm-prose h2 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1b5e20;
-    margin: 12px 0 6px;
-  }
-  .jm-prose h3 {
-    font-size: 0.93rem;
-    font-weight: 700;
-    color: #2e7d32;
-    margin: 10px 0 4px;
-  }
+  .jm-prose h2 { font-size: 1rem; font-weight: 700; color: #1b5e20; margin: 12px 0 6px; text-align: left; }
+  .jm-prose h3 { font-size: 0.93rem; font-weight: 700; color: #2e7d32; margin: 10px 0 4px; text-align: left; }
   .jm-prose p  { margin: 0 0 8px; }
   .jm-prose p:last-child { margin-bottom: 0; }
   .jm-prose strong { font-weight: 700; }
   .jm-prose em     { font-style: italic; }
-  .jm-prose u      { text-decoration: underline; }
-  .jm-prose code {
-    font-family: monospace;
-    font-size: 0.83em;
-    background: #f3f4f6;
-    padding: 1px 5px;
-    border-radius: 3px;
+  .jm-prose ul { list-style: disc; padding-left: 20px; margin: 6px 0 8px; text-align: justify; }
+  .jm-prose ol { list-style: decimal; padding-left: 20px; margin: 6px 0 8px; text-align: justify; }
+  .jm-prose a { color: #1b5e20; text-decoration: underline; }
+  .jm-prose a:hover { color: #2e7d32; }
+
+  /* CSS Khusus untuk Hyperlink Template */
+  .template-link {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1976d2;
+    text-decoration: none;
+    margin-top: 4px;
+    transition: color 0.2s ease;
+    text-align: left; /* <-- Link download tetap dibiarkan rata kiri agar rapi */
   }
-  .jm-prose ul {
-    list-style: disc;
-    padding-left: 20px;
-    margin: 6px 0 8px;
-  }
-  .jm-prose ol {
-    list-style: decimal;
-    padding-left: 20px;
-    margin: 6px 0 8px;
-  }
-  .jm-prose li { margin-bottom: 3px; }
-  .jm-prose blockquote {
-    border-left: 3px solid #a5d6a7;
-    padding-left: 12px;
-    margin: 8px 0;
-    color: #666;
-    font-style: italic;
-  }
-  .jm-prose hr {
-    border: none;
-    border-top: 1px solid #e0e0e0;
-    margin: 12px 0;
-  }
-  .jm-prose a {
-    color: #1b5e20;
+  .template-link:hover {
+    color: #115293;
     text-decoration: underline;
   }
-  .jm-prose a:hover { color: #2e7d32; }
-  .jm-prose img {
-    max-width: 100%;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    margin: 8px 0;
-    display: block;
-  }
-  /* Text-align from Tiptap inline styles */
-  .jm-prose [style*="text-align: center"],
-  .jm-prose [style*="text-align:center"] { text-align: center; }
-  .jm-prose [style*="text-align: right"],
-  .jm-prose [style*="text-align:right"]  { text-align: right; }
 `;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -279,10 +241,9 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
 
       <div style={S.overlay()} onClick={onClose}>
         <div style={S.box()} onClick={(e) => e.stopPropagation()}>
-          {/* ── Header ── */}
           <div style={S.header()}>
             <div style={S.headerText()}>
-              <span style={S.badge()}>Jalur {jalur.id}</span>
+              <span style={S.badge()}>Jalur Pendaftaran</span>
               <h3 style={S.title()}>{jalur.judul}</h3>
             </div>
             <button style={S.closeBtn()} onClick={onClose} aria-label="Tutup">
@@ -299,9 +260,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
             </button>
           </div>
 
-          {/* ── Body ── */}
           <div style={S.body()}>
-            {/* Deskripsi — render HTML dari WYSIWYG */}
             {jalur.deskripsi && (
               <div
                 className="jm-prose"
@@ -310,67 +269,98 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
             )}
 
             <div style={S.cols()}>
-              {/* Persyaratan */}
+              {/* Kolom Kiri: Persyaratan Umum */}
               <div>
                 <h4 style={S.sectionTitle()}>
                   <svg
-                    width="16"
-                    height="16"
+                    width="18"
+                    height="18"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2">
-                    <polyline points="9 11 12 14 22 4" />
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    strokeWidth="2"
+                    strokeOpacity="0.7">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
                   </svg>
-                  Dokumen Umum
+                  Persyaratan Umum
                 </h4>
                 {syaratList.length > 0 ? (
                   <ul style={S.list()}>
-                    {syaratList.map((s) => (
+                    {syaratList.map((s: any) => (
                       <li key={s.id} style={S.listItem()}>
                         <span style={S.dotGreen()} />
-                        {s.syarat}
+                        <div style={S.listItemContent()}>
+                          <span>{s.syarat}</span>
+                          {s.template_link && (
+                            <a
+                              href={s.template_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="template-link"
+                            >
+                              Download Template
+                            </a>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p style={S.emptyList()}>Belum ada persyaratan.</p>
+                  <p style={S.emptyList()}>Belum ada persyaratan umum.</p>
                 )}
               </div>
 
-              {/* Dokumen */}
+              {/* Kolom Kanan: Persyaratan Khusus */}
               <div>
                 <h4 style={S.sectionTitle()}>
                   <svg
-                    width="16"
-                    height="16"
+                    width="18"
+                    height="18"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2">
+                    strokeWidth="2"
+                    strokeOpacity="0.7">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
                   </svg>
-                  Dokumen Khusus
+                  Persyaratan Khusus
                 </h4>
                 {dokumenList.length > 0 ? (
                   <ul style={S.list()}>
-                    {dokumenList.map((d) => (
+                    {dokumenList.map((d: any) => (
                       <li key={d.id} style={S.listItem()}>
-                        <span style={S.dotOrange()} />
-                        {d.dokumen}
+                        <span style={S.dotGreen()} />
+                        <div style={S.listItemContent()}>
+                          <span>{d.dokumen}</span>
+                          {d.template_link && (
+                            <a
+                              href={d.template_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="template-link"
+                            >
+                              Download Template
+                            </a>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p style={S.emptyList()}>Belum ada dokumen.</p>
+                  <p style={S.emptyList()}>Belum ada persyaratan khusus.</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* ── Footer ── */}
           <div style={S.footer()}>
             <button style={S.btnSecondary()} onClick={onClose}>
               Tutup

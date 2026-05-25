@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { masterService } from "@/services/masterService";
-import { STALE_TIME } from "@/constants/reactQuery";
-import type { ICmsJalurPendaftaran, ICmsJalurFormData } from "@/types/master";
+import { masterService } from "../../../services/masterService";
+import { STALE_TIME } from "../../../constants/reactQuery";
+import type { ICmsJalurPendaftaran, ICmsJalurFormData } from "../../../types/master";
 import {
   Plus,
   Pencil,
@@ -37,18 +38,18 @@ import {
   Quote,
   Minus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Switch } from "../../../components/ui/switch";
+import { Badge } from "../../../components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "../../../components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,8 +59,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from "../../../components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -67,15 +68,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../../../components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+} from "../../../components/ui/tooltip";
+import { Separator } from "../../../components/ui/separator";
+import { cn } from "../../../lib/utils";
 
 // Tiptap imports
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -91,6 +92,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 interface ItemRow {
   text: string;
   urutan: number;
+  template_link?: string;
 }
 
 // ─── Empty States ─────────────────────────────────────────────────────────────
@@ -166,7 +168,6 @@ const LinkModal = ({
   const [url, setUrl] = useState(initialUrl);
   const [newTab, setNewTab] = useState(true);
 
-  // Reset when opened
   const prevOpen = useState(open)[0];
   if (open && !prevOpen) {
     // will re-render with fresh state on next open via key trick below
@@ -256,7 +257,6 @@ const ImageModal = ({ open, onConfirm, onClose }: ImageModalProps) => {
   const [alt, setAlt] = useState("");
   const [preview, setPreview] = useState(false);
 
-  // Reset state on open
   const handleOpenChange = (v: boolean) => {
     if (!v) {
       onClose();
@@ -312,7 +312,6 @@ const ImageModal = ({ open, onConfirm, onClose }: ImageModalProps) => {
             />
           </div>
 
-          {/* Preview area */}
           {preview && src && (
             <div className="rounded-md border bg-muted/30 p-2 flex items-center justify-center min-h-[100px]">
               <img
@@ -366,7 +365,6 @@ const WysiwygEditor = ({
   placeholder = "Tulis deskripsi di sini...",
   minHeight = 160,
 }: WysiwygEditorProps) => {
-  // ── Modal state ──
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
@@ -417,14 +415,12 @@ const WysiwygEditor = ({
     },
   });
 
-  // Sync external value when form resets
   const [syncedValue, setSyncedValue] = useState(value);
   if (value !== syncedValue) {
     setSyncedValue(value);
     editor?.commands.setContent(value || "", { emitUpdate: false });
   }
 
-  // ── Link handlers ──
   const handleLinkConfirm = useCallback(
     (url: string, openInNewTab: boolean) => {
       if (!editor) return;
@@ -444,7 +440,6 @@ const WysiwygEditor = ({
     setLinkModalOpen(false);
   }, [editor]);
 
-  // ── Image handler ──
   const handleImageConfirm = useCallback(
     (src: string, alt: string) => {
       if (!editor) return;
@@ -461,9 +456,7 @@ const WysiwygEditor = ({
   return (
     <>
       <div className="rounded-md border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring transition-shadow">
-        {/* ── Toolbar ── */}
         <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b bg-muted/40">
-          {/* History */}
           <ToolbarButton
             tooltip="Undo (Ctrl+Z)"
             onClick={() => editor.chain().focus().undo().run()}
@@ -479,7 +472,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Headings */}
           <ToolbarButton
             tooltip="Heading 2"
             isActive={editor.isActive("heading", { level: 2 })}
@@ -499,7 +491,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Inline marks */}
           <ToolbarButton
             tooltip="Bold (Ctrl+B)"
             isActive={editor.isActive("bold")}
@@ -527,7 +518,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Lists */}
           <ToolbarButton
             tooltip="Bullet List"
             isActive={editor.isActive("bulletList")}
@@ -554,7 +544,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Alignment */}
           <ToolbarButton
             tooltip="Align Left"
             isActive={editor.isActive({ textAlign: "left" })}
@@ -576,7 +565,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Link */}
           <ToolbarButton
             tooltip={
               editor.isActive("link") ? "Edit Tautan" : "Sisipkan Tautan"
@@ -596,7 +584,6 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="mx-1 h-5" />
 
-          {/* Image */}
           <ToolbarButton
             tooltip="Sisipkan Gambar"
             onClick={() => setImageModalOpen(true)}>
@@ -604,7 +591,6 @@ const WysiwygEditor = ({
           </ToolbarButton>
         </div>
 
-        {/* ── Editor Area ── */}
         <EditorContent
           editor={editor}
           style={{ minHeight }}
@@ -612,7 +598,6 @@ const WysiwygEditor = ({
         />
       </div>
 
-      {/* ── Link Modal ── */}
       <LinkModal
         open={linkModalOpen}
         initialUrl={currentLinkUrl}
@@ -622,7 +607,6 @@ const WysiwygEditor = ({
         onClose={() => setLinkModalOpen(false)}
       />
 
-      {/* ── Image Modal ── */}
       <ImageModal
         open={imageModalOpen}
         onConfirm={handleImageConfirm}
@@ -648,12 +632,21 @@ const ItemListEditor = ({
   onChange,
 }: ItemListEditorProps) => {
   const [draft, setDraft] = useState("");
+  const [draftLink, setDraftLink] = useState("");
 
   const addItem = () => {
     const trimmed = draft.trim();
     if (!trimmed) return;
-    onChange([...items, { text: trimmed, urutan: items.length + 1 }]);
+    onChange([
+      ...items,
+      {
+        text: trimmed,
+        template_link: draftLink.trim() || undefined,
+        urutan: items.length + 1,
+      },
+    ]);
     setDraft("");
+    setDraftLink("");
   };
 
   const removeItem = (idx: number) => {
@@ -663,61 +656,86 @@ const ItemListEditor = ({
     onChange(next);
   };
 
-  const updateItem = (idx: number, value: string) => {
+  const updateItem = (idx: number, field: keyof ItemRow, value: string) => {
     const next = items.map((it, i) =>
-      i === idx ? { ...it, text: value } : it,
+      i === idx ? { ...it, [field]: value } : it
     );
     onChange(next);
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Label className="text-sm font-medium">{label}</Label>
 
       {items.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-3">
           {items.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2 group">
-              <GripVertical className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
-              <span className="text-xs text-muted-foreground w-5 flex-shrink-0">
+            <div key={idx} className="flex items-start gap-2 group bg-muted/20 p-2 rounded-md border">
+              <div className="flex-shrink-0 mt-2 cursor-grab">
+                <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+              </div>
+              <span className="text-xs text-muted-foreground w-4 flex-shrink-0 mt-2 font-mono">
                 {idx + 1}.
               </span>
-              <Input
-                value={item.text}
-                onChange={(e) => updateItem(idx, e.target.value)}
-                className="h-8 text-sm"
-              />
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={item.text}
+                  onChange={(e) => updateItem(idx, "text", e.target.value)}
+                  className="h-8 text-sm font-medium"
+                  placeholder="Deskripsi syarat/dokumen"
+                />
+                <Input
+                  value={item.template_link || ""}
+                  onChange={(e) => updateItem(idx, "template_link", e.target.value)}
+                  className="h-7 text-xs text-muted-foreground"
+                  placeholder="https://... (Kosongkan jika tidak ada template)"
+                />
+              </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => removeItem(idx)}>
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Input
-          placeholder={placeholder}
-          value={draft}
-          className="h-8 text-sm"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addItem();
-            }
-          }}
-        />
+      <div className="flex gap-2 items-start bg-muted/40 p-3 rounded-md border border-dashed">
+        <div className="flex-1 space-y-2">
+          <Input
+            placeholder={placeholder}
+            value={draft}
+            className="h-8 text-sm"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem();
+              }
+            }}
+          />
+          <Input
+            placeholder="Link Template Unduhan (Opsional)"
+            value={draftLink}
+            className="h-7 text-xs"
+            onChange={(e) => setDraftLink(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem();
+              }
+            }}
+          />
+        </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="flex-shrink-0 gap-1"
+          className="flex-shrink-0 gap-1 h-8"
           onClick={addItem}
           disabled={!draft.trim()}>
           <Plus className="h-3.5 w-3.5" />
@@ -777,7 +795,6 @@ const JalurDetailRow = ({
           <div className="space-y-0.5">
             <p className="font-medium text-sm">{jalur.judul}</p>
             {jalur.deskripsi && (
-              /* Render HTML preview from WYSIWYG safely */
               <p
                 className="text-xs text-muted-foreground line-clamp-1 [&_*]:inline"
                 dangerouslySetInnerHTML={{
@@ -858,7 +875,14 @@ const JalurDetailRow = ({
                         <span className="text-muted-foreground text-xs w-4 flex-shrink-0 mt-0.5">
                           {s.urutan}.
                         </span>
-                        {s.syarat}
+                        <span>
+                          {s.syarat}
+                          {(s as any).template_link && (
+                            <span className="block text-xs text-blue-500 mt-1">
+                              Link: {(s as any).template_link}
+                            </span>
+                          )}
+                        </span>
                       </li>
                     ))}
                   </ol>
@@ -881,7 +905,14 @@ const JalurDetailRow = ({
                         <span className="text-muted-foreground text-xs w-4 flex-shrink-0 mt-0.5">
                           {d.urutan}.
                         </span>
-                        {d.dokumen}
+                        <span>
+                          {d.dokumen}
+                          {(d as any).template_link && (
+                            <span className="block text-xs text-blue-500 mt-1">
+                              Link: {(d as any).template_link}
+                            </span>
+                          )}
+                        </span>
                       </li>
                     ))}
                   </ol>
@@ -904,7 +935,6 @@ const JalurDetailRow = ({
                 </div>
               )}
 
-              {/* Rich-text deskripsi preview */}
               {jalur.deskripsi && (
                 <div className="md:col-span-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
@@ -931,12 +961,8 @@ const JalurPendaftaranPage = () => {
 
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<ICmsJalurPendaftaran | null>(
-    null,
-  );
-  const [deleteTarget, setDeleteTarget] = useState<ICmsJalurPendaftaran | null>(
-    null,
-  );
+  const [editTarget, setEditTarget] = useState<ICmsJalurPendaftaran | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ICmsJalurPendaftaran | null>(null);
   const [formData, setFormData] = useState<ICmsJalurFormData>(EMPTY_FORM);
   const [syaratItems, setSyaratItems] = useState<ItemRow[]>([]);
   const [dokumenItems, setDokumenItems] = useState<ItemRow[]>([]);
@@ -961,7 +987,7 @@ const JalurPendaftaranPage = () => {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: ICmsJalurFormData) => masterService.createCmsJalur(data),
+    mutationFn: (data: any) => masterService.createCmsJalur(data),
     onSuccess: () => {
       invalidate();
       closeForm();
@@ -969,7 +995,7 @@ const JalurPendaftaranPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ICmsJalurFormData }) =>
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       masterService.updateCmsJalur(id, data),
     onSuccess: () => {
       invalidate();
@@ -1008,10 +1034,18 @@ const JalurPendaftaranPage = () => {
       is_active: jalur.is_active,
     });
     setSyaratItems(
-      jalur.syarat.map((s) => ({ text: s.syarat, urutan: s.urutan })),
+      jalur.syarat.map((s: any) => ({
+        text: s.syarat,
+        urutan: s.urutan,
+        template_link: s.template_link,
+      }))
     );
     setDokumenItems(
-      jalur.dokumen.map((d) => ({ text: d.dokumen, urutan: d.urutan })),
+      jalur.dokumen.map((d: any) => ({
+        text: d.dokumen,
+        urutan: d.urutan,
+        template_link: d.template_link,
+      }))
     );
     setIsFormOpen(true);
   };
@@ -1027,10 +1061,18 @@ const JalurPendaftaranPage = () => {
   const handleSubmit = () => {
     if (!formData.judul.trim()) return;
 
-    const payload: ICmsJalurFormData = {
+    const payload: any = {
       ...formData,
-      syarat: syaratItems.map((s, i) => ({ syarat: s.text, urutan: i + 1 })),
-      dokumen: dokumenItems.map((d, i) => ({ dokumen: d.text, urutan: i + 1 })),
+      syarat: syaratItems.map((s, i) => ({
+        syarat: s.text,
+        template_link: s.template_link,
+        urutan: i + 1,
+      })),
+      dokumen: dokumenItems.map((d, i) => ({
+        dokumen: d.text,
+        template_link: d.template_link,
+        urutan: i + 1,
+      })),
     };
 
     if (editTarget) {
@@ -1044,7 +1086,6 @@ const JalurPendaftaranPage = () => {
 
   return (
     <div className="container mx-auto w-full space-y-6 py-6">
-      {/* ── Header ── */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-bold">
@@ -1063,7 +1104,6 @@ const JalurPendaftaranPage = () => {
         </CardContent>
       </Card>
 
-      {/* ── Search + Table ── */}
       <Card>
         <CardContent className="pt-4 px-4 pb-0">
           <div className="relative mb-4 max-w-sm">
@@ -1133,7 +1173,6 @@ const JalurPendaftaranPage = () => {
         </CardContent>
       </Card>
 
-      {/* ── Form Dialog ── */}
       <Dialog open={isFormOpen} onOpenChange={(v) => !v && closeForm()}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto font-inter">
           <DialogHeader>
@@ -1169,7 +1208,6 @@ const JalurPendaftaranPage = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab: Info */}
             <TabsContent value="info" className="space-y-4 mt-0">
               <div className="space-y-1.5">
                 <Label htmlFor="judul">
@@ -1185,7 +1223,6 @@ const JalurPendaftaranPage = () => {
                 />
               </div>
 
-              {/* ── WYSIWYG Deskripsi ── */}
               <div className="space-y-1.5">
                 <Label>Deskripsi</Label>
                 <WysiwygEditor
@@ -1247,7 +1284,6 @@ const JalurPendaftaranPage = () => {
               </div>
             </TabsContent>
 
-            {/* Tab: Syarat */}
             <TabsContent value="syarat" className="mt-0">
               <div className="rounded-lg border p-4">
                 <ItemListEditor
@@ -1258,12 +1294,10 @@ const JalurPendaftaranPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Saat menyimpan, seluruh syarat lama akan diganti dengan daftar
-                ini.
+                Saat menyimpan, seluruh syarat lama akan diganti dengan daftar ini.
               </p>
             </TabsContent>
 
-            {/* Tab: Dokumen */}
             <TabsContent value="dokumen" className="mt-0">
               <div className="rounded-lg border p-4">
                 <ItemListEditor
@@ -1274,8 +1308,7 @@ const JalurPendaftaranPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Saat menyimpan, seluruh dokumen lama akan diganti dengan daftar
-                ini.
+                Saat menyimpan, seluruh dokumen lama akan diganti dengan daftar ini.
               </p>
             </TabsContent>
           </Tabs>
@@ -1295,7 +1328,6 @@ const JalurPendaftaranPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Confirm ── */}
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={(v) => !v && setDeleteTarget(null)}>

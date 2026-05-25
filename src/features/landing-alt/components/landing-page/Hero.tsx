@@ -10,7 +10,7 @@ import type { ICmsHero } from "@/types/master";
 const S = {
   section: (bgUrl: string): React.CSSProperties => ({
     minHeight: "100vh",
-    background: `linear-gradient(rgba(46,125,50,.85), rgba(255,152,0,.85)), url('${bgUrl}')`,
+    backgroundImage: `linear-gradient(rgba(46,125,50,.85), rgba(255,152,0,.85)), url('${bgUrl}')`, // <-- Ubah menjadi backgroundImage
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",

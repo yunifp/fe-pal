@@ -270,6 +270,7 @@ export interface ICmsJalurSyarat {
   id_jalur: number;
   syarat: string;
   urutan: number;
+  template_link?: string;
 }
 
 export interface ICmsJalurDokumen {
@@ -277,6 +278,7 @@ export interface ICmsJalurDokumen {
   id_jalur: number;
   dokumen: string;
   urutan: number;
+  template_link?: string;
 }
 
 export interface ICmsJalurPendaftaran {
