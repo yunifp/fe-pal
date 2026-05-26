@@ -7,8 +7,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   ImageIcon,
   X,
   Loader2,

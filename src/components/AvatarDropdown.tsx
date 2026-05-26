@@ -115,13 +115,13 @@ const AvatarDropdown = () => {
               Profil Personal
             </DropdownMenuItem>
             
-            <DropdownMenuItem 
+            {/* <DropdownMenuItem 
               className="cursor-pointer rounded-xl py-3 px-4 focus:bg-emerald-50 focus:text-emerald-700 font-bold text-slate-600 transition-all gap-3"
               onClick={() => navigate("/settings")}
             >
               <Settings className="h-4.5 w-4.5 opacity-70" /> 
               Konfigurasi Akun
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </div>
 
           <DropdownMenuSeparator className="my-2 bg-slate-100" />
