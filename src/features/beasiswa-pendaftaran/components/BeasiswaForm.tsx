@@ -70,7 +70,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isDraftMode, setIsDraftMode] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
-  // --- STATE BARU: Menampung pesan error validasi manual (non react-hook-form) ---
   const [customErrorMessages, setCustomErrorMessages] = useState<string[]>([]);
   
   const [previewData, setPreviewData] = useState<BeasiswaFormData | null>(null);
@@ -142,7 +141,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     resolver: zodResolver(getSchema() as any),
   });
 
-  // ── [+] EVENT LISTENER: Menangkap perintah navigasi stepper dari alert ──
   useEffect(() => {
     const handleNavigationEvent = (event: any) => {
       if (event.detail && typeof event.detail.step === "number") {
@@ -155,7 +153,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       window.removeEventListener("PALMA_NAVIGATE_STEP", handleNavigationEvent);
     };
   }, []);
-  // ────────────────────────────────────────────────────────────────────────
 
   const { data: responseAgama } = useQuery({
     queryKey: ["ref-agama"],
@@ -193,7 +190,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
 
   useEffect(() => {
     if (existBeasiswa) {
-      // Helper untuk memformat value select agar saat data API kosong/null nilainya menjadi "" murni
       const formatSelectValue = (kode?: string | number | null, nama?: string | null) => {
         if (!kode || kode === "") return "";
         return `${kode}#${nama ?? ""}`;
@@ -493,7 +489,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   const handleNext = async () => {
     if (currentStep >= steps.length - 1) return;
     setIsNextLoading(true);
-    setCustomErrorMessages([]); // [!] Reset error manual tiap kali Next diklik
+    setCustomErrorMessages([]); 
 
     try {
       const fieldsToValidate = stepFields[currentStep] ?? [];
@@ -547,7 +543,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         }
       }
 
-      // [!] VALIDASI DOKUMEN UMUM
       if (currentStep === 5) {
         try {
           const res = await beasiswaService.getUploadedPersyaratan("umum", existBeasiswa.id_trx_beasiswa);
@@ -561,7 +556,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           );
 
           if (belumUpload.length > 0) {
-            // [!] Memunculkan Modal Pop-up, bukan toast lagi
             const messages = belumUpload.map((doc) => `Dokumen wajib belum diunggah: ${doc.persyaratan}`);
             setCustomErrorMessages(messages);
             setShowErrorDialog(true);
@@ -574,7 +568,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         }
       }
 
-      // [!] VALIDASI PILIHAN JURUSAN
       if (currentStep === 4) {
         const currentPilihan = (getValues("pilihan_program_studi") ?? []) as Array<{
           perguruan_tinggi?: string;
@@ -628,7 +621,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         }
       }
 
-      // [!] VALIDASI ASAL SEKOLAH & NILAI RAPOR
       if (currentStep === 3) {
         const getKode = (val: string | undefined) => (val ?? "").split("#")[0].trim();
         const asalSekolahChecks: { label: string; valid: boolean }[] = [
@@ -708,7 +700,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         } catch { }
       }
 
-      // [!] VALIDASI ALAMAT (Jika Zod gagal/lolos ke sini, dihandle juga dengan modal)
       if (currentStep === 1) {
         const getKode = (val: string | undefined) => (val ?? "").split("#")[0].trim();
         const alamatChecks: { label: string; valid: boolean }[] = [
@@ -763,7 +754,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   };
 
   const onSubmit = async (data: BeasiswaFormData) => {
-    setCustomErrorMessages([]); // [!] Reset error manual sebelum submit form
+    setCustomErrorMessages([]); 
     if (uploadKhususRef.current?.hasPendingFiles()) {
       try {
         await uploadKhususRef.current.uploadAllPending();
@@ -774,7 +765,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       }
     }
     
-    // [!] VALIDASI DOKUMEN KHUSUS (Menggunakan Modal)
     if (persyaratanKhusus.length > 0) {
       try {
         const res = await beasiswaService.getUploadedPersyaratan("khusus", existBeasiswa.id_trx_beasiswa);
@@ -839,10 +829,18 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
       if (data.foto instanceof File) {
         formData.append("foto", data.foto);
       }
-      if (data.foto_depan instanceof File) formData.append("foto_depan", data.foto_depan);
-      if (data.foto_samping_kiri instanceof File) formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      if (data.foto_samping_kanan instanceof File) formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      if (data.foto_belakang instanceof File) formData.append("foto_belakang", data.foto_belakang);
+      if (data.foto_depan instanceof File) {
+        formData.append("foto_depan", data.foto_depan);
+      }
+      if (data.foto_samping_kiri instanceof File) {
+        formData.append("foto_samping_kiri", data.foto_samping_kiri);
+      }
+      if (data.foto_samping_kanan instanceof File) {
+        formData.append("foto_samping_kanan", data.foto_samping_kanan);
+      }
+      if (data.foto_belakang instanceof File) {
+        formData.append("foto_belakang", data.foto_belakang);
+      }
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -1120,10 +1118,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
     existBeasiswa.id_flow === 4,
   );
 
-  // ── [+] VARIABEL PENGAMAN: Cek apakah formulir dalam proses perbaikan ──
   const isPerbaikan = existBeasiswa.id_flow === 4;
   const sectionValid = existBeasiswa.catatan_data_section;
-  // ───────────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -1156,9 +1152,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
             <Card className="shadow-none border-slate-200">
               <CardContent className="pt-6">
                 <div>
-                  {/* ── [+] PENGUNCIAN FORM: Menonaktifkan form per step via fieldset ── */}
-                  {currentStep === 0 && (
-                    isPerbaikan && sectionValid?.data_pribadi_is_valid === "Y" ? (
+                  {/* PENGUNCIAN FORM DENGAN CSS HIDDEN/BLOCK AGAR STATE TIDAK HILANG */}
+                  <div className={currentStep === 0 ? "block" : "hidden"}>
+                    {isPerbaikan && sectionValid?.data_pribadi_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <IdentitasPribadi
                           sectionCatatan={{
@@ -1200,11 +1196,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
                         isFieldDisabled={isDisabled}
                       />
-                    )
-                  )}
+                    )}
+                  </div>
 
-                  {currentStep === 1 && (
-                    isPerbaikan && sectionValid?.data_tempat_tinggal_bekerja_is_valid === "Y" ? (
+                  <div className={currentStep === 1 ? "block" : "hidden"}>
+                    {isPerbaikan && sectionValid?.data_tempat_tinggal_bekerja_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <Alamat
                           sectionCatatanTempatTinggal={{
@@ -1240,11 +1236,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         setValue={setValue}
                         isFieldDisabled={isDisabled}
                       />
-                    )
-                  )}
+                    )}
+                  </div>
 
-                  {currentStep === 2 && (
-                    isPerbaikan && sectionValid?.data_orang_tua_is_valid === "Y" ? (
+                  <div className={currentStep === 2 ? "block" : "hidden"}>
+                    {isPerbaikan && sectionValid?.data_orang_tua_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <DataOrtu
                           sectionCatatan={{
@@ -1268,11 +1264,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         errors={errors}
                         isFieldDisabled={isDisabled}
                       />
-                    )
-                  )}
+                    )}
+                  </div>
 
-                  {currentStep === 3 && (
-                    isPerbaikan && sectionValid?.data_pendidikan_is_valid === "Y" ? (
+                  <div className={currentStep === 3 ? "block" : "hidden"}>
+                    {isPerbaikan && sectionValid?.data_pendidikan_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <AsalSekolah
                           sectionCatatan={{
@@ -1310,27 +1306,26 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         }}
                         isFieldDisabled={isDisabled}
                       />
-                    )
-                  )}
-                  {/* ───────────────────────────────────────────────────────────────── */}
+                    )}
+                  </div>
 
-                  {currentStep === 4 && (
+                  <div className={currentStep === 4 ? "block" : "hidden"}>
                     <PilihanJurusan
                       control={control}
                       errors={errors}
                       setValue={setValue}
                       idTrxBeasiswa={existBeasiswa?.id_trx_beasiswa}
                     />
-                  )}
+                  </div>
 
-                  {currentStep === 5 && (
+                  <div className={currentStep === 5 ? "block" : "hidden"}>
                     <UploadPersyaratanUmum
                       idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                       persyaratanUmum={persyaratanUmum}
                     />
-                  )}
+                  </div>
 
-                  {currentStep === 6 && (
+                  <div className={currentStep === 6 ? "block" : "hidden"}>
                     <div className="space-y-6">
                       <CustSelect
                         name="jalur"
@@ -1348,7 +1343,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         persyaratanKhusus={persyaratanKhusus}
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="flex justify-between mt-8 border-t pt-6">
@@ -1425,13 +1420,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
         />
       )}
 
-      {/* ── [+] MODAL POP UP YANG SUDAH DIGABUNGKAN DENGAN ERROR MANUAL ── */}
       <Dialog 
         open={showErrorDialog} 
         onOpenChange={(open) => {
           setShowErrorDialog(open);
           if (!open) {
-            // Hapus pesan manual setelah modal ditutup agar saat memvalidasi ulang pesannya bersih
             setTimeout(() => setCustomErrorMessages([]), 300);
           }
         }}>
@@ -1448,7 +1441,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
 
           <div className="max-h-[400px] overflow-y-auto">
             <ul className="space-y-2">
-              {/* Menampilkan error dari skema Zod (react-hook-form) */}
               {Object.entries(errors).map(([field, error]) => (
                 <li
                   key={field}
@@ -1458,7 +1450,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                   </span>
                 </li>
               ))}
-              {/* Menampilkan error validasi manual yang tadinya menggunakan toast */}
               {customErrorMessages.map((msg, idx) => (
                 <li
                   key={`custom-err-${idx}`}

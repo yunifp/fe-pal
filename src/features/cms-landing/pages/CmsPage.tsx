@@ -54,6 +54,8 @@ const EMPTY_FORM: ICmsHeroFormData = {
   judul: "",
   subjudul: "",
   bg_image_url: "",
+  bg_image_url_2: "",
+  bg_image_url_3: "",
   label_cta: "Daftar Sekarang",
   url_cta: "/daftar-penerima-beasiswa",
   is_active: 0,
@@ -135,6 +137,8 @@ const CmsHeroPage = () => {
       judul: hero.judul,
       subjudul: hero.subjudul ?? "",
       bg_image_url: hero.bg_image_url ?? "",
+      bg_image_url_2: hero.bg_image_url_2 ?? "",
+      bg_image_url_3: hero.bg_image_url_3 ?? "",
       label_cta: hero.label_cta ?? "Daftar Sekarang",
       url_cta: hero.url_cta ?? "/daftar-penerima-beasiswa",
       is_active: hero.is_active,
@@ -233,11 +237,11 @@ const CmsHeroPage = () => {
                         <p className="font-medium text-sm leading-snug">
                           {hero.judul}
                         </p>
-                        {hero.bg_image_url && (
-                          <p className="text-xs text-muted-foreground truncate max-w-[180px]">
-                            🖼 {hero.bg_image_url}
-                          </p>
-                        )}
+                        <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                          {hero.bg_image_url && <span className="truncate max-w-[180px]">1️⃣ {hero.bg_image_url}</span>}
+                          {hero.bg_image_url_2 && <span className="truncate max-w-[180px]">2️⃣ {hero.bg_image_url_2}</span>}
+                          {hero.bg_image_url_3 && <span className="truncate max-w-[180px]">3️⃣ {hero.bg_image_url_3}</span>}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[200px] truncate">
@@ -306,7 +310,7 @@ const CmsHeroPage = () => {
 
       {/* ── Form Dialog (Create / Edit) ── */}
       <Dialog open={isFormOpen} onOpenChange={(v) => !v && closeForm()}>
-        <DialogContent className="sm:max-w-lg font-inter">
+        <DialogContent className="sm:max-w-lg font-inter max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editTarget ? "Edit Data Hero" : "Tambah Hero Baru"}
@@ -343,17 +347,45 @@ const CmsHeroPage = () => {
               />
             </div>
 
-            {/* Background Image URL */}
-            <div className="space-y-1.5">
-              <Label htmlFor="bg_image_url">URL Gambar Background</Label>
-              <Input
-                id="bg_image_url"
-                placeholder="/images/bg_beasiswa.png atau https://..."
-                value={formData.bg_image_url ?? ""}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, bg_image_url: e.target.value }))
-                }
-              />
+            {/* Background Image URLs */}
+            <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
+              <Label className="font-semibold block mb-1">Pengaturan Gambar Slider</Label>
+              
+              <div className="space-y-1.5">
+                <Label htmlFor="bg_image_url" className="text-xs">Gambar Slider 1 (Utama)</Label>
+                <Input
+                  id="bg_image_url"
+                  placeholder="URL Gambar 1..."
+                  value={formData.bg_image_url ?? ""}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, bg_image_url: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="bg_image_url_2" className="text-xs">Gambar Slider 2 (Opsional)</Label>
+                <Input
+                  id="bg_image_url_2"
+                  placeholder="URL Gambar 2..."
+                  value={formData.bg_image_url_2 ?? ""}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, bg_image_url_2: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="bg_image_url_3" className="text-xs">Gambar Slider 3 (Opsional)</Label>
+                <Input
+                  id="bg_image_url_3"
+                  placeholder="URL Gambar 3..."
+                  value={formData.bg_image_url_3 ?? ""}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, bg_image_url_3: e.target.value }))
+                  }
+                />
+              </div>
             </div>
 
             {/* Label CTA & URL CTA — side by side */}
@@ -400,7 +432,7 @@ const CmsHeroPage = () => {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 pt-2">
             <Button variant="outline" onClick={closeForm} disabled={isMutating}>
               Batal
             </Button>

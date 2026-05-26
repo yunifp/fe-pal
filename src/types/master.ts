@@ -215,6 +215,8 @@ export interface ICmsHero {
   judul: string;
   subjudul: string | null;
   bg_image_url: string | null;
+  bg_image_url_2: string | null; // Tambahan
+  bg_image_url_3: string | null; // Tambahan
   label_cta: string | null;
   url_cta: string | null;
   is_active: number;
@@ -227,7 +229,9 @@ export interface ICmsHero {
 export interface ICmsHeroFormData {
   judul: string;
   subjudul?: string;
-  bg_image_url?: string;
+  bg_image_url: string | null;
+  bg_image_url_2: string | null; // Tambahan
+  bg_image_url_3: string | null; // Tambahan
   label_cta?: string;
   url_cta?: string;
   is_active?: number;
