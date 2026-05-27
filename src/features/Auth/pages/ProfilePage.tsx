@@ -172,30 +172,30 @@ const ProfilePage = () => {
               </Alert>
 
               <CustInput
-                label="Password Sekarang"
+                label="Pin Sekarang"
                 id="current_pin"
                 type="password"
-                placeholder="Masukkan Password saat ini"
+                placeholder="Masukkan Pin saat ini"
                 {...register("current_pin")}
                 error={!!errors.current_pin}
                 errorMessage={errors.current_pin?.message}
               />
 
               <CustInput
-                label="Password Baru"
+                label="Pin Baru"
                 id="pin"
                 type="password"
-                placeholder="Masukkan Password baru"
+                placeholder="Masukkan Pin baru"
                 {...register("pin")}
                 error={!!errors.pin}
                 errorMessage={errors.pin?.message}
               />
 
               <CustInput
-                label="Konfirmasi Password Baru"
+                label="Konfirmasi Pin Baru"
                 id="confirm_pin"
                 type="password"
-                placeholder="Ulangi Password baru"
+                placeholder="Ulangi Pin baru"
                 {...register("confirm_pin")}
                 error={!!errors.confirm_pin}
                 errorMessage={errors.confirm_pin?.message}

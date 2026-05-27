@@ -39,7 +39,7 @@ import type {
   IPersyaratanUmumBeasiswa,
   IPersyaratanKhususBeasiswa,
 } from "@/types/beasiswa";
-import { SecureImage } from "@/components/SecureImage"; // ✅ Tambahkan ini
+import { SecureImage } from "@/components/SecureImage";
 
 const InfoItem = ({
   icon: Icon,
@@ -59,7 +59,6 @@ const InfoItem = ({
   </div>
 );
 
-// ✅ Sesuaikan FotoItem
 const FotoItem = ({
   label,
   src,
@@ -100,7 +99,6 @@ const FotoItem = ({
           </Badge>
         )}
       </div>
-      {/* ✅ Ganti img dengan SecureImage */}
       <SecureImage
         src={src}
         alt={label}
@@ -147,6 +145,7 @@ interface PreviewDataProps {
   existFotoSampingKiri?: string | null;
   existFotoSampingKanan?: string | null;
   existFotoBelakang?: string | null;
+  isPerbaikan?: boolean; // ✅ Tambahan properti untuk mendeteksi perbaikan
 }
 
 const useFotoSrc = (
@@ -177,6 +176,7 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
   existFotoSampingKiri,
   existFotoSampingKanan,
   existFotoBelakang,
+  isPerbaikan = false, // ✅ Default false jika tidak di-pass dari parent
 }) => {
   const data = previewData;
 
@@ -243,7 +243,6 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
                           : "Foto Tersimpan"}
                       </Badge>
                     )}
-                    {/* ✅ Ganti img dengan SecureImage */}
                     <SecureImage
                       src={fotoProfile.src}
                       alt="Foto profil"
@@ -696,7 +695,8 @@ const PreviewDataBeasiswa: FC<PreviewDataProps> = ({
           <CardContent className="pt-4 space-y-3">
             <Button className="w-full" onClick={() => onSubmit(data)}>
               <Send className="h-4 w-4 mr-2" />
-              Submit Pendaftaran
+              {/* ✅ Gunakan isPerbaikan untuk conditional text */}
+              {isPerbaikan ? "Submit Perbaikan" : "Submit Pendaftaran"}
             </Button>
             <Button variant="outline" className="w-full" onClick={onBack}>
               <ChevronLeft className="h-4 w-4 mr-2" />

@@ -44,7 +44,7 @@ export function ForgotPinDialog({ isOpen, onClose }: ForgotPinDialogProps) {
       onClose(); // Tutup modal
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Gagal mengirim email reset PIN.");
+      toast.error(err?.response?.data?.message || "Gagal mengirim email reset PIN. Pastikan email yang Anda masukkan benar.");
     },
   });
 

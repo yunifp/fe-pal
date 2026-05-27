@@ -122,6 +122,7 @@ function App() {
             <Route path="/login" element={<LoginPenerimaBeasiswaPage />} />
             <Route path="/login-instansi" element={<LoginInstansiPage />} />
             <Route path="/reset-pin/:id/:token" element={<ResetPinPage />} />
+            <Route path="/login/reset-pin/:id/:token" element={<ResetPinPage />} />
             <Route
               path="/daftar-penerima-beasiswa"
               element={<RegisterPenerimaBeasiswaPage />}

@@ -398,6 +398,15 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               label="ID Pendaftaran"
               value={data_beasiswa.kode_pendaftaran}
             />
+            {/* JALUR DITURUNKAN KE SINI */}
+            <KoreksiInfoItem
+              icon={GraduationCap}
+              label="Jalur Pendaftaran"
+              value={data_beasiswa.jalur}
+              showKoreksi={false}
+              fieldKey="jalur"
+            />
+
             <KoreksiInfoItem
               icon={User}
               label="Nama Lengkap"
@@ -405,6 +414,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               showKoreksi={false}
               fieldKey="nama_lengkap"
             />
+            
+            {/* LINK KTP */}
             <KoreksiInfoItem
               icon={IdCard}
               label="NIK"
@@ -412,7 +423,18 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               showKoreksi={false}
               fieldKey="nik"
               fileUrl={ktpFile}
+              fileLabel="Lihat KTP"
+              onDownload={async (url) => {
+                try {
+                  const extractedName = extractFileNameFromUrl(url, "KTP");
+                  await downloadSecureFile(url, extractedName);
+                } catch (error) {
+                  toast.error("Gagal mengunduh KTP. Sesi mungkin kedaluwarsa.");
+                }
+              }}
             />
+            
+            {/* LINK KK */}
             <KoreksiInfoItem
               icon={IdCard}
               label="No Kartu Keluarga"
@@ -420,7 +442,17 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               showKoreksi={false}
               fieldKey="nkk"
               fileUrl={nkkFile}
+              fileLabel="Lihat KK"
+              onDownload={async (url) => {
+                try {
+                  const extractedName = extractFileNameFromUrl(url, "KK");
+                  await downloadSecureFile(url, extractedName);
+                } catch (error) {
+                  toast.error("Gagal mengunduh KK. Sesi mungkin kedaluwarsa.");
+                }
+              }}
             />
+            
             <KoreksiInfoItem
               icon={User}
               label="Jenis Kelamin"
@@ -1110,13 +1142,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               showKoreksi={false}
               fieldKey="nama_beasiswa"
             />
-            <KoreksiInfoItem
-              icon={GraduationCap}
-              label="Jalur"
-              value={data_beasiswa.jalur}
-              showKoreksi={false}
-              fieldKey="jalur"
-            />
+            {/* JALUR DIHAPUS DARI SINI */}
             <KoreksiInfoItem
               icon={GraduationCap}
               label="Jenjang Sekolah"

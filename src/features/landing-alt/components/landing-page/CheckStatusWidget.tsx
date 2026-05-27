@@ -2,55 +2,66 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { 
-  Search, ShieldAlert, User, CheckCircle2, 
-  FileText, Users, Award, MapPin, GraduationCap, RefreshCw 
+import {
+  Search, ShieldAlert, User, CheckCircle2,
+  FileText, Users, Award, MapPin, GraduationCap, RefreshCw
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { publicService } from "@/services/publicService";
 
-// Enhanced Status Translator
 const getStatusTheme = (id_flow: number) => {
-  if (id_flow <= 3) return { 
-    label: "Seleksi Administrasi", 
-    style: "bg-blue-500/10 text-blue-700 border-blue-200", 
-    Icon: FileText 
-  };
-  if (id_flow >= 4 && id_flow <= 10) return { 
-    label: "Tahap Tes & Wawancara", 
-    style: "bg-orange-500/10 text-orange-700 border-orange-200", 
-    Icon: Users 
-  };
-  if (id_flow >= 11 && id_flow <= 13) return { 
-    label: "Perankingan & Rekomtek", 
-    style: "bg-purple-500/10 text-purple-700 border-purple-200", 
-    Icon: Award 
-  };
-  if (id_flow >= 14) return { 
-    label: "Lolos Final (Ditetapkan)", 
-    style: "bg-emerald-500/10 text-emerald-700 border-emerald-200", 
-    Icon: CheckCircle2 
-  };
-  return { 
-    label: "Sedang Diproses", 
-    style: "bg-slate-500/10 text-slate-700 border-slate-200", 
-    Icon: Search 
+  if (id_flow === 0 || id_flow === 1) {
+    return {
+      label: "Pendaftaran Beasiswa",
+      style: "bg-blue-500/10 text-blue-700 border-blue-200",
+      Icon: FileText
+    };
+  }
+
+  if ([2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(id_flow)) {
+    return {
+      label: "Seleksi Administrasi",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+  if (id_flow === 3) {
+    return {
+      label: "Tidak Lulus Administrasi",
+      style: "bg-red-500/10 text-red-700 border-red-200",
+      Icon: ShieldAlert
+    };
+  }
+
+  if (id_flow >= 14) {
+    return {
+      label: "Lulus Seleksi Beasiswa",
+      style: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+      Icon: CheckCircle2
+    };
+  }
+
+  return {
+    label: "Sedang Diproses",
+    style: "bg-slate-500/10 text-slate-700 border-slate-200",
+    Icon: Search
   };
 };
 
 const CekStatusWidget = () => {
   const [nikInput, setNikInput] = useState("");
   const [searchNik, setSearchNik] = useState("");
-  
+
   // State untuk menyimpan hasil pencarian
   const [searchResult, setSearchResult] = useState<any[] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   // State Captcha
   const [captchaAnswer, setCaptchaAnswer] = useState("");
-  const [captchaData, setCaptchaData] = useState<{captchaId: string, question: string} | null>(null);
+  const [captchaData, setCaptchaData] = useState<{ captchaId: string, question: string } | null>(null);
 
   const loadCaptcha = async () => {
     try {
@@ -64,7 +75,7 @@ const CekStatusWidget = () => {
   useEffect(() => { loadCaptcha(); }, []);
 
   const { isPending, mutate } = useMutation({
-    mutationFn: (payload: {nik: string, captchaId: string, answer: string}) => 
+    mutationFn: (payload: { nik: string, captchaId: string, answer: string }) =>
       publicService.cekStatusPendaftar(payload.nik, payload.captchaId, payload.answer),
     onMutate: () => {
       // Saat loading mulai, bersihkan hasil dan error lama
@@ -97,10 +108,10 @@ const CekStatusWidget = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanedNik = nikInput.trim();
-    
+
     if (cleanedNik.length >= 10 && captchaAnswer !== "") {
-      setSearchNik(cleanedNik); 
-      
+      setSearchNik(cleanedNik);
+
       // Tembak API secara imperatif menggunakan data lokal yang pasti fresh
       mutate({
         nik: cleanedNik,
@@ -112,7 +123,7 @@ const CekStatusWidget = () => {
 
   return (
     <div className="w-full relative z-10 px-4 sm:px-0 flex flex-col items-center">
-      
+
       {/* Header Section */}
       <div className="text-center mb-10 space-y-3">
         <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">
@@ -124,8 +135,8 @@ const CekStatusWidget = () => {
       </div>
 
       {/* Search Bar */}
-      <form 
-        onSubmit={handleSearch} 
+      <form
+        onSubmit={handleSearch}
         className="relative group w-full max-w-2xl mx-auto mb-12"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-emerald-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition duration-500"></div>
@@ -142,8 +153,8 @@ const CekStatusWidget = () => {
               onChange={(e) => setNikInput(e.target.value.replace(/\D/g, ''))}
               maxLength={16}
             />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isPending || nikInput.length < 10 || !captchaAnswer}
               className="h-12 px-6 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-bold tracking-wide shadow-lg border-0 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
@@ -176,7 +187,7 @@ const CekStatusWidget = () => {
 
       {/* Result Section */}
       <div className="w-full max-w-3xl mx-auto transition-all duration-500">
-        
+
         {/* Loading State */}
         {isPending && (
           <div className="flex flex-col items-center justify-center py-12 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl animate-pulse">
@@ -184,7 +195,7 @@ const CekStatusWidget = () => {
             <p className="text-white/70 font-medium animate-pulse">Mencari data pendaftar...</p>
           </div>
         )}
-        
+
         {/* Error State (Ditampilkan saat Soft Error atau Error asli) */}
         {errorMessage && !isPending && (
           <div className="p-6 bg-red-500/10 backdrop-blur-xl border border-red-500/30 text-white rounded-3xl flex items-center justify-center gap-4 shadow-2xl">
@@ -224,7 +235,8 @@ const CekStatusWidget = () => {
                       </div>
                       <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200">
                         <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Jalur Pendaftaran:</span>
-                        <span className="text-sm font-bold text-slate-800">{data.nama_kluster || "-"}</span>
+                        {/* Langsung memanggil data.jalur karena tipenya sudah String */}
+                        <span className="text-sm font-bold text-slate-800">{data.jalur || "-"}</span>
                       </div>
                     </div>
                     <div className="md:col-span-5 flex flex-col justify-center space-y-4 md:border-l border-slate-100 md:pl-6 pt-4 md:pt-0">

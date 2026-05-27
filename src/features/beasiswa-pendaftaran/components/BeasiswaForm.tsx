@@ -1417,6 +1417,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
           existFotoSampingKiri={existBeasiswa.foto_samping_kiri}
           existFotoSampingKanan={existBeasiswa.foto_samping_kanan}
           existFotoBelakang={existBeasiswa.foto_belakang}
+          isPerbaikan={existBeasiswa.id_flow === 4}
         />
       )}
 

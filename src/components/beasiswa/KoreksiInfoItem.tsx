@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { type FC } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Download } from "lucide-react";
 
 interface KoreksiFieldState {
   field: string;
@@ -13,6 +13,8 @@ interface KoreksiInfoItemProps {
   label: string;
   value?: string | null;
   fileUrl?: string | null;
+  fileLabel?: string;
+  onDownload?: (url: string) => void;
   showKoreksi?: boolean;
   fieldKey?: string;
   koreksiFields?: KoreksiFieldState[];
@@ -25,6 +27,8 @@ const KoreksiInfoItem: FC<KoreksiInfoItemProps> = ({
   label,
   value,
   fileUrl,
+  fileLabel = "Lihat File",
+  onDownload,
   showKoreksi = false,
   fieldKey,
   koreksiFields = [],
@@ -51,14 +55,24 @@ const KoreksiInfoItem: FC<KoreksiInfoItemProps> = ({
           </p>
 
           {fileUrl && (
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary border border-primary/40 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors flex-shrink-0">
-              <ExternalLink className="w-3 h-3" />
-              Lihat File
-            </a>
+            <button
+              type="button"
+              onClick={(e) => {
+                if (onDownload) {
+                  e.preventDefault();
+                  onDownload(fileUrl);
+                } else {
+                  window.open(fileUrl, "_blank", "noopener,noreferrer");
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary border border-primary/40 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors flex-shrink-0 cursor-pointer">
+              {onDownload ? (
+                <Download className="w-3 h-3" />
+              ) : (
+                <ExternalLink className="w-3 h-3" />
+              )}
+              {fileLabel}
+            </button>
           )}
 
           {/* ✅ Checkbox koreksi inline di samping value — tidak menambah baris baru */}
