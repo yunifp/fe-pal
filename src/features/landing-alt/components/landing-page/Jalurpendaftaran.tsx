@@ -41,7 +41,8 @@ const S = {
   }),
   grid: (): React.CSSProperties => ({
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    // PENTING: Penggunaan min(100%, 280px) agar gak maksa layar buat stretch / overflow
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     gap: 20,
   }),
   card: (): React.CSSProperties => ({
@@ -84,13 +85,11 @@ const S = {
     color: "#1a1a1a",
     lineHeight: 1.4,
   }),
-  // Rich-text deskripsi preview — clamped to 3 lines
   cardDesc: (): React.CSSProperties => ({
     fontSize: "0.8rem",
     color: "#555",
     lineHeight: 1.55,
     flex: 1,
-    // CSS line-clamp via WebkitLineClamp
     display: "-webkit-box",
     WebkitLineClamp: 3,
     WebkitBoxOrient: "vertical",
@@ -111,7 +110,6 @@ const S = {
     cursor: "pointer",
     marginTop: "auto",
   }),
-  // Skeleton
   skeletonCard: (): React.CSSProperties => ({
     background: "#ffffff",
     border: "1px solid #e0e0e0",
@@ -151,10 +149,6 @@ const S = {
   }),
 };
 
-// ─── Wysiwyg preview CSS (injected once) ─────────────────────────────────────
-// Scoped to .jalur-desc-preview so it doesn't bleed into surrounding layout.
-// Strips most spacing to keep the 3-line clamp tight.
-
 const PREVIEW_CSS = `
   .jalur-desc-preview * { margin: 0; padding: 0; }
   .jalur-desc-preview p  { display: inline; }
@@ -174,8 +168,6 @@ const PREVIEW_CSS = `
   .jalur-desc-preview hr { display: none; }
 `;
 
-// ─── Skeleton Card ────────────────────────────────────────────────────────────
-
 const SkeletonCard = () => (
   <div style={S.skeletonCard()}>
     <div style={S.skeletonImg()} />
@@ -185,8 +177,6 @@ const SkeletonCard = () => (
     <div style={S.skeletonBtn()} />
   </div>
 );
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 const JalurPendaftaran = () => {
   const [activeJalur, setActiveJalur] = useState<ICmsJalurPendaftaran | null>(
@@ -229,7 +219,6 @@ const JalurPendaftaran = () => {
             jalur pendaftaran sesuai dengan profil Anda.
           </p>
 
-          {/* ── Loading ── */}
           {isLoading && (
             <div style={S.grid()}>
               {Array.from({ length: 6 }).map((_, i) => (
@@ -238,26 +227,22 @@ const JalurPendaftaran = () => {
             </div>
           )}
 
-          {/* ── Error ── */}
           {isError && (
             <div style={S.emptyState()}>
               Gagal memuat data jalur pendaftaran. Silakan coba lagi.
             </div>
           )}
 
-          {/* ── Empty ── */}
           {!isLoading && !isError && jalurList.length === 0 && (
             <div style={S.emptyState()}>
               Belum ada jalur pendaftaran yang tersedia.
             </div>
           )}
 
-          {/* ── Data ── */}
           {!isLoading && !isError && jalurList.length > 0 && (
             <div style={S.grid()}>
               {jalurList.map((jalur) => (
                 <div key={jalur.id} style={S.card()}>
-                  {/* Gambar */}
                   <div style={S.cardImg()}>
                     {jalur.gambar_url ? (
                       <img
@@ -273,10 +258,8 @@ const JalurPendaftaran = () => {
                     )}
                   </div>
 
-                  {/* Judul */}
                   <p style={S.cardTitle()}>{jalur.judul}</p>
 
-                  {/* Deskripsi — render HTML dari WYSIWYG, clamped 3 baris */}
                   {jalur.deskripsi && (
                     <div
                       className="jalur-desc-preview"
@@ -285,7 +268,6 @@ const JalurPendaftaran = () => {
                     />
                   )}
 
-                  {/* CTA */}
                   <button
                     style={S.cardLink()}
                     onClick={() => setActiveJalur(jalur)}>

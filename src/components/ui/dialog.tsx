@@ -60,6 +60,7 @@ function DialogContent({
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
+        aria-describedby={undefined}
         className={cn(
           "bg-background fixed top-[50%] left-[50%] z-[100] grid gap-4 border shadow-lg duration-200",
           "translate-x-[-50%] translate-y-[-50%] rounded-lg p-6",
@@ -73,6 +74,11 @@ function DialogContent({
         )}
         {...props}
       >
+        {/* Title tersembunyi sebagai fallback jika tidak ada DialogTitle yang dipanggil */}
+        <DialogPrimitive.Title className="sr-only">
+          Dialog
+        </DialogPrimitive.Title>
+        
         {children}
 
         {showCloseButton && (

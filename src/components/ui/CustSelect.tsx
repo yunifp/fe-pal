@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Controller, type Control, type FieldError } from "react-hook-form";
 import {
   Select,
@@ -53,9 +54,9 @@ export const CustSelect = ({
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((option) => (
+              {options.map((option, index) => (
                 <SelectItem
-                  key={option.value}
+                  key={`${option.value}-${index}`} 
                   value={option.value.toString()}
                   className="font-inter"
                 >

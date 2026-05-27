@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
 import { STALE_TIME } from "@/constants/reactQuery";
@@ -30,9 +31,9 @@ const S = {
     borderRadius: 2,
     margin: "12px auto 0",
   }),
-  body: (): React.CSSProperties => ({
+  body: (isMobile: boolean): React.CSSProperties => ({
     display: "grid",
-    gridTemplateColumns: "1fr 280px",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 280px",
     gap: 0,
     border: "1px solid #e0e0e0",
     borderRadius: 10,
@@ -64,12 +65,13 @@ const S = {
     color: "#bdbdbd",
     fontSize: "0.85rem",
   }),
-  info: (): React.CSSProperties => ({
-    padding: "28px 24px",
+  info: (isMobile: boolean): React.CSSProperties => ({
+    padding: isMobile ? "20px 16px" : "28px 24px",
     display: "flex",
     flexDirection: "column",
     gap: 0,
-    borderLeft: "1px solid #e0e0e0",
+    borderLeft: isMobile ? "none" : "1px solid #e0e0e0",
+    borderTop: isMobile ? "1px solid #e0e0e0" : "none",
     background: "#fafafa",
   }),
   infoTitle: (): React.CSSProperties => ({
@@ -176,31 +178,6 @@ const InfoRow = ({ icon, label, value, href }: InfoRowProps) => (
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-const IconPhone = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#2e7d32"
-    strokeWidth="2">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.07 9.81 19.79 19.79 0 0 1 .22 1.2 2 2 0 0 1 2.18 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L6.91 7.91a16 16 0 0 0 6.09 6.09l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-  </svg>
-);
-
-const IconMail = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#2e7d32"
-    strokeWidth="2">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    <polyline points="22,6 12,13 2,6" />
-  </svg>
-);
-
 const IconWhatsapp = () => (
   <svg
     width="16"
@@ -210,19 +187,6 @@ const IconWhatsapp = () => (
     stroke="#2e7d32"
     strokeWidth="2">
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-  </svg>
-);
-
-const IconClock = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#2e7d32"
-    strokeWidth="2">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
@@ -242,6 +206,16 @@ const IconPin = () => (
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const Kontak = () => {
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const { data: kontakResponse, isLoading } = useQuery({
     queryKey: ["cms-kontak-aktif"],
     queryFn: () => masterService.getCmsKontakAktif(),
@@ -268,7 +242,7 @@ const Kontak = () => {
             <span style={S.titleUnderline()} />
           </h2>
 
-          <div style={S.body()}>
+          <div style={S.body(isMobile)}>
             {/* ── Peta ── */}
             <div style={S.mapWrap()}>
               {isLoading ? (
@@ -306,9 +280,8 @@ const Kontak = () => {
             </div>
 
             {/* ── Info ── */}
-            <div style={S.info()}>
+            <div style={S.info(isMobile)}>
               {isLoading ? (
-                // Skeleton
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -338,25 +311,6 @@ const Kontak = () => {
                   <div style={S.infoTitle()}>
                     {kontak.nama_instansi || "Informasi Kontak"}
                   </div>
-
-                  {kontak.telepon && (
-                    <InfoRow
-                      icon={<IconPhone />}
-                      label="Telepon"
-                      value={kontak.telepon}
-                      href={`tel:${kontak.telepon}`}
-                    />
-                  )}
-
-                  {kontak.email && (
-                    <InfoRow
-                      icon={<IconMail />}
-                      label="Email"
-                      value={kontak.email}
-                      href={`mailto:${kontak.email}`}
-                    />
-                  )}
-
                   {kontak.whatsapp && (
                     <InfoRow
                       icon={<IconWhatsapp />}
@@ -365,15 +319,6 @@ const Kontak = () => {
                       href={`https://wa.me/${kontak.whatsapp.replace(/\D/g, "")}`}
                     />
                   )}
-
-                  {kontak.jam_operasional && (
-                    <InfoRow
-                      icon={<IconClock />}
-                      label="Jam Operasional"
-                      value={kontak.jam_operasional}
-                    />
-                  )}
-
                   {kontak.alamat && (
                     <InfoRow
                       icon={<IconPin />}
@@ -381,8 +326,6 @@ const Kontak = () => {
                       value={kontak.alamat}
                     />
                   )}
-
-                  {/* Fallback jika semua field null */}
                   {!kontak.telepon &&
                     !kontak.email &&
                     !kontak.whatsapp &&

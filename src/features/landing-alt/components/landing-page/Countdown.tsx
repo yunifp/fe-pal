@@ -14,22 +14,12 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
     seconds: 0,
   });
 
-  // const endDate = useMemo(
-  //   () => new Date(beasiswa.tanggal_selesai.replace(" ", "T")),
-  //   [beasiswa.tanggal_selesai],
-  // );
-
   const endDate = useMemo(() => {
     const raw = beasiswa.tanggal_selesai;
     // handle berbagai format: "2025-12-31", "2025-12-31 23:59:59", "2025-12-31T23:59:59"
     return new Date(raw.includes("T") ? raw : raw.replace(" ", "T"));
   }, [beasiswa.tanggal_selesai]);
 
-  useEffect(() => {
-    console.log("tanggal_selesai:", beasiswa.tanggal_selesai);
-    console.log("endDate:", endDate);
-    console.log("diff:", endDate.getTime() - Date.now());
-  }, [endDate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -54,25 +44,28 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
 
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
-      <div className="text-5xl font-bold text-green-600">
+      {/* Ukuran font angka mengecil di HP (text-3xl) dan besar di tablet/desktop (sm:text-5xl) */}
+      <div className="text-3xl sm:text-5xl font-bold text-green-600">
         {String(value).padStart(2, "0")}
       </div>
-      <div className="text-sm text-green-600/70 mt-1">{label}</div>
+      {/* Ukuran font label juga disesuaikan */}
+      <div className="text-xs sm:text-sm text-green-600/70 mt-1">{label}</div>
     </div>
   );
 
   return (
     <Card>
-      <CardContent className="px-12 py-6">
+      {/* Padding card disesuaikan biar nggak buang tempat di HP */}
+      <CardContent className="px-4 py-6 sm:px-12 sm:py-6">
         {/* Judul */}
         <div className="text-center mb-6">
-          <p className="text-md text-foreground">
+          <p className="text-sm sm:text-md text-foreground">
             Pendaftaran Beasiswa Akan Ditutup Dalam :
           </p>
         </div>
 
         {/* Countdown */}
-        <div className="flex justify-center items-center gap-4 flex-wrap">
+        <div className="flex justify-center items-center gap-2 sm:gap-4 flex-wrap">
           {time.days > 0 && (
             <>
               <TimeUnit value={time.days} label="Hari" />
@@ -91,7 +84,8 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
 };
 
 const Separator = () => (
-  <div className="text-4xl font-bold text-green-600">:</div>
+  // Titik dua juga dikecilin biar balance sama angkanya
+  <div className="text-2xl sm:text-4xl font-bold text-green-600 -mt-4 sm:-mt-6">:</div>
 );
 
 export default Countdown;

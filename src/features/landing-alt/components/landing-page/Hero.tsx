@@ -9,15 +9,15 @@ import type { ICmsHero } from "@/types/master";
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const S = {
-  section: (): React.CSSProperties => ({
+  section: (isMobile: boolean): React.CSSProperties => ({
     position: "relative",
     minHeight: "100vh",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     textAlign: "center",
-    padding: "124px 24px 60px",
-    overflow: "hidden", // Agar gambar slider tidak melebar ke luar
+    padding: isMobile ? "100px 16px 40px" : "124px 24px 60px",
+    overflow: "hidden", 
   }),
   slideImage: (bgUrl: string, isActive: boolean): React.CSSProperties => ({
     position: "absolute",
@@ -30,7 +30,7 @@ const S = {
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     opacity: isActive ? 1 : 0,
-    transition: "opacity 1.5s ease-in-out", // Transisi lembut saat ganti gambar
+    transition: "opacity 1.5s ease-in-out", 
     zIndex: 0,
   }),
   overlay: (): React.CSSProperties => ({
@@ -39,34 +39,33 @@ const S = {
     left: 0,
     width: "100%",
     height: "100%",
-    // Ubah angka .85 di bawah ini menjadi .4 atau .5
     backgroundImage: "linear-gradient(rgba(46,125,50,0.6), rgba(255,152,0,0.7))",
     zIndex: 1,
   }),
   content: (): React.CSSProperties => ({
     position: "relative",
-    zIndex: 10, // Selalu di atas slider dan overlay
+    zIndex: 10,
     maxWidth: 700,
     width: "100%",
   }),
   title: (): React.CSSProperties => ({
     fontSize: "clamp(1.8rem, 5vw, 3rem)",
-    fontWeight: 900, // <-- Ditebalkan ke angka maksimal (Black)
+    fontWeight: 900, 
     color: "#ffffff",
     letterSpacing: "0.04em",
     marginBottom: 16,
-    textShadow: "0 2px 16px rgba(0,0,0,0.4)", // Shadow sedikit ditebalkan agar lebih kontras
+    textShadow: "0 2px 16px rgba(0,0,0,0.4)", 
   }),
   subtitle: (): React.CSSProperties => ({
-    fontSize: "1.05rem", // Ukuran sedikit dinaikkan agar lebih nyaman dibaca
-    fontWeight: 600, // <-- Weight dibesarkan menjadi Semi-bold
-    color: "#ffffff", // <-- Warna dibuat full putih (sebelumnya transparan 0.85)
-    textShadow: "0 2px 8px rgba(0,0,0,0.4)", // Tambahan shadow tipis agar tidak kalah dengan background
+    fontSize: "1.05rem",
+    fontWeight: 600, 
+    color: "#ffffff", 
+    textShadow: "0 2px 8px rgba(0,0,0,0.4)", 
     marginBottom: 20,
   }),
   subtitleNoBeasiswa: (): React.CSSProperties => ({
     fontSize: "1.05rem",
-    fontWeight: 600, // <-- Ditebalkan juga
+    fontWeight: 600, 
     color: "#ffffff",
     maxWidth: 500,
     margin: "0 auto",
@@ -85,7 +84,6 @@ const S = {
     transition: "background 0.2s, transform 0.2s",
     boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
   }),
-  // Skeleton pulse untuk loading state
   skeletonTitle: (): React.CSSProperties => ({
     height: 48,
     width: "60%",
@@ -112,8 +110,6 @@ const S = {
   }),
 };
 
-// ─── Fallback defaults (jika CMS belum ada datanya) ───────────────────────────
-
 const HERO_DEFAULTS: ICmsHero = {
   id: 0,
   judul: "BEASISWA SDM SAWIT",
@@ -131,18 +127,22 @@ const HERO_DEFAULTS: ICmsHero = {
   updated_by: null,
 };
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface HeroProps {
   beasiswaAktif: IBeasiswa | null;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 const Hero = ({ beasiswaAktif }: HeroProps) => {
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
 
-  // Fetch konten hero dari CMS
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const { data: heroResponse, isLoading: isHeroLoading } = useQuery({
     queryKey: ["cms-hero-aktif"],
     queryFn: () => masterService.getCmsHeroAktif(),
@@ -151,35 +151,27 @@ const Hero = ({ beasiswaAktif }: HeroProps) => {
     staleTime: STALE_TIME,
   });
 
-  // Gunakan data CMS jika ada, fallback ke default
   const hero: ICmsHero = heroResponse?.data ?? HERO_DEFAULTS;
-
-  // Filter gambar yang valid saja
   const slideImages = [
     hero.bg_image_url,
     hero.bg_image_url_2,
     hero.bg_image_url_3,
   ].filter(Boolean) as string[];
 
-  // Jika semua field kosong, berikan 1 gambar default agar tidak error
   if (slideImages.length === 0) {
     slideImages.push("/images/bg_beasiswa.png");
   }
 
-  // Interval untuk auto-slide setiap 5 detik
   useEffect(() => {
-    if (slideImages.length <= 1) return; // Jika cuma 1 gambar, jangan slide
-
+    if (slideImages.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentIdx((prev) => (prev + 1) % slideImages.length);
     }, 5000);
-
     return () => clearInterval(timer);
   }, [slideImages.length]);
 
   return (
     <>
-      {/* Keyframe untuk skeleton */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -187,16 +179,11 @@ const Hero = ({ beasiswaAktif }: HeroProps) => {
         }
       `}</style>
 
-      <section id="beranda" style={S.section()}>
-        {/* ── Background Slider ── */}
+      <section id="beranda" style={S.section(isMobile)}>
         {slideImages.map((imgUrl, idx) => (
           <div key={idx} style={S.slideImage(imgUrl, idx === currentIdx)} />
         ))}
-
-        {/* ── Overlay Gradient (Warna Transparan) ── */}
         <div style={S.overlay()} />
-
-        {/* ── Main Content (Tetap Statis) ── */}
         <div style={S.content()}>
           {isHeroLoading ? (
             <>
@@ -207,18 +194,12 @@ const Hero = ({ beasiswaAktif }: HeroProps) => {
             </>
           ) : (
             <>
-              {/* Judul dari CMS */}
               <h1 style={S.title()}>{hero.judul}</h1>
-
-              {/* Kondisi ada / tidak beasiswa aktif */}
               {beasiswaAktif ? (
                 <>
                   {hero.subjudul && <p style={S.subtitle()}>{hero.subjudul}</p>}
-
                   <p style={S.subtitle()}>Pendaftaran ditutup dalam</p>
                   <Countdown beasiswa={beasiswaAktif} />
-
-                  {/* Tombol CTA */}
                   <a
                     href={hero.url_cta || "/daftar-penerima-beasiswa"}
                     style={S.cta()}>

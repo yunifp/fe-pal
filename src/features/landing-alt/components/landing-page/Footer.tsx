@@ -17,7 +17,7 @@ const Footer = () => (
   <footer style={S.footer()}>
     <p></p>
     <p></p>
-    <p>© 2025. Official Website Beasiswa SDM Sawit</p>
+    <p>© 2026. Official Website Beasiswa SDM Sawit</p>
   </footer>
 );
 

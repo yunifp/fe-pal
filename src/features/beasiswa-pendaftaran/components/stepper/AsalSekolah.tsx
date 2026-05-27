@@ -105,6 +105,7 @@ const AsalSekolah = ({
       masterService.getJurusanSekolahByIdJenjang(
         selectedJenjangSekolah?.split("#")[0] || "",
       ),
+    enabled: !!selectedJenjangSekolah,
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,

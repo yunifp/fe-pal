@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Tambahkan useLocation
+import { useNavigate, useLocation } from "react-router-dom"; 
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -48,8 +48,8 @@ const S = {
     background: "#e0e0e0",
     borderRadius: 6,
   }),
-  desktop: (): React.CSSProperties => ({
-    display: "flex",
+  desktop: (isMobile: boolean): React.CSSProperties => ({
+    display: isMobile ? "none" : "flex",
     alignItems: "center",
     gap: 24,
   }),
@@ -107,8 +107,8 @@ const S = {
     cursor: "pointer",
     ...(full ? { width: "100%", justifyContent: "center" } : {}),
   }),
-  hamburger: (): React.CSSProperties => ({
-    display: "none",
+  hamburger: (isMobile: boolean): React.CSSProperties => ({
+    display: isMobile ? "block" : "none",
     background: "none",
     border: "none",
     cursor: "pointer",
@@ -191,16 +191,26 @@ const NavbarLanding = ({
 }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  // PENTING: Langsung baca layar sejak awal biar nggak flash ke mode desktop
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
+  
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
-  // Menangani scroll otomatis setelah navigasi terjadi (jika ada hash di URL)
   useEffect(() => {
     if (location.hash) {
       const element = document.getElementById(location.hash.substring(1));
@@ -210,19 +220,16 @@ const NavbarLanding = ({
     }
   }, [location]);
 
-  // Cerdas menavigasi, menjaga root link jika ada hash
   const handleNavigate = (path: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     setMenuOpen(false);
 
-    // Jika user mengklik link beranda ("/") saat sudah berada di halaman beranda
     if (path === "/" && location.pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
       navigate("/");
       return;
     }
 
-    // Navigasi normal (Termasuk rute dengan /#hash)
     navigate(path);
   };
 
@@ -253,12 +260,11 @@ const NavbarLanding = ({
         </div>
 
         {/* Desktop nav */}
-        <div style={S.desktop()}>
+        <div style={S.desktop(isMobile)}>
           <div style={S.navLinks()}>
             <a href="/" onClick={handleNavigate("/")} style={S.navLink()}>
               Beranda
             </a>
-            {/* Perhatikan penambahan "/" sebelum "#" agar kembali ke root lebih dulu */}
             <a
               href="/#jalur-pendaftaran"
               onClick={handleNavigate("/#jalur-pendaftaran")}
@@ -300,7 +306,7 @@ const NavbarLanding = ({
 
         {/* Hamburger */}
         <button
-          style={S.hamburger()}
+          style={S.hamburger(isMobile)}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu">
           {menuOpen ? (

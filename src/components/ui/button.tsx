@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -41,10 +43,15 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  isLoading,
+  onInputChange,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
+    isLoading?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onInputChange?: any;
   }) {
   const Comp = asChild ? Slot : "button"
 

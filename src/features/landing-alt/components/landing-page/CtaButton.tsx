@@ -14,13 +14,19 @@ const CTAButton = () => {
         bg-amber-500
         hover:bg-amber-600
         text-white
-        px-8
-        py-6
-        text-lg
+        w-full
+        sm:w-auto
+        px-6
+        py-4
+        sm:px-8
+        sm:py-6
+        text-base
+        sm:text-lg
         shadow-lg
+        transition-all
       "
     >
-      <GraduationCap className="!w-6 !h-6 mr-1" />
+      <GraduationCap className="!w-5 !h-5 sm:!w-6 sm:!h-6 mr-2" />
       Pendaftaran Beasiswa
     </Button>
   );

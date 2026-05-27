@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
 import { STALE_TIME } from "@/constants/reactQuery";
@@ -30,10 +31,10 @@ const S = {
     borderRadius: 2,
     margin: "12px auto 0",
   }),
-  body: (): React.CSSProperties => ({
+  body: (isMobile: boolean): React.CSSProperties => ({
     display: "grid",
-    gridTemplateColumns: "1fr 420px",
-    gap: 48,
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 420px",
+    gap: isMobile ? 32 : 48,
     alignItems: "center",
   }),
   bodyNoImg: (): React.CSSProperties => ({
@@ -53,7 +54,6 @@ const S = {
     height: "auto",
     objectFit: "cover",
   }),
-  // Skeleton
   skeletonLine: (w = "100%", h = 16): React.CSSProperties => ({
     height: h,
     width: w,
@@ -70,8 +70,6 @@ const S = {
   }),
 };
 
-// ─── Fallback defaults ────────────────────────────────────────────────────────
-
 const TENTANG_DEFAULTS: ICmsTentang = {
   id: 0,
   judul_section: "Tentang Beasiswa",
@@ -83,98 +81,50 @@ const TENTANG_DEFAULTS: ICmsTentang = {
   updated_by: null,
 };
 
-// ─── Helper: deteksi apakah string adalah HTML atau plain text ────────────────
-
 const isHtmlContent = (str: string): boolean => /<[a-z][\s\S]*>/i.test(str);
-
-// Konversi plain text lama (pakai \n\n) menjadi HTML paragraf
 const plainTextToHtml = (text: string): string =>
   text
     .split(/\n\n+/)
     .map((para) => `<p>${para.replace(/\n/g, " ").trim()}</p>`)
     .join("");
 
-// ─── Prose CSS untuk konten HTML dari editor ──────────────────────────────────
-
 const PROSE_STYLES = `
   @keyframes tentang-pulse {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.4; }
   }
-
   .tentang-prose {
     font-size: 0.97rem;
     color: #444;
     line-height: 1.8;
   }
-  .tentang-prose p {
-    margin: 0 0 0.85em;
-  }
-  .tentang-prose p:last-child {
-    margin-bottom: 0;
-  }
-  .tentang-prose h2 {
-    font-size: 1.25em;
-    font-weight: 700;
-    color: #1b5e20;
-    margin: 1em 0 0.5em;
-    line-height: 1.3;
-  }
-  .tentang-prose h3 {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: #2e7d32;
-    margin: 0.9em 0 0.4em;
-    line-height: 1.35;
-  }
-  .tentang-prose ul {
-    list-style: disc;
-    padding-left: 1.5em;
-    margin: 0.5em 0 0.85em;
-  }
-  .tentang-prose ol {
-    list-style: decimal;
-    padding-left: 1.5em;
-    margin: 0.5em 0 0.85em;
-  }
-  .tentang-prose li {
-    margin-bottom: 0.3em;
-  }
-  .tentang-prose b,
-  .tentang-prose strong {
-    font-weight: 700;
-    color: #333;
-  }
-  .tentang-prose i,
-  .tentang-prose em {
-    font-style: italic;
-  }
-  .tentang-prose u {
-    text-decoration: underline;
-  }
-  .tentang-prose s,
-  .tentang-prose strike {
-    text-decoration: line-through;
-    color: #888;
-  }
-  .tentang-prose a {
-    color: #1b5e20;
-    text-decoration: underline;
-    transition: color 0.15s;
-  }
-  .tentang-prose a:hover {
-    color: #ff9800;
-  }
-  .tentang-prose hr {
-    border: none;
-    border-top: 1px solid #e0e0e0;
-    margin: 1em 0;
-  }
+  .tentang-prose p { margin: 0 0 0.85em; }
+  .tentang-prose p:last-child { margin-bottom: 0; }
+  .tentang-prose h2 { font-size: 1.25em; font-weight: 700; color: #1b5e20; margin: 1em 0 0.5em; line-height: 1.3; }
+  .tentang-prose h3 { font-size: 1.1em; font-weight: 600; color: #2e7d32; margin: 0.9em 0 0.4em; line-height: 1.35; }
+  .tentang-prose ul { list-style: disc; padding-left: 1.5em; margin: 0.5em 0 0.85em; }
+  .tentang-prose ol { list-style: decimal; padding-left: 1.5em; margin: 0.5em 0 0.85em; }
+  .tentang-prose li { margin-bottom: 0.3em; }
+  .tentang-prose b, .tentang-prose strong { font-weight: 700; color: #333; }
+  .tentang-prose i, .tentang-prose em { font-style: italic; }
+  .tentang-prose u { text-decoration: underline; }
+  .tentang-prose s, .tentang-prose strike { text-decoration: line-through; color: #888; }
+  .tentang-prose a { color: #1b5e20; text-decoration: underline; transition: color 0.15s; }
+  .tentang-prose a:hover { color: #ff9800; }
+  .tentang-prose hr { border: none; border-top: 1px solid #e0e0e0; margin: 1em 0; }
 `;
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 const TentangBeasiswa = () => {
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const { data: tentangResponse, isLoading } = useQuery({
     queryKey: ["cms-tentang-aktif"],
     queryFn: () => masterService.getCmsTentangAktif(),
@@ -185,8 +135,6 @@ const TentangBeasiswa = () => {
 
   const tentang: ICmsTentang = tentangResponse?.data ?? TENTANG_DEFAULTS;
   const hasImage = Boolean(tentang.gambar_url);
-
-  // Normalisasi deskripsi: jika plain text lama → konversi ke HTML
   const deskripsiHtml = tentang.deskripsi
     ? isHtmlContent(tentang.deskripsi)
       ? tentang.deskripsi
@@ -199,7 +147,6 @@ const TentangBeasiswa = () => {
 
       <section style={S.section()} id="tentang">
         <div style={S.inner()}>
-          {/* ── Judul ── */}
           <h2 style={S.title()}>
             {isLoading
               ? "Tentang Beasiswa"
@@ -207,9 +154,8 @@ const TentangBeasiswa = () => {
             <span style={S.titleUnderline()} />
           </h2>
 
-          {/* ── Body ── */}
           {isLoading ? (
-            <div style={S.body()}>
+            <div style={S.body(isMobile)}>
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[100, 90, 95, 85, 100, 70, 80].map((w, i) => (
@@ -219,8 +165,7 @@ const TentangBeasiswa = () => {
               <div style={S.skeletonImg()} />
             </div>
           ) : (
-            <div style={hasImage ? S.body() : S.bodyNoImg()}>
-              {/* Deskripsi — render HTML dari rich text editor */}
+            <div style={hasImage ? S.body(isMobile) : S.bodyNoImg()}>
               {deskripsiHtml ? (
                 <div
                   className="tentang-prose"
@@ -228,7 +173,6 @@ const TentangBeasiswa = () => {
                 />
               ) : null}
 
-              {/* Gambar — hanya tampil jika gambar_url terisi */}
               {hasImage && (
                 <div style={S.imgWrap()}>
                   <img

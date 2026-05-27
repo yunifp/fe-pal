@@ -1378,7 +1378,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                             handleSubmit(onSubmit, onError)();
                           }}
                           disabled={isSubmitting}>
-                          Submit Perbaikan
+                          Lanjutkan
                         </Button>
                       </>
                     ) : (

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ChevronDown, LogOut, User, Settings, ShieldCheck, Mail } from "lucide-react";
+import { ChevronDown, LogOut, User, ShieldCheck, Mail } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
