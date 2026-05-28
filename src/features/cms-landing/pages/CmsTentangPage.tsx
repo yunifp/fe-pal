@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
@@ -703,6 +704,9 @@ const CmsTentangPage = () => {
   const [formData, setFormData] = useState<ICmsTentangFormData>(EMPTY_FORM);
   const [editorKey, setEditorKey] = useState(0);
 
+  // UBAH: Tambah state file untuk gambar
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const {
     data: tentangResponse,
     isLoading,
@@ -725,7 +729,7 @@ const CmsTentangPage = () => {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: ICmsTentangFormData) =>
+    mutationFn: (data: any) => // UBAH: Jadi any untuk FormData
       masterService.createCmsTentang(data),
     onSuccess: () => {
       invalidate();
@@ -734,7 +738,7 @@ const CmsTentangPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ICmsTentangFormData }) =>
+    mutationFn: ({ id, data }: { id: number; data: any }) => // UBAH: Jadi any
       masterService.updateCmsTentang(id, data),
     onSuccess: () => {
       invalidate();
@@ -778,13 +782,26 @@ const CmsTentangPage = () => {
     setIsFormOpen(false);
     setEditTarget(null);
     setFormData(EMPTY_FORM);
+    // UBAH: Reset file state
+    setImageFile(null);
   };
 
   const handleSubmit = () => {
+    if (!formData.judul_section?.trim()) return;
+
+    // UBAH: Konversi ke FormData
+    const fd = new FormData();
+    fd.append("judul_section", formData.judul_section);
+    if (formData.deskripsi) fd.append("deskripsi", formData.deskripsi);
+    fd.append("is_active", String(formData.is_active));
+
+    if (imageFile) fd.append("gambar_url", imageFile);
+    else if (formData.gambar_url) fd.append("gambar_url", formData.gambar_url);
+
     if (editTarget) {
-      updateMutation.mutate({ id: editTarget.id, data: formData });
+      updateMutation.mutate({ id: editTarget.id, data: fd });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(fd);
     }
   };
 
@@ -1003,37 +1020,33 @@ const CmsTentangPage = () => {
               <TabsContent
                 value="pengaturan"
                 className="space-y-5 mt-0 rte-fade-in">
+                {/* UBAH: Area Input File Gambar */}
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="gambar_url"
-                    className="text-sm font-semibold flex items-center gap-1.5">
+                  <Label className="text-sm font-semibold flex items-center gap-1.5">
                     <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    URL Gambar Ilustrasi
+                    Upload Gambar Ilustrasi
                     <span className="text-xs font-normal text-muted-foreground">
                       (opsional)
                     </span>
                   </Label>
                   <Input
-                    id="gambar_url"
-                    placeholder="/images/tentang-beasiswa.png atau https://..."
-                    value={formData.gambar_url ?? ""}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, gambar_url: e.target.value }))
-                    }
-                    className="font-mono text-sm"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="font-mono text-sm cursor-pointer"
                   />
                   <p className="text-xs text-muted-foreground">
                     Gambar yang ditampilkan berdampingan dengan teks deskripsi.
                   </p>
                 </div>
 
-                {formData.gambar_url && (
+                {(imageFile || formData.gambar_url) && (
                   <div className="rounded-xl border-2 border-dashed p-4 space-y-2.5 bg-muted/20 rte-fade-in">
                     <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                       <Eye className="h-3 w-3" /> Preview Gambar
                     </p>
                     <img
-                      src={formData.gambar_url}
+                      src={imageFile ? URL.createObjectURL(imageFile) : formData.gambar_url}
                       alt="preview"
                       className="max-h-44 rounded-lg object-contain border shadow-sm"
                       onError={(e) => {

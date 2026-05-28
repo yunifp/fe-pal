@@ -104,7 +104,7 @@ const PerguruanTinggiEditPage = () => {
       namaOperator: operator?.nama_lengkap || operator?.namaOperator || operator?.nama || "",
       noTeleponOperator: operator?.no_hp || operator?.noTeleponOperator || operator?.telepon || "",
       emailOperator: operator?.email || operator?.emailOperator || "",
-      
+
       namaVerifikator: "-",
       noTeleponVerifikator: "-",
       emailVerifikator: "bypass@mail.com",
@@ -359,18 +359,18 @@ const PerguruanTinggiEditPage = () => {
             </div>
             <h2 className="text-2xl font-bold mb-2 text-slate-900 text-center">Akun Operator Dibuat!</h2>
             <p className="mb-6 text-sm text-slate-500 text-center leading-relaxed">
-              Karena kampus ini belum memiliki akun operator, sistem telah membuatkannya. <strong className="text-rose-500">Harap salin PIN ini sekarang karena hanya ditampilkan satu kali.</strong>
+              Karena kampus ini belum memiliki akun operator, sistem telah membuatkannya. <strong className="text-rose-500">Harap salin Password ini sekarang karena hanya ditampilkan satu kali.</strong>
             </p>
             
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl mb-8 space-y-4 shadow-inner">
               <div>
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Username (User ID)</span>
+                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Username</span>
                 <div className="bg-white px-4 py-2.5 rounded-lg border border-slate-100 text-lg font-mono font-bold text-slate-800 tracking-wide text-center">
                   {createdAccount.username}
                 </div>
               </div>
               <div>
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Login</span>
+                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Password</span>
                 <div className="bg-white px-4 py-2.5 rounded-lg border border-slate-100 text-2xl font-mono font-black text-emerald-600 tracking-[0.25em] text-center">
                   {createdAccount.pin}
                 </div>

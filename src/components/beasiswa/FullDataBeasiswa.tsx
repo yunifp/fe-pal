@@ -235,7 +235,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
             {/* ── Data diri ── */}
             <InfoItem
               icon={IdCard}
-              label="ID Pendaftaran"
+              label="Kode Pendaftaran"
               value={data_beasiswa.kode_pendaftaran}
             />
             <InfoItem

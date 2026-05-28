@@ -395,7 +395,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 items-start">
             <InfoItem
               icon={IdCard}
-              label="ID Pendaftaran"
+              label="Kode Pendaftaran"
               value={data_beasiswa.kode_pendaftaran}
             />
             {/* JALUR DITURUNKAN KE SINI */}

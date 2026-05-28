@@ -1,10 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import BaseLayout from "./layouts/BaseLayout";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./layouts/ProtectedLayout";
 import NotAuthorized from "./features/error/pages/NotAuthorized";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import LoginPenerimaBeasiswaPage from "./features/Auth/pages/LoginPenerimaBeasiswaPage";
 import RegisterPenerimaBeasiswaPage from "./features/Auth/pages/RegisterPenerimaBeasiswaPage";
 import HomePage from "./features/home/pages/HomePage";
@@ -99,7 +99,42 @@ import MappingProdiByPtPage from "./features/setting-jurusan-prodi/pages/Mapping
 import NikCekalPage from "./features/nik-cekal/pages/NikCekalPage";
 import SettingWaktuPage from "./features/beasiswa/pages/SettingWaktuPage";
 
+import { beasiswaService } from "@/services/beasiswaService";
+
 const queryClient = new QueryClient();
+
+const RegistrationGuard = () => {
+  const { data: responseBeasiswaAktif, isLoading } = useQuery({
+    queryKey: ["beasiswa-aktif-guard"],
+    queryFn: () => beasiswaService.getBeasiswaAktif(),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background text-foreground text-sm">
+        Memeriksa status pendaftaran...
+      </div>
+    );
+  }
+
+  const beasiswaAktif = responseBeasiswaAktif?.data ?? null;
+
+  if (!beasiswaAktif) {
+    return <Navigate to="/" replace />;
+  }
+
+  const rawDate = beasiswaAktif.tanggal_selesai;
+  const endDate = new Date(rawDate.includes("T") ? rawDate : rawDate.replace(" ", "T"));
+  const isExpired = endDate.getTime() - Date.now() <= 0;
+
+  if (isExpired) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+};
 
 function App() {
   return (
@@ -123,10 +158,15 @@ function App() {
             <Route path="/login-instansi" element={<LoginInstansiPage />} />
             <Route path="/reset-pin/:id/:token" element={<ResetPinPage />} />
             <Route path="/login/reset-pin/:id/:token" element={<ResetPinPage />} />
-            <Route
-              path="/daftar-penerima-beasiswa"
-              element={<RegisterPenerimaBeasiswaPage />}
-            />
+            
+            {/* Membungkus rute pendaftaran dengan RegistrationGuard */}
+            <Route element={<RegistrationGuard />}>
+              <Route
+                path="/daftar-penerima-beasiswa"
+                element={<RegisterPenerimaBeasiswaPage />}
+              />
+            </Route>
+
             <Route path="/daftar-instansi" element={<RegisterInstansiPage />} />
             <Route path="/logout" element={<LogoutPage />} />
           </Route>

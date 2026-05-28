@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { type FC } from "react";
 import { ExternalLink, Download } from "lucide-react";
 

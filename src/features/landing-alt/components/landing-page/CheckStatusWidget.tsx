@@ -130,7 +130,7 @@ const CekStatusWidget = () => {
           Pantau <span className="text-orange-400">Statusmu.</span>
         </h2>
         <p className="text-white/80 text-sm md:text-base font-medium max-w-lg mx-auto">
-          Masukkan Nomor Induk Kependudukan (NIK) untuk melihat hasil seleksi beasiswa secara *real-time*.
+          Masukkan Nomor Induk Kependudukan (NIK) atau Kode Pendaftaran untuk melihat hasil seleksi beasiswa.
         </p>
       </div>
 
@@ -212,7 +212,7 @@ const CekStatusWidget = () => {
           <div className="p-10 text-center border border-white/10 rounded-3xl bg-white/5 backdrop-blur-xl shadow-2xl flex flex-col items-center">
             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4"><Search className="w-10 h-10 text-white/40" /></div>
             <h4 className="text-xl font-bold text-white mb-2">Data Tidak Ditemukan</h4>
-            <p className="text-white/60 max-w-md">Tidak ada data pendaftar dengan NIK <span className="font-bold text-orange-400">{searchNik}</span>.</p>
+            <p className="text-white/60 max-w-md">Tidak ada data pendaftar dengan NIK atau Kode Pendaftaran <span className="font-bold text-orange-400">{searchNik}</span>.</p>
           </div>
         )}
 

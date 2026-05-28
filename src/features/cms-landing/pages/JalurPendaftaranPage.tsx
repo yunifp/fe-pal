@@ -967,6 +967,9 @@ const JalurPendaftaranPage = () => {
   const [syaratItems, setSyaratItems] = useState<ItemRow[]>([]);
   const [dokumenItems, setDokumenItems] = useState<ItemRow[]>([]);
 
+  // UBAH: Tambah state file untuk gambar
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const {
     data: jalurResponse,
     isLoading,
@@ -1056,29 +1059,41 @@ const JalurPendaftaranPage = () => {
     setFormData(EMPTY_FORM);
     setSyaratItems([]);
     setDokumenItems([]);
+    // UBAH: Reset file
+    setImageFile(null);
   };
 
   const handleSubmit = () => {
     if (!formData.judul.trim()) return;
 
-    const payload: any = {
-      ...formData,
-      syarat: syaratItems.map((s, i) => ({
-        syarat: s.text,
-        template_link: s.template_link,
-        urutan: i + 1,
-      })),
-      dokumen: dokumenItems.map((d, i) => ({
-        dokumen: d.text,
-        template_link: d.template_link,
-        urutan: i + 1,
-      })),
-    };
+    // UBAH: Menjadikan array stringify + ubah root obj jadi FormData
+    const syaratPayload = syaratItems.map((s, i) => ({
+      syarat: s.text,
+      template_link: s.template_link,
+      urutan: i + 1,
+    }));
+    const dokumenPayload = dokumenItems.map((d, i) => ({
+      dokumen: d.text,
+      template_link: d.template_link,
+      urutan: i + 1,
+    }));
+
+    const fd = new FormData();
+    fd.append("judul", formData.judul);
+    if (formData.deskripsi) fd.append("deskripsi", formData.deskripsi);
+    fd.append("urutan", String(formData.urutan || 0));
+    fd.append("is_active", String(formData.is_active));
+    
+    fd.append("syarat", JSON.stringify(syaratPayload));
+    fd.append("dokumen", JSON.stringify(dokumenPayload));
+
+    if (imageFile) fd.append("gambar_url", imageFile);
+    else if (formData.gambar_url) fd.append("gambar_url", formData.gambar_url);
 
     if (editTarget) {
-      updateMutation.mutate({ id: editTarget.id, data: payload });
+      updateMutation.mutate({ id: editTarget.id, data: fd });
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(fd);
     }
   };
 
@@ -1239,16 +1254,16 @@ const JalurPendaftaranPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {/* UBAH: Area Upload Gambar */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="gambar_url">URL Gambar</Label>
-                  <Input
-                    id="gambar_url"
-                    placeholder="/images/jalur.png"
-                    value={formData.gambar_url ?? ""}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, gambar_url: e.target.value }))
-                    }
-                  />
+                  <Label>Gambar Ikon/Logo</Label>
+                  <div className="flex items-center gap-3">
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => setImageFile(e.target.files?.[0] || null)} 
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="urutan">Urutan Tampil</Label>
@@ -1266,6 +1281,17 @@ const JalurPendaftaranPage = () => {
                     }
                   />
                 </div>
+
+                {/* UBAH: Area Preview Gambar */}
+                {(imageFile || formData.gambar_url) && (
+                  <div className="col-span-2">
+                    <img 
+                      src={imageFile ? URL.createObjectURL(imageFile) : formData.gambar_url} 
+                      alt="preview" 
+                      className="h-20 w-auto object-contain rounded border p-1" 
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between rounded-lg border p-3">

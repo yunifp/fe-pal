@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { masterService } from "@/services/masterService";
@@ -70,6 +71,11 @@ const CmsHeroPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<ICmsHero | null>(null);
   const [formData, setFormData] = useState<ICmsHeroFormData>(EMPTY_FORM);
 
+  // UBAH: Tambah state file untuk gambar slider
+  const [file1, setFile1] = useState<File | null>(null);
+  const [file2, setFile2] = useState<File | null>(null);
+  const [file3, setFile3] = useState<File | null>(null);
+
   // ── Query: ambil semua hero ──
   const {
     data: heroResponse,
@@ -90,7 +96,7 @@ const CmsHeroPage = () => {
     queryClient.invalidateQueries({ queryKey: ["cms-hero-all"] });
 
   const createMutation = useMutation({
-    mutationFn: (data: ICmsHeroFormData) => masterService.createCmsHero(data),
+    mutationFn: (data: any) => masterService.createCmsHero(data), // UBAH: data jadi any
     onSuccess: () => {
       invalidate();
       closeForm();
@@ -98,7 +104,7 @@ const CmsHeroPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ICmsHeroFormData }) =>
+    mutationFn: ({ id, data }: { id: number; data: any }) => // UBAH: data jadi any
       masterService.updateCmsHero(id, data),
     onSuccess: () => {
       invalidate();
@@ -148,14 +154,37 @@ const CmsHeroPage = () => {
     setIsFormOpen(false);
     setEditTarget(null);
     setFormData(EMPTY_FORM);
+    // UBAH: Reset file state
+    setFile1(null);
+    setFile2(null);
+    setFile3(null);
   };
 
   const handleSubmit = () => {
     if (!formData.judul.trim()) return;
+
+    // UBAH: Konversi ke FormData
+    const fd = new FormData();
+    fd.append("judul", formData.judul);
+    if (formData.subjudul) fd.append("subjudul", formData.subjudul);
+    if (formData.label_cta) fd.append("label_cta", formData.label_cta);
+    if (formData.url_cta) fd.append("url_cta", formData.url_cta);
+    fd.append("is_active", String(formData.is_active));
+
+    // Cek masing-masing file
+    if (file1) fd.append("bg_image_url", file1);
+    else if (formData.bg_image_url) fd.append("bg_image_url", formData.bg_image_url);
+
+    if (file2) fd.append("bg_image_url_2", file2);
+    else if (formData.bg_image_url_2) fd.append("bg_image_url_2", formData.bg_image_url_2);
+
+    if (file3) fd.append("bg_image_url_3", file3);
+    else if (formData.bg_image_url_3) fd.append("bg_image_url_3", formData.bg_image_url_3);
+
     if (editTarget) {
-      updateMutation.mutate({ id: editTarget.id, data: formData });
+      updateMutation.mutate({ id: editTarget.id, data: fd });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(fd);
     }
   };
 
@@ -236,9 +265,9 @@ const CmsHeroPage = () => {
                           {hero.judul}
                         </p>
                         <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                          {hero.bg_image_url && <span className="truncate max-w-[180px]">1️⃣ {hero.bg_image_url}</span>}
-                          {hero.bg_image_url_2 && <span className="truncate max-w-[180px]">2️⃣ {hero.bg_image_url_2}</span>}
-                          {hero.bg_image_url_3 && <span className="truncate max-w-[180px]">3️⃣ {hero.bg_image_url_3}</span>}
+                          {hero.bg_image_url && <a href={hero.bg_image_url} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">1️⃣ Lihat Gambar 1</a>}
+                          {hero.bg_image_url_2 && <a href={hero.bg_image_url_2} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">2️⃣ Lihat Gambar 2</a>}
+                          {hero.bg_image_url_3 && <a href={hero.bg_image_url_3} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">3️⃣ Lihat Gambar 3</a>}
                         </div>
                       </div>
                     </TableCell>
@@ -345,44 +374,51 @@ const CmsHeroPage = () => {
               />
             </div>
 
-            {/* Background Image URLs */}
+            {/* UBAH: Area Input File Gambar */}
+            {/* Area Input File Gambar */}
             <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
-              <Label className="font-semibold block mb-1">Pengaturan Gambar Slider</Label>
+              <Label className="font-semibold block mb-1">Pengaturan Gambar Slider (Format: JPG/PNG/WEBP)</Label>
               
               <div className="space-y-1.5">
-                <Label htmlFor="bg_image_url" className="text-xs">Gambar Slider 1 (Utama)</Label>
-                <Input
-                  id="bg_image_url"
-                  placeholder="URL Gambar 1..."
-                  value={formData.bg_image_url ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, bg_image_url: e.target.value }))
-                  }
-                />
+                <Label className="text-xs">Gambar Slider 1 (Utama)</Label>
+                <div className="flex items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => setFile1(e.target.files?.[0] || null)} />
+                  {(file1 || formData.bg_image_url) && (
+                    <img 
+                      src={file1 ? URL.createObjectURL(file1) : (formData.bg_image_url ?? undefined)} 
+                      alt="preview 1" 
+                      className="h-10 w-10 object-cover rounded border" 
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="bg_image_url_2" className="text-xs">Gambar Slider 2 (Opsional)</Label>
-                <Input
-                  id="bg_image_url_2"
-                  placeholder="URL Gambar 2..."
-                  value={formData.bg_image_url_2 ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, bg_image_url_2: e.target.value }))
-                  }
-                />
+                <Label className="text-xs">Gambar Slider 2 (Opsional)</Label>
+                <div className="flex items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => setFile2(e.target.files?.[0] || null)} />
+                  {(file2 || formData.bg_image_url_2) && (
+                    <img 
+                      src={file2 ? URL.createObjectURL(file2) : (formData.bg_image_url_2 ?? undefined)} 
+                      alt="preview 2" 
+                      className="h-10 w-10 object-cover rounded border" 
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="bg_image_url_3" className="text-xs">Gambar Slider 3 (Opsional)</Label>
-                <Input
-                  id="bg_image_url_3"
-                  placeholder="URL Gambar 3..."
-                  value={formData.bg_image_url_3 ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, bg_image_url_3: e.target.value }))
-                  }
-                />
+                <Label className="text-xs">Gambar Slider 3 (Opsional)</Label>
+                <div className="flex items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => setFile3(e.target.files?.[0] || null)} />
+                  {(file3 || formData.bg_image_url_3) && (
+                    <img 
+                      src={file3 ? URL.createObjectURL(file3) : (formData.bg_image_url_3 ?? undefined)} 
+                      alt="preview 3" 
+                      className="h-10 w-10 object-cover rounded border" 
+                    />
+                  )}
+                </div>
               </div>
             </div>
 

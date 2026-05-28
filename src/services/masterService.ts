@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   MASTER_SERVICE_BASE_URL,
@@ -25,9 +24,7 @@ import type {
   NpsnFormData,
   INpsn,
   PaginatedNpsnResponse,
-  ICmsHeroFormData,
   ICmsHero,
-  ICmsJalurFormData,
   ICmsJalurPendaftaran,
   ICmsItemFormData,
   ICmsJalurSyarat,
@@ -35,7 +32,6 @@ import type {
   ICmsKontakFormData,
   ICmsKontak,
   ICmsTentang,
-  ICmsTentangFormData,
 } from "@/types/master";
 import type { Response } from "@/types/response";
 
@@ -470,9 +466,9 @@ export const masterService = {
    * POST /cms/hero
    */
   createCmsHero: async (
-    data: ICmsHeroFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsHero>> => {
-    const response = await axiosInstanceJson.post(
+    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero`,
       data,
     );
@@ -485,9 +481,9 @@ export const masterService = {
    */
   updateCmsHero: async (
     id: number,
-    data: ICmsHeroFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceJson.put(
+    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
       data,
     );
@@ -561,9 +557,9 @@ export const masterService = {
    * POST /cms/jalur
    */
   createCmsJalur: async (
-    data: ICmsJalurFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsJalurPendaftaran>> => {
-    const response = await axiosInstanceJson.post(
+    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/jalur`,
       data,
     );
@@ -576,9 +572,9 @@ export const masterService = {
    */
   updateCmsJalur: async (
     id: number,
-    data: ICmsJalurFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceJson.put(
+    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}`,
       data,
     );
@@ -831,9 +827,9 @@ export const masterService = {
    * POST /cms/tentang
    */
   createCmsTentang: async (
-    data: ICmsTentangFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsTentang>> => {
-    const response = await axiosInstanceJson.post(
+    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/tentang`,
       data,
     );
@@ -846,9 +842,9 @@ export const masterService = {
    */
   updateCmsTentang: async (
     id: number,
-    data: ICmsTentangFormData,
+    data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceJson.put(
+    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}`,
       data,
     );
