@@ -193,9 +193,9 @@ export const beasiswaService = {
     return response.data;
   },
   submitBeasiswa: async (formData: FormData): Promise<Response<null>> => {
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
 
     const response = await axiosInstanceFormData.post(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa`,

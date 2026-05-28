@@ -95,13 +95,13 @@ export const masterService = {
     formData.append("kode_pos", data.kodePos);
     formData.append("email", data.alamatEmail);
     formData.append("website", data.alamatWebsite || "");
-    formData.append("nama_pimpinan", data.namaDirektur);
-    formData.append("jabatan_pimpinan", data.jabatanPimpinan);
-    formData.append("no_telepon_pimpinan", data.noTeleponPimpinan);
-    formData.append("no_rekening", data.noRekeningLembaga);
-    formData.append("nama_bank", data.namaBank);
-    formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
-    formData.append("npwp", data.npwp);
+    // formData.append("nama_pimpinan", data.namaDirektur);
+    // formData.append("jabatan_pimpinan", data.jabatanPimpinan);
+    // formData.append("no_telepon_pimpinan", data.noTeleponPimpinan);
+    // formData.append("no_rekening", data.noRekeningLembaga);
+    // formData.append("nama_bank", data.namaBank);
+    // formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
+    // formData.append("npwp", data.npwp);
     formData.append("status_aktif", String(data.statusAktif));
 
     if (data.logoLembaga) {
@@ -323,13 +323,13 @@ export const masterService = {
     formData.append("kode_pos", data.kodePos);
     formData.append("email", data.alamatEmail);
     formData.append("website", data.alamatWebsite || "");
-    formData.append("nama_pimpinan", data.namaDirektur);
-    formData.append("jabatan_pimpinan", data.jabatanPimpinan);
-    formData.append("no_telepon_pimpinan", data.noTeleponPimpinan);
-    formData.append("no_rekening", data.noRekeningLembaga);
-    formData.append("nama_bank", data.namaBank);
-    formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
-    formData.append("npwp", data.npwp);
+    // formData.append("nama_pimpinan", data.namaDirektur);
+    // formData.append("jabatan_pimpinan", data.jabatanPimpinan);
+    // formData.append("no_telepon_pimpinan", data.noTeleponPimpinan);
+    // formData.append("no_rekening", data.noRekeningLembaga);
+    // formData.append("nama_bank", data.namaBank);
+    // formData.append("nama_penerima_transfer", data.namaPenerimaTransfer);
+    // formData.append("npwp", data.npwp);
     formData.append("status_aktif", String(data.statusAktif));
 
     if (data.logoLembaga) {

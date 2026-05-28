@@ -99,7 +99,7 @@ const ManajemenVerifikator = () => {
     return verifikatorIds.map((id) => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
       const namaData = namaList.find((n) => n.id === id); // ← ambil dari auth
-      console.log(id);
+     
 
       return {
         id,

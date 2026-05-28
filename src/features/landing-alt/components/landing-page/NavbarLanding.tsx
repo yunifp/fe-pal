@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom"; 
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ─── Styles (Tidak diubah) ────────────────────────────────────────────────────
 const S = {
   nav: (scrolled: boolean): React.CSSProperties => ({
     position: "fixed",
@@ -144,17 +143,8 @@ const S = {
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
-
 const IconDaftar = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <line x1="19" y1="8" x2="19" y2="14" />
@@ -163,15 +153,7 @@ const IconDaftar = () => (
 );
 
 const IconMasuk = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
     <polyline points="10 17 15 12 10 7" />
     <line x1="15" y1="12" x2="3" y2="12" />
@@ -183,15 +165,16 @@ const IconMasuk = () => (
 interface NavbarProps {
   hasBeasiswaAktif: boolean;
   isBeasiswaLoading: boolean;
+  isPendaftaranTutup?: boolean; // Prop baru ditambahkan di sini
 }
 
 const NavbarLanding = ({
   hasBeasiswaAktif,
   isBeasiswaLoading,
+  isPendaftaranTutup,
 }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  // PENTING: Langsung baca layar sejak awal biar nggak flash ke mode desktop
   const [isMobile, setIsMobile] = useState(() => 
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
@@ -262,119 +245,53 @@ const NavbarLanding = ({
         {/* Desktop nav */}
         <div style={S.desktop(isMobile)}>
           <div style={S.navLinks()}>
-            <a href="/" onClick={handleNavigate("/")} style={S.navLink()}>
-              Beranda
-            </a>
-            <a
-              href="/#jalur-pendaftaran"
-              onClick={handleNavigate("/#jalur-pendaftaran")}
-              style={S.navLink()}>
-              Jalur Pendaftaran
-            </a>
-            <a
-              href="/cek-status"
-              onClick={handleNavigate("/cek-status")}
-              style={S.navLink()}>
-              Cek Status
-            </a>
-            <a 
-              href="/#kontak" 
-              onClick={handleNavigate("/#kontak")} 
-              style={S.navLink()}>
-              Kontak
-            </a>
+            <a href="/" onClick={handleNavigate("/")} style={S.navLink()}>Beranda</a>
+            <a href="/#jalur-pendaftaran" onClick={handleNavigate("/#jalur-pendaftaran")} style={S.navLink()}>Jalur Pendaftaran</a>
+            <a href="/cek-status" onClick={handleNavigate("/cek-status")} style={S.navLink()}>Cek Status</a>
+            <a href="/#kontak" onClick={handleNavigate("/#kontak")} style={S.navLink()}>Kontak</a>
           </div>
           <div style={S.auth()}>
-            {hasBeasiswaAktif && (
-              <a
-                href="/daftar-penerima-beasiswa"
-                onClick={handleNavigate("/daftar-penerima-beasiswa")}
-                style={S.btnDaftar()}>
-                <IconDaftar />
-                Daftar
+            
+            {/* Sembunyikan jika waktu pendaftaran habis */}
+            {hasBeasiswaAktif && !isPendaftaranTutup && (
+              <a href="/daftar-penerima-beasiswa" onClick={handleNavigate("/daftar-penerima-beasiswa")} style={S.btnDaftar()}>
+                <IconDaftar /> Daftar
               </a>
             )}
-            <a
-              href="/login"
-              onClick={handleNavigate("/login")}
-              style={S.btnMasuk()}>
-              <IconMasuk />
-              Masuk
+
+            <a href="/login" onClick={handleNavigate("/login")} style={S.btnMasuk()}>
+              <IconMasuk /> Masuk
             </a>
           </div>
         </div>
 
         {/* Hamburger */}
-        <button
-          style={S.hamburger(isMobile)}
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu">
+        <button style={S.hamburger(isMobile)} onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           {menuOpen ? (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           ) : (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
           )}
         </button>
       </div>
 
       {/* Mobile menu */}
       <div style={S.mobileMenu(menuOpen)}>
-        <a href="/" onClick={handleNavigate("/")} style={S.mobileLink()}>
-          Beranda
-        </a>
-        <a
-          href="/pendaftaran-beasiswa"
-          onClick={handleNavigate("/pendaftaran-beasiswa")}
-          style={S.mobileLink()}>
-          Beasiswa
-        </a>
-        <a 
-          href="/#kontak" 
-          onClick={handleNavigate("/#kontak")} 
-          style={S.mobileLink()}>
-          Kontak
-        </a>
-        <a 
-          href="/#tentang" 
-          onClick={handleNavigate("/#tentang")} 
-          style={S.mobileLink()}>
-          Tentang
-        </a>
+        <a href="/" onClick={handleNavigate("/")} style={S.mobileLink()}>Beranda</a>
+        <a href="/pendaftaran-beasiswa" onClick={handleNavigate("/pendaftaran-beasiswa")} style={S.mobileLink()}>Beasiswa</a>
+        <a href="/#kontak" onClick={handleNavigate("/#kontak")} style={S.mobileLink()}>Kontak</a>
+        <a href="/#tentang" onClick={handleNavigate("/#tentang")} style={S.mobileLink()}>Tentang</a>
         <div style={S.mobileAuth()}>
-          {hasBeasiswaAktif && (
-            <a
-              href="/daftar-penerima-beasiswa"
-              onClick={handleNavigate("/daftar-penerima-beasiswa")}
-              style={S.btnDaftar(true)}>
-              <IconDaftar />
-              Daftar
+          
+          {/* Sembunyikan jika waktu pendaftaran habis di Mobile Menu juga */}
+          {hasBeasiswaAktif && !isPendaftaranTutup && (
+            <a href="/daftar-penerima-beasiswa" onClick={handleNavigate("/daftar-penerima-beasiswa")} style={S.btnDaftar(true)}>
+              <IconDaftar /> Daftar
             </a>
           )}
-          <a
-            href="/login"
-            onClick={handleNavigate("/login")}
-            style={S.btnMasuk(true)}>
-            <IconMasuk />
-            Masuk
+
+          <a href="/login" onClick={handleNavigate("/login")} style={S.btnMasuk(true)}>
+            <IconMasuk /> Masuk
           </a>
         </div>
       </div>

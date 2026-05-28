@@ -41,7 +41,6 @@ const S = {
   }),
   grid: (): React.CSSProperties => ({
     display: "grid",
-    // PENTING: Penggunaan min(100%, 280px) agar gak maksa layar buat stretch / overflow
     gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     gap: 20,
   }),
@@ -178,7 +177,13 @@ const SkeletonCard = () => (
   </div>
 );
 
-const JalurPendaftaran = () => {
+// 1. TAMBAHKAN INTERFACE PROPS DI SINI
+interface JalurPendaftaranProps {
+  isPendaftaranTutup?: boolean;
+}
+
+// 2. TERIMA PROPS DI KOMPONEN
+const JalurPendaftaran = ({ isPendaftaranTutup }: JalurPendaftaranProps) => {
   const [activeJalur, setActiveJalur] = useState<ICmsJalurPendaftaran | null>(
     null,
   );
@@ -280,8 +285,13 @@ const JalurPendaftaran = () => {
         </div>
       </section>
 
+      {/* 3. TERUSKAN PROPS KE JALUR MODAL */}
       {activeJalur && (
-        <JalurModal jalur={activeJalur} onClose={() => setActiveJalur(null)} />
+        <JalurModal 
+          jalur={activeJalur} 
+          onClose={() => setActiveJalur(null)} 
+          isPendaftaranTutup={isPendaftaranTutup} 
+        />
       )}
     </>
   );

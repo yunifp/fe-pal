@@ -2,8 +2,7 @@
 import { useEffect } from "react";
 import type { ICmsJalurPendaftaran } from "@/types/master";
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ─── Styles (Tidak diubah) ────────────────────────────────────────────────────
 const S = {
   overlay: (): React.CSSProperties => ({
     position: "fixed",
@@ -116,7 +115,7 @@ const S = {
     display: "flex",
     flexDirection: "column",
     gap: 2,
-    textAlign: "justify", /* <-- Ditambahkan untuk rata kanan kiri di list */
+    textAlign: "justify",
   }),
   dotGreen: (): React.CSSProperties => ({
     flexShrink: 0,
@@ -166,14 +165,8 @@ const S = {
 };
 
 // ─── Prose & Link CSS ─────────────────────────────────────────────────────────
-
 const PROSE_CSS = `
-  .jm-prose {
-    font-size: 0.92rem;
-    color: #444;
-    line-height: 1.65;
-    text-align: justify; /* <-- Ditambahkan untuk rata kanan kiri di deskripsi */
-  }
+  .jm-prose { font-size: 0.92rem; color: #444; line-height: 1.65; text-align: justify; }
   .jm-prose h2 { font-size: 1rem; font-weight: 700; color: #1b5e20; margin: 12px 0 6px; text-align: left; }
   .jm-prose h3 { font-size: 0.93rem; font-weight: 700; color: #2e7d32; margin: 10px 0 4px; text-align: left; }
   .jm-prose p  { margin: 0 0 8px; }
@@ -184,34 +177,20 @@ const PROSE_CSS = `
   .jm-prose ol { list-style: decimal; padding-left: 20px; margin: 6px 0 8px; text-align: justify; }
   .jm-prose a { color: #1b5e20; text-decoration: underline; }
   .jm-prose a:hover { color: #2e7d32; }
-
-  /* CSS Khusus untuk Hyperlink Template */
-  .template-link {
-    display: inline-block;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #1976d2;
-    text-decoration: none;
-    margin-top: 4px;
-    transition: color 0.2s ease;
-    text-align: left; /* <-- Link download tetap dibiarkan rata kiri agar rapi */
-  }
-  .template-link:hover {
-    color: #115293;
-    text-decoration: underline;
-  }
+  .template-link { display: inline-block; font-size: 0.8rem; font-weight: 700; color: #1976d2; text-decoration: none; margin-top: 4px; transition: color 0.2s ease; text-align: left; }
+  .template-link:hover { color: #115293; text-decoration: underline; }
 `;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
-
 interface JalurModalProps {
   jalur: ICmsJalurPendaftaran;
   onClose: () => void;
+  isPendaftaranTutup?: boolean; // Prop baru ditambahkan di sini
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
+const JalurModal = ({ jalur, onClose, isPendaftaranTutup }: JalurModalProps) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -247,16 +226,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
               <h3 style={S.title()}>{jalur.judul}</h3>
             </div>
             <button style={S.closeBtn()} onClick={onClose} aria-label="Tutup">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
             </button>
           </div>
 
@@ -269,23 +239,10 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
             )}
 
             <div style={S.cols()}>
-              {/* Kolom Kiri: Persyaratan Umum */}
+              {/* Kolom Kiri */}
               <div>
                 <h4 style={S.sectionTitle()}>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeOpacity="0.7">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                   Persyaratan Umum
                 </h4>
                 {syaratList.length > 0 ? (
@@ -296,14 +253,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
                         <div style={S.listItemContent()}>
                           <span>{s.syarat}</span>
                           {s.template_link && (
-                            <a
-                              href={s.template_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="template-link"
-                            >
-                              Download Template
-                            </a>
+                            <a href={s.template_link} target="_blank" rel="noopener noreferrer" className="template-link">Download Template</a>
                           )}
                         </div>
                       </li>
@@ -314,23 +264,10 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
                 )}
               </div>
 
-              {/* Kolom Kanan: Persyaratan Khusus */}
+              {/* Kolom Kanan */}
               <div>
                 <h4 style={S.sectionTitle()}>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeOpacity="0.7">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                   Persyaratan Khusus
                 </h4>
                 {dokumenList.length > 0 ? (
@@ -341,14 +278,7 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
                         <div style={S.listItemContent()}>
                           <span>{d.dokumen}</span>
                           {d.template_link && (
-                            <a
-                              href={d.template_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="template-link"
-                            >
-                              Download Template
-                            </a>
+                            <a href={d.template_link} target="_blank" rel="noopener noreferrer" className="template-link">Download Template</a>
                           )}
                         </div>
                       </li>
@@ -365,9 +295,14 @@ const JalurModal = ({ jalur, onClose }: JalurModalProps) => {
             <button style={S.btnSecondary()} onClick={onClose}>
               Tutup
             </button>
-            <a href="/daftar-penerima-beasiswa" style={S.btnPrimary()}>
-              Daftar Sekarang
-            </a>
+
+            {/* Sembunyikan jika waktu pendaftaran sudah ditutup */}
+            {!isPendaftaranTutup && (
+              <a href="/daftar-penerima-beasiswa" style={S.btnPrimary()}>
+                Daftar Sekarang
+              </a>
+            )}
+            
           </div>
         </div>
       </div>

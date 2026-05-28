@@ -87,9 +87,9 @@ export const authService = {
       formData.append("answer", data.answer.toString());
     }
 
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
 
     const response = await axios.post(
       `${AUTH_SERVICE_BASE_URL}/auth/register`,
@@ -136,9 +136,9 @@ export const authService = {
     if (payload.avatar && payload.avatar instanceof File) {
       formData.append("avatar", payload.avatar);
     }
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
     const response = await axiosInstanceFormData.put<Response<IProfile>>(
       `${AUTH_SERVICE_BASE_URL}/auth/profile`,
       formData,

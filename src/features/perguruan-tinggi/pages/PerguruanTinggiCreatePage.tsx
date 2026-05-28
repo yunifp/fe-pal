@@ -167,12 +167,12 @@ const PerguruanTinggiCreatePage = () => {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  {/* <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                     <UserCircle className="w-5 h-5 text-emerald-600" />
                     <h2 className="text-lg font-bold text-slate-800">Pimpinan & Administrasi</h2>
-                  </div>
+                  </div> */}
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <CustInput label="Nama Direktur / Rektor" placeholder="Nama pimpinan" {...register("namaDirektur")} error={!!errors.namaDirektur} errorMessage={errors.namaDirektur?.message} />
                     <CustInput label="Jabatan Pimpinan" placeholder="Contoh: Rektor" {...register("jabatanPimpinan")} error={!!errors.jabatanPimpinan} errorMessage={errors.jabatanPimpinan?.message} />
                     <div className="md:col-span-2">
@@ -184,7 +184,7 @@ const PerguruanTinggiCreatePage = () => {
                     
                     <CustInput label="Atas Nama (Penerima)" placeholder="Nama pemilik rekening" {...register("namaPenerimaTransfer")} error={!!errors.namaPenerimaTransfer} errorMessage={errors.namaPenerimaTransfer?.message} />
                     <CustInput label="NPWP Institusi" placeholder="Nomor NPWP" {...register("npwp")} error={!!errors.npwp} errorMessage={errors.npwp?.message} />
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="space-y-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">

@@ -169,17 +169,17 @@ export const perguruanEditTinggiSchema = z.object({
     .instanceof(File, { message: "Logo lembaga wajib diunggah" })
     .optional(),
 
-  namaDirektur: z.string().min(1, "Nama Direktur / Rektor wajib diisi"),
-  noTeleponPimpinan: z.string().min(1, "Nomor telepon pimpinan wajib diisi"),
-  jabatanPimpinan: z.string().min(1, "Nama pimpinan wajib diisi"),
+  // namaDirektur: z.string().min(1, "Nama Direktur / Rektor wajib diisi"),
+  // noTeleponPimpinan: z.string().min(1, "Nomor telepon pimpinan wajib diisi"),
+  // jabatanPimpinan: z.string().min(1, "Nama pimpinan wajib diisi"),
 
-  noRekeningLembaga: z.string().min(1, "Nomor rekening lembaga wajib diisi"),
+  // noRekeningLembaga: z.string().min(1, "Nomor rekening lembaga wajib diisi"),
 
-  namaBank: z.string().min(1, "Nama bank wajib diisi"),
+  // namaBank: z.string().min(1, "Nama bank wajib diisi"),
 
-  namaPenerimaTransfer: z.string().min(1, "Nama penerima transfer wajib diisi"),
+  // namaPenerimaTransfer: z.string().min(1, "Nama penerima transfer wajib diisi"),
 
-  npwp: z.string().min(15, "NPWP tidak valid").max(20, "NPWP tidak valid"),
+  // npwp: z.string().min(15, "NPWP tidak valid").max(20, "NPWP tidak valid"),
 
   statusAktif: z.number().optional(),
 

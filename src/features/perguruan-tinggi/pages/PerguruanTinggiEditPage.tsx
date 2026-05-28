@@ -56,8 +56,16 @@ const PerguruanTinggiEditPage = () => {
       ]);
 
       const master = masterRes?.data;
-      const operatorArray = authRes?.data;
-      const operator = (operatorArray && operatorArray.length > 0) ? operatorArray[0] : null;
+      
+      // FIX: Handle struktur response operator dengan lebih aman (Array atau Object)
+      let operator = null;
+      if (authRes?.data) {
+        if (Array.isArray(authRes.data) && authRes.data.length > 0) {
+          operator = authRes.data[0];
+        } else if (!Array.isArray(authRes.data)) {
+          operator = authRes.data.operator || authRes.data;
+        }
+      }
 
       return { master, operator };
     },
@@ -84,19 +92,19 @@ const PerguruanTinggiEditPage = () => {
       faxPt: master.fax_pt || "",
       alamatEmail: master.email || "",
       alamatWebsite: master.website || "",
-      namaDirektur: master.nama_pimpinan || "",
-      jabatanPimpinan: master.jabatan_pimpinan || "",
-      noTeleponPimpinan: master.no_telepon_pimpinan || "",
-      noRekeningLembaga: master.no_rekening || "",
-      namaBank: master.nama_bank || "",
-      namaPenerimaTransfer: master.nama_penerima_transfer || "",
-      npwp: master.npwp || "",
+      // namaDirektur: master.nama_pimpinan || "",
+      // jabatanPimpinan: master.jabatan_pimpinan || "",
+      // noTeleponPimpinan: master.no_telepon_pimpinan || "",
+      // noRekeningLembaga: master.no_rekening || "",
+      // namaBank: master.nama_bank || "",
+      // namaPenerimaTransfer: master.nama_penerima_transfer || "",
+      // npwp: master.npwp || "",
       statusAktif: master.status_aktif ?? 1,
       
-      namaOperator: operator?.nama_lengkap || "",
-      noTeleponOperator: operator?.no_hp || "",
-      emailOperator: operator?.email || "",
-
+      namaOperator: operator?.nama_lengkap || operator?.namaOperator || operator?.nama || "",
+      noTeleponOperator: operator?.no_hp || operator?.noTeleponOperator || operator?.telepon || "",
+      emailOperator: operator?.email || operator?.emailOperator || "",
+      
       namaVerifikator: "-",
       noTeleponVerifikator: "-",
       emailVerifikator: "bypass@mail.com",
@@ -229,12 +237,12 @@ const PerguruanTinggiEditPage = () => {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    {/* <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                       <UserCircle className="w-5 h-5 text-amber-600" />
                       <h2 className="text-lg font-bold text-slate-800">Pimpinan & Administrasi</h2>
-                    </div>
+                    </div> */}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                       <CustInput label="Nama Direktur / Rektor" placeholder="Nama pimpinan" {...register("namaDirektur")} error={!!errors.namaDirektur} errorMessage={errors.namaDirektur?.message} />
                       <CustInput label="Jabatan Pimpinan" placeholder="Contoh: Rektor" {...register("jabatanPimpinan")} error={!!errors.jabatanPimpinan} errorMessage={errors.jabatanPimpinan?.message} />
                       <div className="md:col-span-2">
@@ -246,7 +254,7 @@ const PerguruanTinggiEditPage = () => {
                       
                       <CustInput label="Atas Nama (Penerima)" placeholder="Nama pemilik rekening" {...register("namaPenerimaTransfer")} error={!!errors.namaPenerimaTransfer} errorMessage={errors.namaPenerimaTransfer?.message} />
                       <CustInput label="NPWP Institusi" placeholder="Nomor NPWP" {...register("npwp")} error={!!errors.npwp} errorMessage={errors.npwp?.message} />
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="space-y-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">

@@ -6,8 +6,7 @@ import Countdown from "./Countdown";
 import type { IBeasiswa } from "@/types/beasiswa";
 import type { ICmsHero } from "@/types/master";
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ─── Styles (Tidak ada yang diubah) ───────────────────────────────────────────
 const S = {
   section: (isMobile: boolean): React.CSSProperties => ({
     position: "relative",
@@ -129,9 +128,11 @@ const HERO_DEFAULTS: ICmsHero = {
 
 interface HeroProps {
   beasiswaAktif: IBeasiswa | null;
+  isPendaftaranTutup?: boolean;
+  onTimeUp?: () => void;
 }
 
-const Hero = ({ beasiswaAktif }: HeroProps) => {
+const Hero = ({ beasiswaAktif, isPendaftaranTutup, onTimeUp }: HeroProps) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isMobile, setIsMobile] = useState(() => 
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
@@ -199,12 +200,17 @@ const Hero = ({ beasiswaAktif }: HeroProps) => {
                 <>
                   {hero.subjudul && <p style={S.subtitle()}>{hero.subjudul}</p>}
                   <p style={S.subtitle()}>Pendaftaran ditutup dalam</p>
-                  <Countdown beasiswa={beasiswaAktif} />
-                  <a
-                    href={hero.url_cta || "/daftar-penerima-beasiswa"}
-                    style={S.cta()}>
-                    {hero.label_cta || "Daftar Sekarang"}
-                  </a>
+                  
+                  <Countdown beasiswa={beasiswaAktif} onTimeUp={onTimeUp} />
+                  
+                  {/* Tampilkan tombol Daftar hanya jika waktu belum habis */}
+                  {!isPendaftaranTutup && (
+                    <a
+                      href={hero.url_cta || "/daftar-penerima-beasiswa"}
+                      style={S.cta()}>
+                      {hero.label_cta || "Daftar Sekarang"}
+                    </a>
+                  )}
                 </>
               ) : (
                 <p style={S.subtitleNoBeasiswa()}>

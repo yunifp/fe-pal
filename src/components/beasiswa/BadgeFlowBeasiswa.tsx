@@ -52,14 +52,11 @@ export const BadgeFlowBeasiswa: FC<BadgeFlowBeasiswaProps> = ({
 }) => {
   let idNum = Number(id);
 
-  console.log("BadgeFlowBeasiswa - id:", id, "idNum:", idNum); // ← tambah ini
+ 
   if (ADMIN_LULUS.includes(idNum)) {
     idNum = 17;
   }
-  console.log("BadgeFlowBeasiswa - idNum after remap:", idNum); // ← dan ini
   const label = (labels && labels[idNum]) || DEFAULT_LABELS[idNum] || "Unknown";
-  console.log("DEFAULT_LABELS[13]:", DEFAULT_LABELS[13]);
-  console.log("label:", label);
   const colorClass =
     (colorClasses && colorClasses[idNum]) ||
     DEFAULT_COLORS[idNum] ||

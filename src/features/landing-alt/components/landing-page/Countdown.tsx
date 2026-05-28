@@ -4,9 +4,10 @@ import type { IBeasiswa } from "@/types/beasiswa";
 
 interface CountdownProps {
   beasiswa: IBeasiswa;
+  onTimeUp?: () => void;
 }
 
-const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
+const Countdown: FC<CountdownProps> = ({ beasiswa, onTimeUp }) => {
   const [time, setTime] = useState({
     days: 0,
     hours: 0,
@@ -22,13 +23,13 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
 
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const checkTime = () => {
       const diff = endDate.getTime() - Date.now();
 
       if (diff <= 0) {
-        clearInterval(timer);
         setTime({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
+        if (onTimeUp) onTimeUp(); // Lapor ke atas saat waktu habis
+        return true;
       }
 
       setTime({
@@ -37,34 +38,40 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
         minutes: Math.floor((diff / (1000 * 60)) % 60),
         seconds: Math.floor((diff / 1000) % 60),
       });
+      return false;
+    };
+
+    // Cek langsung saat render pertama
+    const isExpired = checkTime();
+    if (isExpired) return;
+
+    // Jika belum habis, jalankan interval
+    const timer = setInterval(() => {
+      const expired = checkTime();
+      if (expired) clearInterval(timer);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [endDate]);
+  }, [endDate, onTimeUp]);
 
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
-      {/* Ukuran font angka mengecil di HP (text-3xl) dan besar di tablet/desktop (sm:text-5xl) */}
       <div className="text-3xl sm:text-5xl font-bold text-green-600">
         {String(value).padStart(2, "0")}
       </div>
-      {/* Ukuran font label juga disesuaikan */}
       <div className="text-xs sm:text-sm text-green-600/70 mt-1">{label}</div>
     </div>
   );
 
   return (
     <Card>
-      {/* Padding card disesuaikan biar nggak buang tempat di HP */}
       <CardContent className="px-4 py-6 sm:px-12 sm:py-6">
-        {/* Judul */}
         <div className="text-center mb-6">
           <p className="text-sm sm:text-md text-foreground">
             Pendaftaran Beasiswa Akan Ditutup Dalam :
           </p>
         </div>
 
-        {/* Countdown */}
         <div className="flex justify-center items-center gap-2 sm:gap-4 flex-wrap">
           {time.days > 0 && (
             <>
@@ -84,7 +91,6 @@ const Countdown: FC<CountdownProps> = ({ beasiswa }) => {
 };
 
 const Separator = () => (
-  // Titik dua juga dikecilin biar balance sama angkanya
   <div className="text-2xl sm:text-4xl font-bold text-green-600 -mt-4 sm:-mt-6">:</div>
 );
 
