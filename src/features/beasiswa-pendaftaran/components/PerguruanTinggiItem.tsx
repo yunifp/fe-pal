@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CustSearchableSelect } from "@/components/CustSearchableSelect";
 import { Card, CardContent } from "@/components/ui/card";
 import { masterService } from "@/services/masterService";
@@ -84,7 +86,7 @@ const PerguruanTinggiItem: FC<Props> = ({
       shouldDirty: true,
       shouldValidate: true,
     });
-  }, [idPt]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [idPt]); 
 
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
     queryKey: ["program-studi", idPt, kondisiButaWarna, selectedJurusanSekolah],
@@ -186,7 +188,7 @@ const PerguruanTinggiItem: FC<Props> = ({
 
     isProdiLoadedRef.current = true;
     onProdiReady?.(index);
-  }, [idPt, isFetchingProdi]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [idPt, isFetchingProdi]);
 
   const selectedProdi = useMemo(
     () =>
@@ -246,7 +248,7 @@ const PerguruanTinggiItem: FC<Props> = ({
     isFetchingProdi,
     isPopulating,
     filteredProdiOptions,
-  ]); // eslint-disable-line react-hooks/exhaustive-deps
+  ]); 
 
   const handleResetProdi = () => {
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
@@ -266,9 +268,9 @@ const PerguruanTinggiItem: FC<Props> = ({
     const currentJenjang = extractJenjangFromProdiValue(
       selectedProdiValue ?? "",
     );
-    if (isJenjangD1D2(currentJenjang)) return `Pilihan ${index + 1} (D1/D2)`;
+    if (isJenjangD1D2(currentJenjang)) return `Pilihan ${index + 1} (D2)`;
     if (isJenjangNonD1D2(currentJenjang))
-      return `Pilihan ${index + 1} (D3/D4/S1)`;
+      return `Pilihan ${index + 1} (D1/D3/D4/S1)`;
     return `Pilihan ${index + 1} (pasangan)`;
   }, [idPt, index, allPilihan, selectedProdiValue]);
 

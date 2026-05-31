@@ -26,6 +26,7 @@ export interface IBeasiswa {
   status_tutup_daftar: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
+  batas_tanggal_lahir: string | null;
 }
 
 export interface IPersyaratanUmumBeasiswa {
@@ -205,6 +206,7 @@ export interface ITrxBeasiswa {
   tinggal_rw?: string | null;
   tinggal_alamat?: string | null;
   alamat_kerja_sama_dengan_tinggal?: boolean | null;
+  batas_tanggal_lahir?: string | null;
 
   // =====================
   // Alamat Kerja

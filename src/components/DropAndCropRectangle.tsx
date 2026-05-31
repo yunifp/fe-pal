@@ -162,7 +162,7 @@ const DropAndCropRectangle = ({
             size="sm"
             type="button"
           >
-            Potong
+            Simpan
           </Button>
         </div>
       )}

@@ -108,7 +108,8 @@ const DbAdminVerifikatorDinasCreatePage = () => {
         queryClient.invalidateQueries({
           queryKey: ["db-user-admin-verifikator-dinas"],
         });
-        navigate("/database/user-admin-verifikator-dinas");
+        // Ubah navigasi ke halaman sebelumnya
+        navigate(-1);
       } else {
         toast.error(res.message);
       }

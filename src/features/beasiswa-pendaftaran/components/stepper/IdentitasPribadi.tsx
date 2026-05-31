@@ -41,6 +41,7 @@ interface Step1IdentitasPribadiProps {
   sukuOptions: RefOption[];
   onUmurChange?: (melebihi: boolean) => void;
   isFieldDisabled?: (fieldName: string) => boolean;
+  batasTanggalLahir?: string | null; // <-- Prop batas lahir dari database
 }
 
 interface RefOption {
@@ -75,6 +76,7 @@ const IdentitasPribadi = ({
   sukuOptions,
   onUmurChange,
   isFieldDisabled = () => false,
+  batasTanggalLahir, // <-- Tangkap prop di sini
 }: Step1IdentitasPribadiProps) => {
   
   const onFotoChange = async (file: File | null) => {
@@ -94,17 +96,18 @@ const IdentitasPribadi = ({
   const tanggalLahir = useWatch({ control, name: "tanggal_lahir" });
 
   const umurMelebihi = useMemo(() => {
-    if (!tanggalLahir) return false;
+    if (!tanggalLahir || !batasTanggalLahir) return false;
+    
     const lahir = new Date(tanggalLahir);
-    const today = new Date();
-    let umur = today.getFullYear() - lahir.getFullYear();
-    const bulanBelum =
-      today.getMonth() < lahir.getMonth() ||
-      (today.getMonth() === lahir.getMonth() &&
-        today.getDate() < lahir.getDate());
-    if (bulanBelum) umur--;
-    return umur > 23;
-  }, [tanggalLahir]);
+    lahir.setHours(0,0,0,0);
+
+    const batasLahir = new Date(batasTanggalLahir);
+    batasLahir.setHours(0,0,0,0);
+
+    return lahir < batasLahir;
+  }, [tanggalLahir, batasTanggalLahir]);
+
+  // Format tanggal untuk ditampilkan di pesan error
 
   useEffect(() => {
     onUmurChange?.(umurMelebihi);
@@ -239,10 +242,10 @@ const IdentitasPribadi = ({
           <div>
             <CustInput
               label="No. Telepon"
-              type="text" // <-- Diubah menjadi text agar maxLength didukung semua browser
+              type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              maxLength={13} // <-- Tambahan batasan di UI
+              maxLength={13}
               id="no_hp"
               placeholder="Cth: 08123456789"
               isRequired={true}
@@ -251,7 +254,6 @@ const IdentitasPribadi = ({
               onKeyDown={onlyNumbers}
               {...register("no_hp", {
                 onChange: (e) => {
-                  // Memastikan input mentok di 13 karakter saat mengetik
                   const value = e.target.value.slice(0, 13);
                   setValue("no_hp", value);
                 },
@@ -300,13 +302,14 @@ const IdentitasPribadi = ({
             />
           </div>
         </div>
+
         {umurMelebihi && (
           <div className="flex items-center gap-2 rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            Umur Anda melebihi batas ketentuan (maksimal 23 tahun). Anda tidak
-            dapat melanjutkan pendaftaran.
+            Umur Anda melebihi batas ketentuan (maksimal 23 tahun). Anda tidak dapat melanjutkan pendaftaran.
           </div>
         )}
+
         <div className="grid grid-cols-2 gap-4 items-start">
           <div id="agama">
             <CustSelect

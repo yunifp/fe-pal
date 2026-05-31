@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Calendar, Save, Loader2 } from "lucide-react";
+import { Calendar, Save, Loader2, Settings } from "lucide-react";
 
-// 1. PERBAIKAN IMPORT (Gunakan Named Import)
+// PERBAIKAN IMPORT (Gunakan Named Import)
 import { SectionHeader } from "@/components/SectionHeader";
 
 const SettingWaktuPage = () => {
@@ -17,6 +17,8 @@ const SettingWaktuPage = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [mulai, setMulai] = useState("");
   const [selesai, setSelesai] = useState("");
+  // Tambahan state untuk batas maksimal tanggal lahir pendaftar
+  const [batasLahir, setBatasLahir] = useState("");
 
   const { data: beasiswaRes, isLoading } = useQuery({
     queryKey: ["all-beasiswa"],
@@ -24,48 +26,59 @@ const SettingWaktuPage = () => {
   });
 
   const mutation = useMutation({
+    // Pastikan di masterService.ts endpoint URL sudah sesuai (misal: PUT /set-pengaturan/:id)
     mutationFn: ({ id, data }: { id: number; data: any }) => 
       masterService.updateTanggalBeasiswa(id, data),
     onSuccess: (res) => {
       if (res.success) {
-        toast.success(res.message);
+        toast.success("Pengaturan beasiswa berhasil diperbarui");
         setEditingId(null);
         queryClient.invalidateQueries({ queryKey: ["all-beasiswa"] });
       }
     },
-    onError: () => toast.error("Gagal memperbarui waktu pendaftaran"),
+    onError: () => toast.error("Gagal memperbarui pengaturan"),
   });
 
   const handleEdit = (beasiswa: any) => {
     setEditingId(beasiswa.id);
+    
+    // Potong string untuk menyesuaikan dengan input type="datetime-local"
     setMulai(beasiswa.tanggal_mulai ? beasiswa.tanggal_mulai.replace(" ", "T").slice(0, 16) : "");
     setSelesai(beasiswa.tanggal_selesai ? beasiswa.tanggal_selesai.replace(" ", "T").slice(0, 16) : "");
+    
+    // Potong string untuk menyesuaikan dengan input type="date" (YYYY-MM-DD)
+    setBatasLahir(beasiswa.batas_tanggal_lahir ? beasiswa.batas_tanggal_lahir.split(" ")[0] : "");
   };
 
   const handleSave = (id: number) => {
-    if (!mulai || !selesai) return toast.error("Harap isi kedua tanggal");
+    if (!mulai || !selesai) return toast.error("Harap isi waktu mulai dan selesai");
     
-    const data = {
+    const data: any = {
       tanggal_mulai: mulai.replace("T", " ") + ":00",
       tanggal_selesai: selesai.replace("T", " ") + ":00",
     };
+
+    // Tambahkan format time 00:00:00 jika batas lahir diisi
+    if (batasLahir) {
+      data.batas_tanggal_lahir = `${batasLahir} 00:00:00`;
+    }
+
     mutation.mutate({ id, data });
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* 2. PERBAIKAN PEMANGGILAN (Tambahkan prop Icon={Calendar}) */}
       <SectionHeader 
-        title="Pengaturan Waktu Pendaftaran" 
-        subtitle="Kelola jadwal mulai dan berakhirnya pendaftaran beasiswa" 
-        Icon={Calendar} 
+        title="Pengaturan Pendaftaran Beasiswa" 
+        subtitle="Kelola jadwal pendaftaran dan batasan usia pendaftar beasiswa" 
+        Icon={Settings} 
       />
 
       <Card className="border-t-4 border-t-primary shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Daftar Jadwal Beasiswa
+            Daftar Pengaturan Beasiswa
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -81,11 +94,12 @@ const SettingWaktuPage = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Waktu Mulai</TableHead>
                   <TableHead>Waktu Selesai</TableHead>
+                  <TableHead>Maks. Tgl Lahir</TableHead> {/* Tambahan Header */}
                   <TableHead className="text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {beasiswaRes?.data?.map((b) => (
+                {beasiswaRes?.data?.map((b: any) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.nama_beasiswa}</TableCell>
                     <TableCell>
@@ -107,6 +121,21 @@ const SettingWaktuPage = () => {
                         b.tanggal_selesai || "-"
                       )}
                     </TableCell>
+                    
+                    {/* Tambahan Render Data Batas Tanggal Lahir */}
+                    <TableCell>
+                      {editingId === b.id ? (
+                        <Input 
+                          type="date" 
+                          value={batasLahir} 
+                          onChange={(e) => setBatasLahir(e.target.value)} 
+                          size={1} 
+                        />
+                      ) : (
+                        b.batas_tanggal_lahir ? b.batas_tanggal_lahir.split(" ")[0] : "-"
+                      )}
+                    </TableCell>
+
                     <TableCell className="text-center">
                       {editingId === b.id ? (
                         <div className="flex gap-2 justify-center">
@@ -116,7 +145,7 @@ const SettingWaktuPage = () => {
                           <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Batal</Button>
                         </div>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(b)}>Atur Waktu</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(b)}>Atur Pengaturan</Button>
                       )}
                     </TableCell>
                   </TableRow>

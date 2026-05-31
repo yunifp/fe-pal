@@ -33,8 +33,8 @@ interface PilihanJurusanProps {
 export type ProdiCacheItem = { jenjang: string; boleh_buta_warna?: string };
 
 // ── Konstanta jenjang ────────────────────────────────────────────────────────
-const D1D2_JENJANG = new Set(["D1", "D2"]);
-const NON_D1D2_JENJANG = new Set(["D3", "D4", "S1"]);
+const D1D2_JENJANG = new Set(["D2"]);
+const NON_D1D2_JENJANG = new Set(["D1","D3", "D4", "S1"]);
 
 export const isJenjangD1D2 = (jenjang: string): boolean =>
   D1D2_JENJANG.has(jenjang?.trim().toUpperCase());
@@ -539,12 +539,12 @@ const PilihanJurusan = ({
                     </h3>
                     <div className="flex flex-col items-end gap-0.5">
                       <p className="text-sm text-muted-foreground">
-                        {fields.length} slot tersedia
+                        {fields.length} pilihan tersedia
                       </p>
                       {extraSlotCount > 0 && (
                         <p className="text-xs text-blue-600">
-                          termasuk {extraSlotCount} slot ekstra dari PT
-                          ber-program D1/D2 + D3/D4/S1
+                          termasuk {extraSlotCount} pilihan wajib dari PT
+                          jenjang D2 + D1/D3/D4/S1
                         </p>
                       )}
                     </div>

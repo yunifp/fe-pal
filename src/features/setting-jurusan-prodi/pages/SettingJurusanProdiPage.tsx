@@ -14,7 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Link2, Search, Filter } from "lucide-react";
+// Import tambahan untuk Combobox
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Link2, Search, Filter, Check, ChevronsUpDown } from "lucide-react";
 import type { IProgramStudi } from "@/types/programStudi";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
@@ -29,6 +32,9 @@ const SettingJurusanProdiPage = () => {
 
   const [selectedJurusanId, setSelectedJurusanId] = useState<string>("");
   const [selectedPtId, setSelectedPtId] = useState<string>("all");
+  
+  // State untuk mengontrol buka/tutup popover kampus
+  const [openPt, setOpenPt] = useState(false);
 
   const [activeJurusanId, setActiveJurusanId] = useState<number | null>(null);
   const [activePtId, setActivePtId] = useState<string>("all");
@@ -155,6 +161,8 @@ const SettingJurusanProdiPage = () => {
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-wrap items-end justify-end gap-4">
+              
+              {/* Dropdown Jurusan (Tetap menggunakan Select biasa) */}
               <div className="w-full sm:w-[280px] space-y-2">
                 <Label className="text-sm font-bold text-slate-700 ml-1">Jurusan Sekolah <span className="text-rose-500">*</span></Label>
                 <Select value={selectedJurusanId} onValueChange={setSelectedJurusanId}>
@@ -171,21 +179,69 @@ const SettingJurusanProdiPage = () => {
                 </Select>
               </div>
 
+              {/* Dropdown Perguruan Tinggi (Menggunakan Combobox/Searchable) */}
               <div className="w-full sm:w-[280px] space-y-2">
                 <Label className="text-sm font-bold text-slate-700 ml-1">Filter Perguruan Tinggi</Label>
-                <Select value={selectedPtId} onValueChange={setSelectedPtId}>
-                  <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium">
-                    <SelectValue placeholder="Semua Kampus" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-200 shadow-lg">
-                    <SelectItem value="all" className="font-bold text-emerald-700">-- Semua Kampus --</SelectItem>
-                    {listPt.map((pt: any) => (
-                      <SelectItem key={pt.id_pt} value={String(pt.id_pt)} className="font-medium">
-                        {pt.nama_pt}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={openPt} onOpenChange={setOpenPt}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openPt}
+                      className="w-full h-10 justify-between rounded-xl border-slate-200 bg-slate-50/50 hover:bg-slate-100 font-medium text-slate-700"
+                    >
+                      <span className="truncate">
+                        {selectedPtId === "all"
+                          ? "-- Semua Kampus --"
+                          : listPt.find((pt: any) => String(pt.id_pt) === selectedPtId)?.nama_pt || "Pilih Kampus..."}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-0 rounded-xl border-slate-200 shadow-lg">
+                    <Command>
+                      <CommandInput placeholder="Cari kampus..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>Kampus tidak ditemukan.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="-- Semua Kampus --"
+                            onSelect={() => {
+                              setSelectedPtId("all");
+                              setOpenPt(false);
+                            }}
+                            className="font-bold text-emerald-700 cursor-pointer"
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selectedPtId === "all" ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            -- Semua Kampus --
+                          </CommandItem>
+                          {listPt.map((pt: any) => (
+                            <CommandItem
+                              key={pt.id_pt}
+                              value={pt.nama_pt}
+                              onSelect={() => {
+                                setSelectedPtId(String(pt.id_pt));
+                                setOpenPt(false);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  selectedPtId === String(pt.id_pt) ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              {pt.nama_pt}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <Button 

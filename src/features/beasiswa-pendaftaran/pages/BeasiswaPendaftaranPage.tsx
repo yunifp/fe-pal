@@ -9,7 +9,6 @@ import {
 } from "@/types/beasiswa";
 import FullDataBeasiswa from "../../../components/beasiswa/FullDataBeasiswa";
 import AlertSudahSubmit from "../components/AlertSudahSubmit";
-// import FlowBeasiswaStepper from "@/components/beasiswa/FlowBeasiswaStepper";
 import AlertDitolak from "../components/AlertDitolak";
 import AlertPerbaikan from "../components/AlertPerbaikan";
 import BeasiswaForm from "../components/BeasiswaForm";
@@ -75,13 +74,14 @@ const BeasiswaPendaftaranPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* <BeasiswaAktif beasiswa={beasiswaAktif} /> */}
-
       {existBeasiswa && (
         <>
           {/* Flow 1: Draft - Hanya Form */}
           {existBeasiswa.id_flow === 0 && (
-            <BeasiswaForm existBeasiswa={existBeasiswa} />
+            <BeasiswaForm 
+              existBeasiswa={existBeasiswa} 
+              batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir} 
+            />
           )}
 
           {/* Flow 2: Verifikasi - Stepper + Full Data */}
@@ -92,9 +92,14 @@ const BeasiswaPendaftaranPage = () => {
             existBeasiswa.id_flow === 11 ||
             existBeasiswa.id_flow === 10 ||
             existBeasiswa.id_flow === 1 ||
+            existBeasiswa.id_flow === 13 ||
             existBeasiswa.id_flow === 7) && (
               <>
-                <AlertSudahSubmit idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />              {/* <FlowBeasiswaStepper currentIdFlow={existBeasiswa.id_flow!!} /> */}
+                {/* 🔴 PERBAIKAN: PASSING idFlow KE KOMPONEN INI */}
+                <AlertSudahSubmit 
+                  idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} 
+                  idFlow={existBeasiswa.id_flow} 
+                />
                 <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
               </>
             )}
@@ -114,15 +119,12 @@ const BeasiswaPendaftaranPage = () => {
                 catatanUmum={existBeasiswa.verifikator_catatan}
                 sectionData={existBeasiswa.catatan_data_section}
                 onNavigateToStep={(targetStepIndex) => {
-                  // Karena kontrol stepper ada di dalam BeasiswaForm, 
-                  // kita trigger custom event/klik atau scroll halus ke formnya
                   window.dispatchEvent(
                     new CustomEvent("PALMA_NAVIGATE_STEP", {
                       detail: { step: targetStepIndex },
                     })
                   );
 
-                  // Scroll halus ke area form pendaftaran
                   document
                     .getElementById("form-pendaftaran-anchor")
                     ?.scrollIntoView({
@@ -131,7 +133,10 @@ const BeasiswaPendaftaranPage = () => {
                 }}
               />
               <div id="form-pendaftaran-anchor">
-                <BeasiswaForm existBeasiswa={existBeasiswa} />
+                <BeasiswaForm 
+                  existBeasiswa={existBeasiswa} 
+                  batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir} 
+                />
               </div>
             </>
           )}

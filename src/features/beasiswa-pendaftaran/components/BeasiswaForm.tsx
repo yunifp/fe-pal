@@ -58,13 +58,14 @@ import { useKoreksiFields } from "@/hooks/useKoreksiFields";
 
 interface BeasiswaFormProps {
   existBeasiswa: ITrxBeasiswa;
+  batasTanggalLahir?: string | null; // <-- Prop batas umur yang diterima dari Page
 }
 
 const beasiswaSchema = createBeasiswaSchema();
 const beasiswaEditSchema = editBeasiswaSchema();
 const beasiswaDraftSchema = createBeasiswaDraftSchema();
 
-const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
+const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir }) => {
   const user = useAuthStore((state) => state.user);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -300,13 +301,13 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
   }, [existBeasiswa, agamaOptions, sukuOptions, reset, user]);
 
   const steps = [
-    { id: 0, title: "Identitas Pribadi", description: "Informasi data diri dan kontak", icon: UserCheck },
-    { id: 1, title: "Alamat Lengkap", description: "Domisili dan lokasi kerja/kebun", icon: MapPin },
-    { id: 2, title: "Data Orang Tua", description: "Informasi identitas dan pekerjaan orang tua", icon: Users },
-    { id: 3, title: "Asal Sekolah", description: "Riwayat pendidikan terakhir", icon: GraduationCap },
-    { id: 4, title: "Pilihan Jurusan", description: "Program studi dan perguruan tinggi", icon: BookOpen },
-    { id: 5, title: "Dokumen Umum", description: "Berkas persyaratan wajib", icon: FileText },
-    { id: 6, title: "Dokumen Khusus", description: "Berkas pendukung tambahan", icon: FolderOpen },
+    { id: 0, title: "Identitas Pribadi", description: "Informasi Data Diri dan Kontak", icon: UserCheck },
+    { id: 1, title: "Alamat Lengkap", description: "Domisili dan Lokasi Kerja/Kebun", icon: MapPin },
+    { id: 2, title: "Data Orang Tua/Wali", description: "Informasi Identitas dan Pekerjaan Orang Tua/Wali", icon: Users },
+    { id: 3, title: "Asal Sekolah", description: "Riwayat Pendidikan Sekolah", icon: GraduationCap },
+    { id: 4, title: "Pilihan Jurusan", description: "Program Studi dan Perguruan Tinggi", icon: BookOpen },
+    { id: 5, title: "Persyaratan Umum", description: "Berkas Dokumen Persyaratan Umum", icon: FileText },
+    { id: 6, title: "Persyaratan Khusus", description: "Berkas Dokumen Persyaratan Khusus", icon: FolderOpen },
   ];
 
   const { data: responseProvinsi } = useQuery({
@@ -1152,7 +1153,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
             <Card className="shadow-none border-slate-200">
               <CardContent className="pt-6">
                 <div>
-                  {/* PENGUNCIAN FORM DENGAN CSS HIDDEN/BLOCK AGAR STATE TIDAK HILANG */}
                   <div className={currentStep === 0 ? "block" : "hidden"}>
                     {isPerbaikan && sectionValid?.data_pribadi_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
@@ -1174,6 +1174,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                           sukuOptions={sukuOptions}
                           onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
                           isFieldDisabled={isDisabled}
+                          batasTanggalLahir={batasTanggalLahir} // <-- Prop di pass ke IdentitasPribadi
                         />
                       </fieldset>
                     ) : (
@@ -1195,6 +1196,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa }) => {
                         sukuOptions={sukuOptions}
                         onUmurChange={(melebihi) => setUmurMelebihi(melebihi)}
                         isFieldDisabled={isDisabled}
+                        batasTanggalLahir={batasTanggalLahir} // <-- Prop di pass ke IdentitasPribadi
                       />
                     )}
                   </div>

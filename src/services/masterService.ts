@@ -214,10 +214,10 @@ export const masterService = {
   },
   updateTanggalBeasiswa: async (
     idBeasiswa: number,
-    data: { tanggal_mulai: string; tanggal_selesai: string },
+    data: { tanggal_mulai: string; tanggal_selesai: string;batas_tanggal_lahir?: string; },
   ): Promise<Response<null>> => {
     const response = await axiosInstanceJson.put(
-      `${MASTER_SERVICE_BASE_URL}/beasiswa/set-tanggal/${idBeasiswa}`,
+     `${MASTER_SERVICE_BASE_URL}/beasiswa/set-pengaturan/${idBeasiswa}`,
       data,
     );
     return response.data;

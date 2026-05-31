@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { useDropzone } from "react-dropzone";
@@ -178,7 +179,7 @@ const DropAndCropCircle = ({
             size="sm"
             type="button"
           >
-            Potong
+            Simpan
           </Button>
         </div>
       )}

@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ShieldCheck, Eye } from "lucide-react";
@@ -5,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import type { ITrxBeasiswa } from "@/types/beasiswa";
 import BadgeFlowBeasiswa from "@/components/beasiswa/BadgeFlowBeasiswa";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SecureImage } from "@/components/SecureImage"; // ✅ Import SecureImage
+import { SecureImage } from "@/components/SecureImage";
 
 const SkeletonRow = () => (
   <div className="flex items-center gap-4">
@@ -98,7 +100,7 @@ export const getColumns = (isLoading?: boolean): ColumnDef<ITrxBeasiswa>[] => [
   },
   {
     id: "hasil_dinas_provinsi",
-    header: "Hasil Verifikasi",
+    header: "Hasil Verifikasi Provinsi",
     cell: ({ row }) => {
       if (isLoading) return <Skeleton className="h-6 w-32 rounded-md" />;
 

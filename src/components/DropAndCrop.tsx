@@ -74,11 +74,10 @@ const DropAndCrop = ({ aspectRatio = 1 }: DropAndCropProps) => {
       {/* Dropzone Area */}
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-md p-6 text-center transition-colors duration-200 ${
-          isDragActive
+        className={`border-2 border-dashed rounded-md p-6 text-center transition-colors duration-200 ${isDragActive
             ? "border-green-500 text-green-600"
             : "border-gray-400 text-gray-600"
-        } cursor-pointer`}
+          } cursor-pointer`}
       >
         <input {...getInputProps()} />
         <p>
@@ -118,7 +117,7 @@ const DropAndCrop = ({ aspectRatio = 1 }: DropAndCropProps) => {
       {imageSrc && (
         <div className="mt-0.5 flex justify-center">
           <Button onClick={getCroppedImg} variant="outline" size="sm">
-            Potong
+            Simpan
           </Button>
         </div>
       )}

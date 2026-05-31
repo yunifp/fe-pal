@@ -123,13 +123,13 @@ const WawancaraSeleksiPage = () => {
               <div className="p-2.5 bg-emerald-50 rounded-xl">
                 <Users className="h-7 w-7 text-emerald-600" />
               </div>
-              Penilaian Wawancara
+              Penilaian Wawancara &  Seleksi
             </h2>
             
             <div className="flex items-start gap-3 p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl text-sm text-slate-600 leading-relaxed">
               <Info className="h-5 w-5 text-emerald-500 mt-0.5 flex-shrink-0" />
               <p>
-                Silakan <span className="font-semibold text-slate-800">Download Rekap</span> terlebih dahulu, isi kolom Status Wawancara dengan angka <strong className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">1 (Rekomendasi)</strong> atau <strong className="text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">0 (Tidak Rekomendasi)</strong>, lalu klik <span className="font-semibold text-slate-800">Upload Excel</span>. Kolom pengaturan status manual pada tabel akan otomatis muncul setelah dokumen Excel berhasil diunggah.
+                Silakan <span className="font-semibold text-slate-800">Download Rekap</span> terlebih dahulu, isi kolom Status Wawancara dan Seleksi dengan angka <strong className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">1 (Rekomendasi)</strong> atau <strong className="text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">0 (Tidak Rekomendasi)</strong>, lalu klik <span className="font-semibold text-slate-800">Upload Excel</span>. Kolom pengaturan status manual pada tabel akan otomatis muncul setelah dokumen Excel berhasil diunggah.
               </p>
             </div>
           </div>

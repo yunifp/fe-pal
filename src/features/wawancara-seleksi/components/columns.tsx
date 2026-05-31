@@ -50,7 +50,7 @@ export const getWawancaraColumns = (
   if (showActionColumn) {
     baseColumns.push({ 
       accessorKey: "status_wawancara", 
-      header: "Status Wawancara",
+      header: "Status Wawancara dan Seleksi",
       cell: ({ row }) => {
         const idTrx = row.original.id_trx_beasiswa;
         const status = row.original.status_wawancara || "";
