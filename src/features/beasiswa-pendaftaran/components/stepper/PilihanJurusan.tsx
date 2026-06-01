@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -31,11 +30,15 @@ interface PilihanJurusanProps {
   isFieldDisabled?: (fieldName: string) => boolean;
 }
 
-export type ProdiCacheItem = { jenjang: string; boleh_buta_warna?: string };
+export type ProdiCacheItem = {
+  id_prodi: string;
+  jenjang: string;
+  boleh_buta_warna?: string;
+};
 
 // ── Konstanta jenjang ────────────────────────────────────────────────────────
-const D1D2_JENJANG = new Set(["D2"]);
-const NON_D1D2_JENJANG = new Set(["D1", "D3", "D4", "S1"]);
+const D1D2_JENJANG = new Set(["D1", "D2"]);
+const NON_D1D2_JENJANG = new Set(["D3", "D4", "S1"]);
 
 export const isJenjangD1D2 = (jenjang: string): boolean =>
   D1D2_JENJANG.has(jenjang?.trim().toUpperCase());
@@ -62,11 +65,40 @@ export const extractJenjangFromProdiValue = (value: string): string => {
   return match ? match[1].trim() : "";
 };
 
+// export const buildSlotCount = (
+//   ptList: Array<{
+//     id_pt: number;
+//     has_d1_d2?: string | number | null;
+//   }>,
+//   ptProdiMap: Map<string, ProdiCacheItem[]>,
+//   kondisiButaWarna: string = "",
+// ): number => {
+//   let total = 0;
+//   ptList.forEach((pt) => {
+//     const idPT = String(pt.id_pt);
+//     const rawProdiList = ptProdiMap.get(idPT);
+//     if (!rawProdiList || rawProdiList.length === 0) return;
+
+//     // Filter by buta warna
+//     const prodiList =
+//       kondisiButaWarna === "Y"
+//         ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+//         : rawProdiList;
+
+//     if (prodiList.length === 0) return; // skip this PT if no valid prodi left
+
+//     total += 1;
+
+//     const hasD1D2Prodi = prodiList.some((j) => isJenjangD1D2(j.jenjang));
+//     const hasNonD1D2Prodi = prodiList.some((j) => isJenjangNonD1D2(j.jenjang));
+//     if (hasD1D2Prodi && hasNonD1D2Prodi) {
+//       total += 1;
+//     }
+//   });
+//   return total;
+// };
 export const buildSlotCount = (
-  ptList: Array<{
-    id_pt: number;
-    has_d1_d2?: string | number | null;
-  }>,
+  ptList: Array<{ id_pt: number; has_d1_d2?: string | number | null }>,
   ptProdiMap: Map<string, ProdiCacheItem[]>,
   kondisiButaWarna: string = "",
 ): number => {
@@ -76,35 +108,36 @@ export const buildSlotCount = (
     const rawProdiList = ptProdiMap.get(idPT);
     if (!rawProdiList || rawProdiList.length === 0) return;
 
-    // Filter by buta warna
     const prodiList =
       kondisiButaWarna === "Y"
         ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
         : rawProdiList;
 
-    if (prodiList.length === 0) return; // skip this PT if no valid prodi left
+    if (prodiList.length === 0) return;
 
-    total += 1;
+    // 1 slot untuk Non-D1/D2 jika ada
+    const hasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j.jenjang));
+    if (hasNonD1D2) total += 1;
 
-    const hasD1D2Prodi = prodiList.some((j) => isJenjangD1D2(j.jenjang));
-    const hasNonD1D2Prodi = prodiList.some((j) => isJenjangNonD1D2(j.jenjang));
-    if (hasD1D2Prodi && hasNonD1D2Prodi) {
-      total += 1;
-    }
+    // ✅ 1 slot PER PRODI D1/D2 (bukan per jenjang, tapi per prodi individual)
+    const d1d2ProdiCount = prodiList.filter((j) =>
+      isJenjangD1D2(j.jenjang),
+    ).length;
+    total += d1d2ProdiCount;
   });
   return total;
 };
-
 export const validatePilihan = (
   pilihan: Array<{
     perguruan_tinggi?: string;
     program_studi?: string;
   }>,
-  ptProdiMap: Map<string, any[]>,
+  ptProdiMap: Map<string, ProdiCacheItem[]>,
   kondisiButaWarna: string = "",
 ): string[] => {
   const errs: string[] = [];
 
+  // Cek semua slot terisi
   pilihan.forEach((p, i) => {
     if (!p?.perguruan_tinggi) {
       errs.push(`Pilihan ${i + 1}: Perguruan tinggi belum dipilih.`);
@@ -115,56 +148,152 @@ export const validatePilihan = (
 
   if (errs.length > 0) return errs;
 
-  const byPT = new Map<string, Array<{ rowIndex: number; jenjang: string }>>();
+  // Kelompokkan per PT
+  const byPT = new Map<
+    string,
+    Array<{ rowIndex: number; jenjang: string; prodiId: string }>
+  >();
 
   pilihan.forEach((p, i) => {
     const idPT = extractIdPT(p.perguruan_tinggi ?? "");
     if (!idPT) return;
     const jenjang = extractJenjangFromProdiValue(p.program_studi ?? "");
+    const prodiId = (p.program_studi ?? "").split("#")[0];
     if (!byPT.has(idPT)) byPT.set(idPT, []);
-    byPT.get(idPT)!.push({ rowIndex: i, jenjang });
+    byPT.get(idPT)!.push({ rowIndex: i, jenjang, prodiId });
   });
 
   byPT.forEach((rows, idPT) => {
-    if (rows.length === 1) return;
+    const rawProdiList = ptProdiMap.get(idPT) ?? [];
+    const prodiList =
+      kondisiButaWarna === "Y"
+        ? rawProdiList.filter((p: any) => p.boleh_buta_warna === "Y")
+        : rawProdiList;
 
-    if (rows.length > 2) {
+    const d1d2Prodi = prodiList.filter((j: any) => isJenjangD1D2(j.jenjang));
+    const hasNonD1D2 = prodiList.some((j: any) => isJenjangNonD1D2(j.jenjang));
+    const requiredTotal = (hasNonD1D2 ? 1 : 0) + d1d2Prodi.length;
+
+    // Cek jumlah slot sesuai yang diharapkan
+    if (rows.length !== requiredTotal) {
       errs.push(
-        `Perguruan tinggi pada pilihan ${rows
-          .map((r) => r.rowIndex + 1)
-          .join(", ")} dipilih lebih dari dua kali, yang tidak diperbolehkan.`,
+        `Perguruan tinggi pada pilihan ${rows.map((r) => r.rowIndex + 1).join(", ")}: ` +
+          `harus memilih ${requiredTotal} prodi` +
+          (hasNonD1D2 ? ` (1 prodi D3/D4/S1` : " (") +
+          (d1d2Prodi.length > 0
+            ? `${hasNonD1D2 ? " + " : ""}${d1d2Prodi.length} prodi D1/D2)`
+            : ")") +
+          `.`,
       );
       return;
     }
 
-    const rawProdiList = ptProdiMap.get(idPT) ?? [];
-    const prodiList =
-      kondisiButaWarna === "Y"
-        ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
-        : rawProdiList;
+    // ✅ Cek setiap id_prodi D1/D2 yang tersedia harus dipilih tepat 1x
+    const selectedD1D2ProdiIds = rows
+      .filter((r) => isJenjangD1D2(r.jenjang))
+      .map((r) => r.prodiId);
 
-    const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j.jenjang || j));
-    const ptHasNonD1D2 = prodiList.some((j) =>
-      isJenjangNonD1D2(j.jenjang || j),
-    );
+    d1d2Prodi.forEach((availableProdi: any) => {
+      const idProdi = String(availableProdi.id_prodi);
+      const count = selectedD1D2ProdiIds.filter((id) => id === idProdi).length;
 
-    const jenjangList = rows.map((r) => r.jenjang.trim().toUpperCase());
-    const hasD1D2Slot = jenjangList.some((j) => D1D2_JENJANG.has(j));
-    const hasNonD1D2Slot = jenjangList.some((j) => NON_D1D2_JENJANG.has(j));
+      if (count === 0) {
+        errs.push(
+          `Pilihan ${rows.map((r) => r.rowIndex + 1).join(", ")}: ` +
+            `prodi "${availableProdi.nama_prodi ?? idProdi}" (${availableProdi.jenjang}) wajib dipilih.`,
+        );
+      } else if (count > 1) {
+        errs.push(
+          `Pilihan ${rows.map((r) => r.rowIndex + 1).join(", ")}: ` +
+            `prodi "${availableProdi.nama_prodi ?? idProdi}" (${availableProdi.jenjang}) dipilih lebih dari satu kali.`,
+        );
+      }
+    });
 
-    if (!hasD1D2Slot || !hasNonD1D2Slot) {
-      errs.push(
-        `Pilihan ${rows
-          .map((r) => r.rowIndex + 1)
-          .join(
-            " dan ",
-          )}: Perguruan tinggi yang sama dipilih dua kali harus memiliki kombinasi satu prodi D1/D2 dan satu prodi D3/D4/S1.`,
-      );
+    // Cek slot Non-D1/D2 jika tersedia
+    if (hasNonD1D2) {
+      const hasNonD1D2Selected = rows.some((r) => isJenjangNonD1D2(r.jenjang));
+      if (!hasNonD1D2Selected) {
+        errs.push(
+          `Pilihan ${rows.map((r) => r.rowIndex + 1).join(", ")}: ` +
+            `wajib memilih satu prodi D3/D4/S1.`,
+        );
+      }
     }
   });
 
   return errs;
 };
+// export const validatePilihan = (
+//   pilihan: Array<{
+//     perguruan_tinggi?: string;
+//     program_studi?: string;
+//   }>,
+//   ptProdiMap: Map<string, any[]>,
+//   kondisiButaWarna: string = "",
+// ): string[] => {
+//   const errs: string[] = [];
+
+//   pilihan.forEach((p, i) => {
+//     if (!p?.perguruan_tinggi) {
+//       errs.push(`Pilihan ${i + 1}: Perguruan tinggi belum dipilih.`);
+//     } else if (!p?.program_studi) {
+//       errs.push(`Pilihan ${i + 1}: Program studi belum dipilih.`);
+//     }
+//   });
+
+//   if (errs.length > 0) return errs;
+
+//   const byPT = new Map<string, Array<{ rowIndex: number; jenjang: string }>>();
+
+//   pilihan.forEach((p, i) => {
+//     const idPT = extractIdPT(p.perguruan_tinggi ?? "");
+//     if (!idPT) return;
+//     const jenjang = extractJenjangFromProdiValue(p.program_studi ?? "");
+//     if (!byPT.has(idPT)) byPT.set(idPT, []);
+//     byPT.get(idPT)!.push({ rowIndex: i, jenjang });
+//   });
+
+//   byPT.forEach((rows, idPT) => {
+//     if (rows.length === 1) return;
+
+//     if (rows.length > 2) {
+//       errs.push(
+//         `Perguruan tinggi pada pilihan ${rows
+//           .map((r) => r.rowIndex + 1)
+//           .join(", ")} dipilih lebih dari dua kali, yang tidak diperbolehkan.`,
+//       );
+//       return;
+//     }
+
+//     const rawProdiList = ptProdiMap.get(idPT) ?? [];
+//     const prodiList =
+//       kondisiButaWarna === "Y"
+//         ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+//         : rawProdiList;
+
+//     const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j.jenjang || j));
+//     const ptHasNonD1D2 = prodiList.some((j) =>
+//       isJenjangNonD1D2(j.jenjang || j),
+//     );
+
+//     const jenjangList = rows.map((r) => r.jenjang.trim().toUpperCase());
+//     const hasD1D2Slot = jenjangList.some((j) => D1D2_JENJANG.has(j));
+//     const hasNonD1D2Slot = jenjangList.some((j) => NON_D1D2_JENJANG.has(j));
+
+//     if (!hasD1D2Slot || !hasNonD1D2Slot) {
+//       errs.push(
+//         `Pilihan ${rows
+//           .map((r) => r.rowIndex + 1)
+//           .join(
+//             " dan ",
+//           )}: Perguruan tinggi yang sama dipilih dua kali harus memiliki kombinasi satu prodi D1/D2 dan satu prodi D3/D4/S1.`,
+//       );
+//     }
+//   });
+
+//   return errs;
+// };
 
 // ── Komponen ─────────────────────────────────────────────────────────────────
 
@@ -257,6 +386,7 @@ const PilihanJurusan = ({
           .then((res) => ({
             idPT: String(pt.id_pt),
             jenjangList: (res?.data ?? []).map((ps: any) => ({
+              id_prodi: String(ps.id_prodi),
               jenjang: ps.jenjang,
               boleh_buta_warna: ps.boleh_buta_warna,
             })),
@@ -318,19 +448,32 @@ const PilihanJurusan = ({
 
   const extraSlotCount = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
-    return responsePerguruanTinggi.data.filter((pt) => {
+    return responsePerguruanTinggi.data.reduce((acc, pt) => {
       const rawProdiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
       const prodiList =
         selectedKondisiButaWarna === "Y"
           ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
           : rawProdiList;
-
-      return (
-        prodiList.some((j) => isJenjangD1D2(j.jenjang)) &&
-        prodiList.some((j) => isJenjangNonD1D2(j.jenjang))
-      );
-    }).length;
+      // ✅ Hitung per prodi D1/D2, bukan per PT
+      return acc + prodiList.filter((j) => isJenjangD1D2(j.jenjang)).length;
+    }, 0);
   }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
+
+  // const extraSlotCount = useMemo(() => {
+  //   if (!responsePerguruanTinggi?.data) return 0;
+  //   return responsePerguruanTinggi.data.filter((pt) => {
+  //     const rawProdiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
+  //     const prodiList =
+  //       selectedKondisiButaWarna === "Y"
+  //         ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+  //         : rawProdiList;
+
+  //     return (
+  //       prodiList.some((j) => isJenjangD1D2(j.jenjang)) &&
+  //       prodiList.some((j) => isJenjangNonD1D2(j.jenjang))
+  //     );
+  //   }).length;
+  // }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
   useEffect(() => {
     if (!selectedKondisiButaWarna) return;

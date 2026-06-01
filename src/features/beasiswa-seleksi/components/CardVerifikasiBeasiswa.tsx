@@ -111,7 +111,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
       <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
         <p className="text-xs text-blue-700 leading-relaxed">
           <strong>Catatan:</strong> Pastikan semua dokumen telah diperiksa
-          sebelum melakukan verifikasi.
+          sebelum melakukan seleksi.
         </p>
       </div>
 
@@ -126,7 +126,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
         <div className="p-6 space-y-5">
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700 block">
-              Status Verifikasi
+              Status Seleksi
             </label>
             {statusOptions.map((option) => {
               const Icon = option.icon;
@@ -181,7 +181,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
           )}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 block">
-              Catatan Verifikasi
+              Catatan Selektor
               {selectedStatus === 4 || selectedStatus === 3 ? (
                 <span className="text-red-500 ml-1">*</span>
               ) : (
@@ -195,7 +195,7 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
                   ? "Jelaskan dokumen apa yang perlu diperbaiki..."
                   : selectedStatus === 3
                     ? "Jelaskan alasan penolakan..."
-                    : "Tulis catatan verifikasi (opsional)..."
+                    : "Tulis catatan selekstor (opsional)..."
               }
               {...register("catatan")}
               error={!!errors.catatan}

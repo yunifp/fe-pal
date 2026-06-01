@@ -169,18 +169,6 @@ export const perguruanEditTinggiSchema = z.object({
     .instanceof(File, { message: "Logo lembaga wajib diunggah" })
     .optional(),
 
-  // namaDirektur: z.string().min(1, "Nama Direktur / Rektor wajib diisi"),
-  // noTeleponPimpinan: z.string().min(1, "Nomor telepon pimpinan wajib diisi"),
-  // jabatanPimpinan: z.string().min(1, "Nama pimpinan wajib diisi"),
-
-  // noRekeningLembaga: z.string().min(1, "Nomor rekening lembaga wajib diisi"),
-
-  // namaBank: z.string().min(1, "Nama bank wajib diisi"),
-
-  // namaPenerimaTransfer: z.string().min(1, "Nama penerima transfer wajib diisi"),
-
-  // npwp: z.string().min(15, "NPWP tidak valid").max(20, "NPWP tidak valid"),
-
   statusAktif: z.number().optional(),
 
   namaOperator: z.string().min(1, "Nama operator wajib diisi"),
@@ -215,10 +203,27 @@ export interface ICmsHero {
   judul: string;
   subjudul: string | null;
   bg_image_url: string | null;
-  bg_image_url_2: string | null; // Tambahan
-  bg_image_url_3: string | null; // Tambahan
+  bg_image_url_2: string | null;
+  bg_image_url_3: string | null;
   label_cta: string | null;
   url_cta: string | null;
+  label_cta_2: string | null; 
+  url_cta_2: string | null;   
+  // --- Tambahan Slide 2 ---
+  judul_2: string | null;
+  subjudul_2: string | null;
+  s2_label_cta: string | null;
+  s2_url_cta: string | null;
+  s2_label_cta_2: string | null;
+  s2_url_cta_2: string | null;
+
+  // --- Tambahan Slide 3 ---
+  judul_3: string | null;
+  subjudul_3: string | null;
+  s3_label_cta: string | null;
+  s3_url_cta: string | null;
+  s3_label_cta_2: string | null;
+  s3_url_cta_2: string | null;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -230,10 +235,26 @@ export interface ICmsHeroFormData {
   judul: string;
   subjudul?: string;
   bg_image_url: string | null;
-  bg_image_url_2: string | null; // Tambahan
-  bg_image_url_3: string | null; // Tambahan
+  bg_image_url_2: string | null;
+  bg_image_url_3: string | null;
   label_cta?: string;
   url_cta?: string;
+  label_cta_2?: string; // UBAH: Tambahan field baru
+  url_cta_2?: string;   // UBAH: Tambahan field baru
+  judul_2?: string;
+  subjudul_2?: string;
+  s2_label_cta?: string;
+  s2_url_cta?: string;
+  s2_label_cta_2?: string;
+  s2_url_cta_2?: string;
+
+  // --- Tambahan Slide 3 ---
+  judul_3?: string;
+  subjudul_3?: string;
+  s3_label_cta?: string;
+  s3_url_cta?: string;
+  s3_label_cta_2?: string;
+  s3_url_cta_2?: string;
   is_active?: number;
 }
 
@@ -265,10 +286,6 @@ export type PerguruanTinggiEditFormData = z.infer<
   typeof perguruanEditTinggiSchema
 >;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tambahkan type berikut ke @/types/master.ts
-// ─────────────────────────────────────────────────────────────────────────────
-//
 export interface ICmsJalurSyarat {
   id: number;
   id_jalur: number;
@@ -316,25 +333,6 @@ export interface ICmsItemFormData {
   urutan?: number;
 }
 
-// export interface ICmsKontak {
-//   id: number;
-//   judul_section: string;
-//   nama_instansi: string | null;
-//   alamat: string | null;
-//   telepon: string | null;
-//   email: string | null;
-//   whatsapp: string | null;
-//   jam_operasional: string | null;
-//   maps_embed_url: string | null;
-//   maps_lat: string | null;
-//   maps_lng: string | null;
-//   is_active: number;
-//   created_by: string | null;
-//   updated_by: string | null;
-// }
-
-// Tambahkan ke @/types/master.ts
-
 export interface ICmsKontak {
   id: number;
   judul_section: string;
@@ -348,8 +346,6 @@ export interface ICmsKontak {
   maps_lat: string | null;
   maps_lng: string | null;
   is_active: number;
-  // created_at: string;
-  // updated_at: string;
   created_by: string | null;
   updated_by: string | null;
 }
@@ -371,11 +367,9 @@ export interface ICmsKontakFormData {
 export interface ICmsTentang {
   id: number;
   judul_section: string;
-  deskripsi: string | null; // LONGTEXT — support HTML
+  deskripsi: string | null;
   gambar_url: string | null;
   is_active: number;
-  // created_at: string;
-  // updated_at: string;
   created_by: string | null;
   updated_by: string | null;
 }

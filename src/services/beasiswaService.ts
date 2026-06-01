@@ -80,8 +80,8 @@ export const beasiswaService = {
     idBeasiswa: number,
     page: number = 1,
     search: string = "",
-    idFlow?: string, 
-    idJalur?: string 
+    idFlow?: string,
+    idJalur?: string,
   ): Promise<Response<PaginatedTrxBeasiswaResponse>> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/trx-seleksi-administrasi/${idBeasiswa}`,
@@ -629,7 +629,7 @@ export const beasiswaService = {
           limit: params.limit ?? 10,
           search: params.search ?? "",
           filter: params.filter ?? "all",
-          id_verifikator: params.id_verifikator, 
+          id_verifikator: params.id_verifikator,
           status_filter: params.status_filter,
         },
       },
@@ -747,13 +747,13 @@ export const beasiswaService = {
   // ✅ TAMBAHAN: Fungsi untuk get dokumen S3 Provinsi
   getDokumenProvinsiV2: async (kode_prov: string): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
-      `/verifikasi-nasional-v2/dokumen-provinsi/${kode_prov}`
+      `/verifikasi-nasional-v2/dokumen-provinsi/${kode_prov}`,
     );
     return response.data;
   },
- getRekapKabkotaByProvinsiV2: async (kode_prov: string): Promise<any> => {
+  getRekapKabkotaByProvinsiV2: async (kode_prov: string): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
-      `/verifikasi-nasional-v2/rekap-kabkota/${kode_prov}`
+      `/verifikasi-nasional-v2/rekap-kabkota/${kode_prov}`,
     );
     return response.data;
   },
@@ -761,7 +761,7 @@ export const beasiswaService = {
   // ✅ TAMBAHAN BARU: Fungsi untuk mendapatkan Dokumen BA & SK milik Kabupaten/Kota
   getDokumenKabkotaV2: async (kode_kabkota: string): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
-      `/verifikasi-nasional-v2/dokumen-kabkota/${kode_kabkota}`
+      `/verifikasi-nasional-v2/dokumen-kabkota/${kode_kabkota}`,
     );
     return response.data;
   },
@@ -769,7 +769,12 @@ export const beasiswaService = {
   // ✅ MODIFIKASI: Tambahkan `kode_kabkota?: string` di dalam interface params
   getDetailProvinsiV2: async (
     kode_prov: string,
-    params?: { page?: number; limit?: number; search?: string; kode_kabkota?: string },
+    params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      kode_kabkota?: string;
+    },
   ): Promise<any> => {
     const response = await axiosInstanceBeasiswa.get(
       `/verifikasi-nasional-v2/detail-provinsi/${kode_prov}`,
@@ -892,7 +897,7 @@ export const beasiswaService = {
         idJalur: params.idJalur,
         statusLulus: params.statusLulus,
         refDokumenUmum: params.refDokumenUmum,
-        refDokumenKhusus: params.refDokumenKhusus, 
+        refDokumenKhusus: params.refDokumenKhusus,
       },
       {
         responseType: "blob",
@@ -919,7 +924,7 @@ export const beasiswaService = {
     idFlow?: number;
     idJalur?: number;
     statusLulus?: "Y" | "N";
-    refDokumenUmum: { id: number; persyaratan: string }[]; 
+    refDokumenUmum: { id: number; persyaratan: string }[];
     refDokumenKhusus: { id: number; persyaratan: string }[];
   }): Promise<void> => {
     const response = await axiosInstanceJson.post(
@@ -932,8 +937,8 @@ export const beasiswaService = {
         idFlow: params.idFlow,
         idJalur: params.idJalur,
         statusLulus: params.statusLulus,
-        refDokumenUmum: params.refDokumenUmum, 
-        refDokumenKhusus: params.refDokumenKhusus, 
+        refDokumenUmum: params.refDokumenUmum,
+        refDokumenKhusus: params.refDokumenKhusus,
       },
       { responseType: "blob" },
     );
@@ -1168,6 +1173,7 @@ export const beasiswaService = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
+
   downloadPdfBuktiPendaftaran: async (idTrxBeasiswa: number): Promise<void> => {
     const response = await axiosInstanceJson.get(
       `${BEASISWA_SERVICE_BASE_URL}/beasiswa/download-pdf-bukti-pendaftaran/${idTrxBeasiswa}`,
@@ -1185,6 +1191,35 @@ export const beasiswaService = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
+  getCountPtAndProdi: async (params: {
+    id_pt: number[];
+    id_prodi: number[];
+  }): Promise<
+    Response<{
+      top_pt: Array<{
+        id_pt: number;
+        nama_pt: string;
+        jumlah: string;
+      }>;
+      top_prodi: Array<{
+        id_prodi: number;
+        nama_prodi: string;
+        id_pt: number;
+        nama_pt: string;
+        jumlah: string;
+      }>;
+    }>
+  > => {
+    const response = await axiosInstanceJson.get(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/count-pt-prodi`,
+      {
+        params: {
+          id_pt: params.id_pt.join(","),
+          id_prodi: params.id_prodi.join(","),
+        },
+      },
+    );
+
+    return response.data;
+  },
 };
-
-

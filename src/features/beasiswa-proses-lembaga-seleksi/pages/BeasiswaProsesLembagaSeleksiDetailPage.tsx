@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 import { useParams } from "react-router-dom";

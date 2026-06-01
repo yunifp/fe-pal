@@ -21,7 +21,6 @@ const Countdown: FC<CountdownProps> = ({ beasiswa, onTimeUp }) => {
     return new Date(raw.includes("T") ? raw : raw.replace(" ", "T"));
   }, [beasiswa.tanggal_selesai]);
 
-
   useEffect(() => {
     const checkTime = () => {
       const diff = endDate.getTime() - Date.now();
@@ -55,24 +54,26 @@ const Countdown: FC<CountdownProps> = ({ beasiswa, onTimeUp }) => {
   }, [endDate, onTimeUp]);
 
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center min-w-[60px]">
       <div className="text-3xl sm:text-5xl font-bold text-green-600">
         {String(value).padStart(2, "0")}
       </div>
-      <div className="text-xs sm:text-sm text-green-600/70 mt-1">{label}</div>
+      <div className="text-xs sm:text-sm font-medium text-green-600/80 mt-1">{label}</div>
     </div>
   );
 
   return (
-    <Card>
-      <CardContent className="px-4 py-6 sm:px-12 sm:py-6">
-        <div className="text-center mb-6">
-          <p className="text-sm sm:text-md text-foreground">
+    // Tambahkan w-fit dan mx-auto agar Card tidak melar, dan tambahkan shadow agar lebih menonjol
+    <Card className="mx-auto w-fit shadow-xl border-none">
+      {/* Perbesar padding di CardContent agar tidak sesak */}
+      <CardContent className="px-6 py-5 sm:px-12 sm:py-8">
+        <div className="text-center mb-5">
+          <p className="text-sm sm:text-base font-semibold text-slate-700">
             Pendaftaran Beasiswa Akan Ditutup Dalam :
           </p>
         </div>
 
-        <div className="flex justify-center items-center gap-2 sm:gap-4 flex-wrap">
+        <div className="flex justify-center items-center gap-3 sm:gap-6 flex-nowrap">
           {time.days > 0 && (
             <>
               <TimeUnit value={time.days} label="Hari" />
@@ -91,7 +92,7 @@ const Countdown: FC<CountdownProps> = ({ beasiswa, onTimeUp }) => {
 };
 
 const Separator = () => (
-  <div className="text-2xl sm:text-4xl font-bold text-green-600 -mt-4 sm:-mt-6">:</div>
+  <div className="text-2xl sm:text-4xl font-bold text-green-600 -mt-5 sm:-mt-6">:</div>
 );
 
 export default Countdown;

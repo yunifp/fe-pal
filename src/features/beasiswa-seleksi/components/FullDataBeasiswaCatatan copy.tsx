@@ -395,7 +395,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   return (
     <>
       {/* Data Pribadi */}
-      <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
+      <CollapsibleSection title="Data Identitas Pribadi" icon={User} defaultOpen={true}>
         <>
           {/* Foto Gallery: profil + 4 sisi */}
           <FotoGallery
@@ -536,7 +536,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
           </div>
 
           <KesesuaianSection
-            title="Kesesuaian Data Pribadi"
+            title="Kesesuaian Data Identitas Pribadi"
             nameValid="data_pribadi_is_valid"
             nameCatatan="data_pribadi_catatan"
             control={control}

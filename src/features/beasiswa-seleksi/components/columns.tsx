@@ -80,7 +80,7 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
         ) : (
           <>
             <ShieldCheck className="h-3.5 w-3.5" />
-            Verifikasi
+            Seleksi
           </>
         )}
       </Button>
@@ -92,7 +92,7 @@ const ActionCell = ({ beasiswa }: { beasiswa: ITrxBeasiswa }) => {
           className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
           onClick={handleDownloadPdf}
           disabled={isDownloading}
-          title="Unduh Hasil Verifikasi PDF"
+          title="Unduh Hasil Seleksi PDF"
         >
           {isDownloading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

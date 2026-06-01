@@ -124,7 +124,7 @@ export const KesesuaianSection = ({
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0" />
                   <p className="font-medium">
-                    Sebelumnya dinyatakan sesuai oleh verifikator
+                    Sebelumnya dinyatakan sesuai oleh selektor
                   </p>
                 </div>
               )}
@@ -185,7 +185,7 @@ export const KesesuaianSection = ({
                 {value === "Y" && (
                   <div className="text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    Data telah diverifikasi dan sesuai
+                    Data telah diseleksi dan sesuai
                   </div>
                 )}
               </div>

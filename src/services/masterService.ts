@@ -469,33 +469,21 @@ export const masterService = {
    * Buat hero baru
    * POST /cms/hero
    */
-  createCmsHero: async (
-    data: any, // UBAH: Jadi menerima FormData
-  ): Promise<Response<ICmsHero>> => {
+ createCmsHero: async (data: any): Promise<Response<ICmsHero>> => {
     const response = await axiosInstanceFormData.post(
-      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero`,
       data,
     );
     return response.data;
   },
 
-  /**
-   * Update hero by id
-   * PUT /cms/hero/:id
-   */
-  updateCmsHero: async (
-    id: number,
-    data: any, // UBAH: Jadi menerima FormData
-  ): Promise<Response<null>> => {
+  updateCmsHero: async (id: number, data: any): Promise<Response<null>> => {
     const response = await axiosInstanceFormData.put(
-      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
       data,
     );
     return response.data;
   },
-
   /**
    * Hapus hero by id
    * DELETE /cms/hero/:id

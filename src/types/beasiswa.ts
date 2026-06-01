@@ -824,15 +824,28 @@ export interface CatatanDataSection {
   created_by: string | null;
 }
 
-const persyaratanSchema = z.object({
-  id: z.string(),
-  kategori: z.enum(["Umum", "Khusus", "Dinas"]),
-  is_valid: z.enum(["Y", "N"], {
-    required_error: "Kesesuaian wajib dipilih",
-  }),
-  is_required: z.enum(["Y", "N"]).optional(),
-  catatan: z.string().optional(),
-});
+const persyaratanSchema = z
+  .object({
+    id: z.string(),
+    kategori: z.enum(["Umum", "Khusus", "Dinas"]),
+    is_valid: z.enum(["Y", "N"], {
+      required_error: "Kesesuaian wajib dipilih",
+    }),
+    is_required: z.enum(["Y", "N"]).optional(),
+    catatan: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    // Skip validasi kalau dokumen tidak wajib
+    if (val.is_required === "N") return;
+
+    if (!val.is_valid || !["Y", "N"].includes(val.is_valid)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["is_valid"],
+        message: "Pilih status kesesuaian dokumen",
+      });
+    }
+  });
 
 const persyaratanDinasSchema = z.object({
   id: z.string().optional(),

@@ -372,7 +372,7 @@ const Alamat = ({
           />
         )}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Alamat Bekerja / Kebun</h3>
+          <h3 className="text-lg font-semibold">Alamat Kebun / Bekerja</h3>
           <div className="grid grid-cols-2 gap-4">
             <div id="kerja_provinsi">
               <CustSearchableSelect

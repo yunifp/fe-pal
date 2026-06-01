@@ -53,10 +53,29 @@ const EMPTY_FORM: ICmsHeroFormData = {
   judul: "",
   subjudul: "",
   bg_image_url: "",
-  bg_image_url_2: "",
-  bg_image_url_3: "",
   label_cta: "Daftar Sekarang",
   url_cta: "/daftar-penerima-beasiswa",
+  label_cta_2: "",
+  url_cta_2: "",
+  
+  // Slide 2
+  bg_image_url_2: "",
+  judul_2: "",
+  subjudul_2: "",
+  s2_label_cta: "",
+  s2_url_cta: "",
+  s2_label_cta_2: "",
+  s2_url_cta_2: "",
+
+  // Slide 3
+  bg_image_url_3: "",
+  judul_3: "",
+  subjudul_3: "",
+  s3_label_cta: "",
+  s3_url_cta: "",
+  s3_label_cta_2: "",
+  s3_url_cta_2: "",
+
   is_active: 0,
 };
 
@@ -71,7 +90,7 @@ const CmsHeroPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<ICmsHero | null>(null);
   const [formData, setFormData] = useState<ICmsHeroFormData>(EMPTY_FORM);
 
-  // UBAH: Tambah state file untuk gambar slider
+  // State file untuk gambar slider
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [file3, setFile3] = useState<File | null>(null);
@@ -96,7 +115,7 @@ const CmsHeroPage = () => {
     queryClient.invalidateQueries({ queryKey: ["cms-hero-all"] });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => masterService.createCmsHero(data), // UBAH: data jadi any
+    mutationFn: (data: any) => masterService.createCmsHero(data),
     onSuccess: () => {
       invalidate();
       closeForm();
@@ -104,7 +123,7 @@ const CmsHeroPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => // UBAH: data jadi any
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       masterService.updateCmsHero(id, data),
     onSuccess: () => {
       invalidate();
@@ -141,10 +160,29 @@ const CmsHeroPage = () => {
       judul: hero.judul,
       subjudul: hero.subjudul ?? "",
       bg_image_url: hero.bg_image_url ?? "",
+      label_cta: hero.label_cta ?? "",
+      url_cta: hero.url_cta ?? "",
+      label_cta_2: hero.label_cta_2 ?? "",
+      url_cta_2: hero.url_cta_2 ?? "",
+
+      // Set value Slide 2
       bg_image_url_2: hero.bg_image_url_2 ?? "",
+      judul_2: hero.judul_2 ?? "",
+      subjudul_2: hero.subjudul_2 ?? "",
+      s2_label_cta: hero.s2_label_cta ?? "",
+      s2_url_cta: hero.s2_url_cta ?? "",
+      s2_label_cta_2: hero.s2_label_cta_2 ?? "",
+      s2_url_cta_2: hero.s2_url_cta_2 ?? "",
+
+      // Set value Slide 3
       bg_image_url_3: hero.bg_image_url_3 ?? "",
-      label_cta: hero.label_cta ?? "Daftar Sekarang",
-      url_cta: hero.url_cta ?? "/daftar-penerima-beasiswa",
+      judul_3: hero.judul_3 ?? "",
+      subjudul_3: hero.subjudul_3 ?? "",
+      s3_label_cta: hero.s3_label_cta ?? "",
+      s3_url_cta: hero.s3_url_cta ?? "",
+      s3_label_cta_2: hero.s3_label_cta_2 ?? "",
+      s3_url_cta_2: hero.s3_url_cta_2 ?? "",
+
       is_active: hero.is_active,
     });
     setIsFormOpen(true);
@@ -154,7 +192,6 @@ const CmsHeroPage = () => {
     setIsFormOpen(false);
     setEditTarget(null);
     setFormData(EMPTY_FORM);
-    // UBAH: Reset file state
     setFile1(null);
     setFile2(null);
     setFile3(null);
@@ -163,15 +200,19 @@ const CmsHeroPage = () => {
   const handleSubmit = () => {
     if (!formData.judul.trim()) return;
 
-    // UBAH: Konversi ke FormData
     const fd = new FormData();
-    fd.append("judul", formData.judul);
-    if (formData.subjudul) fd.append("subjudul", formData.subjudul);
-    if (formData.label_cta) fd.append("label_cta", formData.label_cta);
-    if (formData.url_cta) fd.append("url_cta", formData.url_cta);
-    fd.append("is_active", String(formData.is_active));
+    
+    // Append data text secara dinamis agar ringkas
+    const keys = Object.keys(formData) as (keyof ICmsHeroFormData)[];
+    keys.forEach((key) => {
+      if (!["bg_image_url", "bg_image_url_2", "bg_image_url_3"].includes(key)) {
+        if (formData[key] !== undefined && formData[key] !== null) {
+          fd.append(key, String(formData[key]));
+        }
+      }
+    });
 
-    // Cek masing-masing file
+    // Append file gambar
     if (file1) fd.append("bg_image_url", file1);
     else if (formData.bg_image_url) fd.append("bg_image_url", formData.bg_image_url);
 
@@ -207,7 +248,7 @@ const CmsHeroPage = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Kelola konten hero section pada landing page. Hanya satu hero yang
+            Kelola konten hero section pada landing page (Multiple Slide). Hanya satu hero yang
             dapat aktif pada satu waktu.
           </p>
         </CardContent>
@@ -239,15 +280,9 @@ const CmsHeroPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">#</TableHead>
-                  <TableHead>Judul</TableHead>
+                  <TableHead>Judul Utama</TableHead>
                   <TableHead className="hidden md:table-cell">
                     Sub-judul
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell">
-                    Label CTA
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell">
-                    URL CTA
                   </TableHead>
                   <TableHead className="w-24 text-center">Status</TableHead>
                   <TableHead className="w-32 text-center">Aksi</TableHead>
@@ -265,24 +300,14 @@ const CmsHeroPage = () => {
                           {hero.judul}
                         </p>
                         <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                          {hero.bg_image_url && <a href={hero.bg_image_url} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">1️⃣ Lihat Gambar 1</a>}
-                          {hero.bg_image_url_2 && <a href={hero.bg_image_url_2} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">2️⃣ Lihat Gambar 2</a>}
-                          {hero.bg_image_url_3 && <a href={hero.bg_image_url_3} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">3️⃣ Lihat Gambar 3</a>}
+                          {hero.bg_image_url && <a href={hero.bg_image_url} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">1️⃣ Slide 1 Aktif</a>}
+                          {hero.bg_image_url_2 && <a href={hero.bg_image_url_2} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">2️⃣ Slide 2 Aktif</a>}
+                          {hero.bg_image_url_3 && <a href={hero.bg_image_url_3} target="_blank" className="truncate max-w-[180px] hover:underline text-blue-500">3️⃣ Slide 3 Aktif</a>}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[200px] truncate">
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[300px] truncate">
                       {hero.subjudul ?? (
-                        <span className="italic opacity-40">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
-                      {hero.label_cta ?? (
-                        <span className="italic opacity-40">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground truncate max-w-[160px]">
-                      {hero.url_cta ?? (
                         <span className="italic opacity-40">—</span>
                       )}
                     </TableCell>
@@ -337,124 +362,114 @@ const CmsHeroPage = () => {
 
       {/* ── Form Dialog (Create / Edit) ── */}
       <Dialog open={isFormOpen} onOpenChange={(v) => !v && closeForm()}>
-        <DialogContent className="sm:max-w-lg font-inter max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl font-inter max-h-[90vh] overflow-y-auto bg-slate-50">
           <DialogHeader>
             <DialogTitle>
               {editTarget ? "Edit Data Hero" : "Tambah Hero Baru"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Judul */}
-            <div className="space-y-1.5">
-              <Label htmlFor="judul">
-                Judul <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="judul"
-                placeholder="Contoh: BEASISWA SDM SAWIT"
-                value={formData.judul}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, judul: e.target.value }))
-                }
-              />
-            </div>
-
-            {/* Sub-judul */}
-            <div className="space-y-1.5">
-              <Label htmlFor="subjudul">Sub-judul</Label>
-              <Textarea
-                id="subjudul"
-                placeholder="Deskripsi singkat hero section..."
-                rows={2}
-                value={formData.subjudul ?? ""}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, subjudul: e.target.value }))
-                }
-              />
-            </div>
-
-            {/* UBAH: Area Input File Gambar */}
-            {/* Area Input File Gambar */}
-            <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
-              <Label className="font-semibold block mb-1">Pengaturan Gambar Slider (Format: JPG/PNG/WEBP)</Label>
-              
+          <div className="space-y-6 py-2">
+            
+            {/* ── SLIDE 1 (UTAMA) ── */}
+            <div className="bg-white p-4 border rounded-xl shadow-sm space-y-4">
+              <h3 className="font-bold text-lg text-primary flex items-center gap-2">🖼️ Slide 1 (Utama)</h3>
               <div className="space-y-1.5">
-                <Label className="text-xs">Gambar Slider 1 (Utama)</Label>
+                <Label>Gambar Background <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-3">
                   <Input type="file" accept="image/*" onChange={(e) => setFile1(e.target.files?.[0] || null)} />
                   {(file1 || formData.bg_image_url) && (
-                    <img 
-                      src={file1 ? URL.createObjectURL(file1) : (formData.bg_image_url ?? undefined)} 
-                      alt="preview 1" 
-                      className="h-10 w-10 object-cover rounded border" 
-                    />
+                    <img src={file1 ? URL.createObjectURL(file1) : (formData.bg_image_url ?? undefined)} className="h-10 w-10 object-cover rounded border" />
                   )}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Gambar Slider 2 (Opsional)</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="file" accept="image/*" onChange={(e) => setFile2(e.target.files?.[0] || null)} />
-                  {(file2 || formData.bg_image_url_2) && (
-                    <img 
-                      src={file2 ? URL.createObjectURL(file2) : (formData.bg_image_url_2 ?? undefined)} 
-                      alt="preview 2" 
-                      className="h-10 w-10 object-cover rounded border" 
-                    />
-                  )}
-                </div>
+                <Label htmlFor="judul">Judul <span className="text-destructive">*</span></Label>
+                <Input id="judul" placeholder="Contoh: BEASISWA SDM SAWIT" value={formData.judul} onChange={(e) => setFormData((p) => ({ ...p, judul: e.target.value }))} />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Gambar Slider 3 (Opsional)</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="file" accept="image/*" onChange={(e) => setFile3(e.target.files?.[0] || null)} />
-                  {(file3 || formData.bg_image_url_3) && (
-                    <img 
-                      src={file3 ? URL.createObjectURL(file3) : (formData.bg_image_url_3 ?? undefined)} 
-                      alt="preview 3" 
-                      className="h-10 w-10 object-cover rounded border" 
-                    />
-                  )}
-                </div>
+                <Label htmlFor="subjudul">Sub-judul</Label>
+                <Textarea id="subjudul" rows={2} value={formData.subjudul ?? ""} onChange={(e) => setFormData((p) => ({ ...p, subjudul: e.target.value }))} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border rounded-lg">
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (Label)</Label><Input placeholder="Daftar Sekarang" value={formData.label_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, label_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (URL)</Label><Input placeholder="/daftar" value={formData.url_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, url_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (Label)</Label><Input placeholder="Download Panduan" value={formData.label_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, label_cta_2: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (URL)</Label><Input placeholder="https://link-panduan.pdf" value={formData.url_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, url_cta_2: e.target.value }))} /></div>
               </div>
             </div>
 
-            {/* Label CTA & URL CTA — side by side */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* ── SLIDE 2 (OPSIONAL) ── */}
+            <div className="bg-white p-4 border rounded-xl shadow-sm space-y-4">
+              <h3 className="font-bold text-lg text-primary flex items-center gap-2">🖼️ Slide 2 (Opsional)</h3>
               <div className="space-y-1.5">
-                <Label htmlFor="label_cta">Label Tombol CTA</Label>
-                <Input
-                  id="label_cta"
-                  placeholder="Daftar Sekarang"
-                  value={formData.label_cta ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, label_cta: e.target.value }))
-                  }
-                />
+                <Label>Gambar Background</Label>
+                <div className="flex items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => setFile2(e.target.files?.[0] || null)} />
+                  {(file2 || formData.bg_image_url_2) && (
+                    <img src={file2 ? URL.createObjectURL(file2) : (formData.bg_image_url_2 ?? undefined)} className="h-10 w-10 object-cover rounded border" />
+                  )}
+                </div>
               </div>
+
               <div className="space-y-1.5">
-                <Label htmlFor="url_cta">URL Tombol CTA</Label>
-                <Input
-                  id="url_cta"
-                  placeholder="/daftar-penerima-beasiswa"
-                  value={formData.url_cta ?? ""}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, url_cta: e.target.value }))
-                  }
-                />
+                <Label>Judul (Slide 2)</Label>
+                <Input value={formData.judul_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, judul_2: e.target.value }))} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Sub-judul (Slide 2)</Label>
+                <Textarea rows={2} value={formData.subjudul_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, subjudul_2: e.target.value }))} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border rounded-lg">
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (Label)</Label><Input value={formData.s2_label_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s2_label_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (URL)</Label><Input value={formData.s2_url_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s2_url_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (Label)</Label><Input value={formData.s2_label_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s2_label_cta_2: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (URL)</Label><Input value={formData.s2_url_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s2_url_cta_2: e.target.value }))} /></div>
+              </div>
+            </div>
+
+            {/* ── SLIDE 3 (OPSIONAL) ── */}
+            <div className="bg-white p-4 border rounded-xl shadow-sm space-y-4">
+              <h3 className="font-bold text-lg text-primary flex items-center gap-2">🖼️ Slide 3 (Opsional)</h3>
+              <div className="space-y-1.5">
+                <Label>Gambar Background</Label>
+                <div className="flex items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => setFile3(e.target.files?.[0] || null)} />
+                  {(file3 || formData.bg_image_url_3) && (
+                    <img src={file3 ? URL.createObjectURL(file3) : (formData.bg_image_url_3 ?? undefined)} className="h-10 w-10 object-cover rounded border" />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Judul (Slide 3)</Label>
+                <Input value={formData.judul_3 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, judul_3: e.target.value }))} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Sub-judul (Slide 3)</Label>
+                <Textarea rows={2} value={formData.subjudul_3 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, subjudul_3: e.target.value }))} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border rounded-lg">
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (Label)</Label><Input value={formData.s3_label_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s3_label_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 1 (URL)</Label><Input value={formData.s3_url_cta ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s3_url_cta: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (Label)</Label><Input value={formData.s3_label_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s3_label_cta_2: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">Tombol 2 (URL)</Label><Input value={formData.s3_url_cta_2 ?? ""} onChange={(e) => setFormData((p) => ({ ...p, s3_url_cta_2: e.target.value }))} /></div>
               </div>
             </div>
 
             {/* Status Aktif */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center justify-between rounded-lg bg-white border p-4 shadow-sm">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Jadikan Aktif</Label>
                 <p className="text-xs text-muted-foreground">
-                  Hanya satu hero yang aktif. Hero lain akan otomatis
-                  dinonaktifkan.
+                  Hanya satu set hero yang aktif dalam satu waktu.
                 </p>
               </div>
               <Switch

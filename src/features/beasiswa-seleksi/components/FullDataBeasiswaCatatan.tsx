@@ -388,7 +388,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
   return (
     <>
-      <CollapsibleSection title="Data Pribadi" icon={User} defaultOpen={true}>
+      <CollapsibleSection title="Data Identitas Pribadi" icon={User} defaultOpen={true}>
         <>
           <FotoGallery
             foto={data_beasiswa.foto}
@@ -566,7 +566,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
           </div>
 
           <KesesuaianSection
-            title="Kesesuaian Data Pribadi"
+            title="Kesesuaian Data Identitas Pribadi"
             nameValid="data_pribadi_is_valid"
             nameCatatan="data_pribadi_catatan"
             control={control}
@@ -583,7 +583,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Data Tempat Tinggal & Tempat Bekerja / Kebun"
+        title="Data Alamat Lengkap"
         icon={MapPin}
         defaultOpen={false}>
         <>
@@ -678,7 +678,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Data Tempat Tinggal
+              Data Alamat KTP
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 items-start">
               <KoreksiInfoItem
@@ -751,7 +751,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Data Tempat Bekerja / Kebun
+              Data Alamat Kebun/Bekerja
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               <KoreksiInfoItem
@@ -819,7 +819,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               />
             </div>
             <KesesuaianSection
-              title="Kesesuaian Data Tempat Tinggal Bekerja / Kebun"
+              title="Kesesuaian Alamat Lengkap "
               nameValid="data_tempat_tinggal_bekerja_is_valid"
               nameCatatan="data_tempat_tinggal_bekerja_catatan"
               control={control}
@@ -840,7 +840,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Data Orang Tua"
+        title="Data Orang Tua/Wali"
         icon={Users}
         defaultOpen={false}>
         <>
@@ -1132,7 +1132,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
             )}
           </div>
           <KesesuaianSection
-            title="Kesesuaian Data Orang Tua"
+            title="Kesesuaian Data Orang Tua/Wali"
             nameValid="data_orang_tua_is_valid"
             nameCatatan="data_orang_tua_catatan"
             control={control}
@@ -1150,7 +1150,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Data Pendidikan"
+        title="Data Asal Sekolah"
         icon={GraduationCap}
         defaultOpen={false}>
         <>
@@ -1293,7 +1293,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
           )}
 
           <KesesuaianSection
-            title="Kesesuaian Data Pendidikan"
+            title="Kesesuaian Data Asal Sekolah"
             nameValid="data_pendidikan_is_valid"
             nameCatatan="data_pendidikan_catatan"
             control={control}
@@ -1313,7 +1313,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
       {data_beasiswa.pilihan_program_studi &&
         data_beasiswa.pilihan_program_studi.length > 0 && (
           <CollapsibleSection
-            title="Pilihan Program Studi"
+            title="Pilihan Jurusan/Program Studi"
             icon={BookOpen}
             defaultOpen={false}>
             <div className="space-y-3">
@@ -1330,7 +1330,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
       {persyaratan_umum && persyaratan_umum.length > 0 && (
         <CollapsibleSection
-          title="Persyaratan Umum"
+          title="Dokumen Persyaratan Umum"
           icon={FileText}
           defaultOpen={false}>
           <>
@@ -1356,7 +1356,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
       {persyaratan_khusus && persyaratan_khusus.length > 0 && (
         <CollapsibleSection
-          title="Persyaratan Khusus"
+          title="Dokumen Persyaratan Khusus"
           icon={Award}
           defaultOpen={false}>
           <>

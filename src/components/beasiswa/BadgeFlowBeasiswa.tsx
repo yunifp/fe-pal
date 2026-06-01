@@ -9,10 +9,10 @@ export interface BadgeFlowBeasiswaProps {
 
 const DEFAULT_LABELS: Record<number, string> = {
   1: "Draft",
-  2: "Verifikasi",
+  2: "Seleksi",
   3: "Tolak",
   4: "Perlu Perbaikan",
-  5: "Verifikasi Hasil Perbaikan",
+  5: "Seleksi Hasil Perbaikan",
   6: "Proses Analisa dan Penelaahan",
   7: "Proses Wawancara & Akademik",
   8: "Proses Verifikasi Dinas",

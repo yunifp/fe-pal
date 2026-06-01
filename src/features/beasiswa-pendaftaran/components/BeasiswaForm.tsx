@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState, useRef, type FC } from "react";
@@ -55,6 +54,8 @@ import { validatePilihan } from "./stepper/PilihanJurusan";
 import type { UploadPersyaratanKhususRef } from "./UploadPersyaratanKhusus";
 import KoreksiPendaftarAlert from "@/components/beasiswa/KoreksiPendaftarAlert";
 import { useKoreksiFields } from "@/hooks/useKoreksiFields";
+// import { PilihanSummaryCard } from "./PilihanSummaryCard";
+import type { ProdiCacheItem } from "./stepper/PilihanJurusan";
 
 interface BeasiswaFormProps {
   existBeasiswa: ITrxBeasiswa;
@@ -416,7 +417,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
     {
       id: 1,
       title: "Alamat Lengkap",
-      description: "Domisili dan Lokasi Kerja/Kebun",
+      description: "Domisili dan Lokasi Kebun/Bekerja",
       icon: MapPin,
     },
     {
@@ -804,6 +805,80 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         }
       }
 
+      // if (currentStep === 4) {
+      //   const currentPilihan = (getValues("pilihan_program_studi") ??
+      //     []) as Array<{
+      //     perguruan_tinggi?: string;
+      //     program_studi?: string;
+      //   }>;
+
+      //   const adaYangMasihFetching = currentPilihan.some(
+      //     (p) =>
+      //       (p?.perguruan_tinggi ?? "") !== "" &&
+      //       (p?.program_studi ?? "") === "",
+      //   );
+
+      //   if (adaYangMasihFetching) {
+      //     setCustomErrorMessages([
+      //       "Masih ada program studi yang sedang dimuat. Mohon tunggu sebentar, lalu lengkapi pilihan Anda.",
+      //     ]);
+      //     setShowErrorDialog(true);
+      //     return;
+      //   }
+
+      //   const adaPTTerisi = currentPilihan.some(
+      //     (p) => (p?.perguruan_tinggi ?? "") !== "",
+      //   );
+      //   let pilihanUntukValidasi = currentPilihan;
+
+      //   if (!adaPTTerisi) {
+      //     try {
+      //       const existing =
+      //         await beasiswaService.getPilihanProgramStudiForForm(
+      //           existBeasiswa.id_trx_beasiswa,
+      //         );
+      //       pilihanUntukValidasi = existing?.data ?? [];
+      //     } catch {
+      //       setCustomErrorMessages([
+      //         "Gagal memuat pilihan program studi. Silakan coba lagi.",
+      //       ]);
+      //       setShowErrorDialog(true);
+      //       return;
+      //     }
+      //   }
+      //   let ptHasD1D2Map = new Map<string, boolean>();
+      //   try {
+      //     const jurusanSekolahRaw = getValues("jurusan_sekolah") as string;
+      //     const idJurusanSekolah = jurusanSekolahRaw?.split("#")[0];
+      //     if (idJurusanSekolah) {
+      //       const resPT =
+      //         await masterService.getPerguruanTinggiByJurusanSekolah(
+      //           idJurusanSekolah,
+      //         );
+      //       (resPT?.data ?? []).forEach(
+      //         (pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
+      //           const raw = pt.has_d1_d2;
+      //           const s = raw != null ? String(raw).trim().toUpperCase() : "";
+      //           ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
+      //         },
+      //       );
+      //     }
+      //   } catch {}
+
+      //   // const ptProdiMap = new Map<string, string[]>();
+      //   const ptProdiMap = new Map<string, ProdiCacheItem[]>();
+      //   const validationErrors = validatePilihan(
+      //     pilihanUntukValidasi,
+      //     ptProdiMap,
+      //   );
+
+      //   if (validationErrors.length > 0) {
+      //     setCustomErrorMessages(validationErrors);
+      //     setShowErrorDialog(true);
+      //     return;
+      //   }
+      // }
+
       if (currentStep === 4) {
         const currentPilihan = (getValues("pilihan_program_studi") ??
           []) as Array<{
@@ -845,29 +920,49 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
             return;
           }
         }
-        let ptHasD1D2Map = new Map<string, boolean>();
+
+        // ✅ Ambil ptProdiMap dari API, bukan Map kosong
+        const ptProdiMap = new Map<string, ProdiCacheItem[]>();
         try {
           const jurusanSekolahRaw = getValues("jurusan_sekolah") as string;
           const idJurusanSekolah = jurusanSekolahRaw?.split("#")[0];
+
           if (idJurusanSekolah) {
-            const resPT =
-              await masterService.getPerguruanTinggiByJurusanSekolah(
-                idJurusanSekolah,
-              );
-            (resPT?.data ?? []).forEach(
-              (pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
-                const raw = pt.has_d1_d2;
-                const s = raw != null ? String(raw).trim().toUpperCase() : "";
-                ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
-              },
+            // Kumpulkan id PT unik dari pilihan
+            const uniquePtIds = [
+              ...new Set(
+                pilihanUntukValidasi
+                  .map((p) => (p?.perguruan_tinggi ?? "").split("#")[0])
+                  .filter((id) => id !== ""),
+              ),
+            ];
+
+            await Promise.allSettled(
+              uniquePtIds.map((idPT) =>
+                masterService
+                  .getProgramStudiByJurusanSekolahDanPT(idJurusanSekolah, idPT)
+                  .then((res) => {
+                    ptProdiMap.set(
+                      idPT,
+                      (res?.data ?? []).map((ps: any) => ({
+                        id_prodi: String(ps.id_prodi),
+                        jenjang: ps.jenjang,
+                        boleh_buta_warna: ps.boleh_buta_warna,
+                      })),
+                    );
+                  }),
+              ),
             );
           }
-        } catch {}
+        } catch {
+          // ptProdiMap tetap kosong, validasi akan skip cek detail
+        }
 
-        const ptProdiMap = new Map<string, string[]>();
+        const kondisiButaWarna = getValues("kondisi_buta_warna") as string;
         const validationErrors = validatePilihan(
           pilihanUntukValidasi,
           ptProdiMap,
+          kondisiButaWarna,
         );
 
         if (validationErrors.length > 0) {
@@ -1767,6 +1862,16 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
                       idTrxBeasiswa={existBeasiswa?.id_trx_beasiswa}
                       isFieldDisabled={isDisabled}
                     />
+                    {/* <PilihanSummaryCard
+                      allPilihan={(watch("pilihan_program_studi") ?? []).filter(
+                        (p) =>
+                          (p?.perguruan_tinggi ?? "").split("#")[0] !== "" &&
+                          Number((p?.perguruan_tinggi ?? "").split("#")[0]) >
+                            0 &&
+                          (p?.program_studi ?? "").split("#")[0] !== "" &&
+                          Number((p?.program_studi ?? "").split("#")[0]) > 0,
+                      )}
+                    /> */}
                   </div>
 
                   <div className={currentStep === 5 ? "block" : "hidden"}>

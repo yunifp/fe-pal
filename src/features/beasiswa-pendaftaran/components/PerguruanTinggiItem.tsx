@@ -112,20 +112,19 @@ const PerguruanTinggiItem: FC<Props> = ({
     }
 
     if (idPt) {
-      const sibling = allPilihan.find((p, i) => {
-        if (i === index) return false;
-        return extractIdPT(p?.perguruan_tinggi ?? "") === idPt;
-      });
+      // Kumpulkan id_prodi yang sudah dipilih di slot lain dengan PT yang sama
+      const siblingsSelectedProdiIds = allPilihan
+        .filter(
+          (p, i) =>
+            i !== index && extractIdPT(p?.perguruan_tinggi ?? "") === idPt,
+        )
+        .map((p) => (p?.program_studi ?? "").split("#")[0])
+        .filter((id) => id !== "");
 
-      if (sibling?.program_studi) {
-        const siblingJenjang = extractJenjangFromProdiValue(
-          sibling.program_studi,
+      if (siblingsSelectedProdiIds.length > 0) {
+        list = list.filter(
+          (ps: any) => !siblingsSelectedProdiIds.includes(String(ps.id_prodi)),
         );
-        if (isJenjangD1D2(siblingJenjang)) {
-          list = list.filter((ps: any) => isJenjangNonD1D2(ps.jenjang));
-        } else if (isJenjangNonD1D2(siblingJenjang)) {
-          list = list.filter((ps: any) => isJenjangD1D2(ps.jenjang));
-        }
       }
     }
 
@@ -156,16 +155,15 @@ const PerguruanTinggiItem: FC<Props> = ({
           ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
           : rawProdiList;
 
-      const ptCanDouble =
-        prodiList.some((j) => isJenjangD1D2(j.jenjang || j)) &&
-        prodiList.some((j) => isJenjangNonD1D2(j.jenjang || j));
+      // Hitung total slot maksimal PT ini (1 NonD1D2 + jumlah prodi D1/D2 individual)
+      const hasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j.jenjang));
+      const d1d2Count = prodiList.filter((j) =>
+        isJenjangD1D2(j.jenjang),
+      ).length;
+      const maxSlotsForPT = (hasNonD1D2 ? 1 : 0) + d1d2Count;
 
-      if (!ptCanDouble) {
-        disabled.add(optIdPT);
-        return;
-      }
-
-      if (countInOtherSlots >= 2) {
+      // Disable jika semua slot sudah terpakai
+      if (countInOtherSlots >= maxSlotsForPT) {
         disabled.add(optIdPT);
       }
     });
@@ -278,9 +276,9 @@ const PerguruanTinggiItem: FC<Props> = ({
     const currentJenjang = extractJenjangFromProdiValue(
       selectedProdiValue ?? "",
     );
-    if (isJenjangD1D2(currentJenjang)) return `Pilihan ${index + 1} (D2)`;
+    if (isJenjangD1D2(currentJenjang)) return `Pilihan ${index + 1} (D1/D2)`;
     if (isJenjangNonD1D2(currentJenjang))
-      return `Pilihan ${index + 1} (D1/D3/D4/S1)`;
+      return `Pilihan ${index + 1} (D3/D4/S1)`;
     return `Pilihan ${index + 1} (pasangan)`;
   }, [idPt, index, allPilihan, selectedProdiValue]);
 
