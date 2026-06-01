@@ -44,7 +44,10 @@ const DataOrtu = ({
       { value: "< 1.000.000", label: "< Rp 1.000.000" },
       { value: "1.000.000 - 3.000.000", label: "Rp 1.000.000 - Rp 3.000.000" },
       { value: "3.000.000 - 5.000.000", label: "Rp 3.000.000 - Rp 5.000.000" },
-      { value: "5.000.000 - 10.000.000", label: "Rp 5.000.000 - Rp 10.000.000" },
+      {
+        value: "5.000.000 - 10.000.000",
+        label: "Rp 5.000.000 - Rp 10.000.000",
+      },
       { value: "> 10.000.000", label: "> Rp 10.000.000" },
     ],
     [],
@@ -58,12 +61,13 @@ const DataOrtu = ({
   };
 
   return (
-    <div 
-      id="section-data-ortu" 
+    <div
+      id="section-data-ortu"
       className={`space-y-6 transition-all duration-300 ${
-        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
-      }`}
-    >
+        sectionCatatan.isValid === "N"
+          ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl"
+          : ""
+      }`}>
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_orang_tua"
@@ -146,6 +150,7 @@ const DataOrtu = ({
                 placeholder="Pilih range penghasilan"
                 isRequired
                 error={errors.ayah_penghasilan}
+                disabled={isFieldDisabled("ayah_penghasilan")}
               />
             </div>
             <div id="ayah_status_hidup">
@@ -156,6 +161,7 @@ const DataOrtu = ({
                 options={statusHidupOptions}
                 placeholder="Pilih status hidup"
                 error={errors.ayah_status_hidup}
+                disabled={isFieldDisabled("ayah_status_hidup")}
                 isRequired
               />
             </div>
@@ -322,6 +328,7 @@ const DataOrtu = ({
                 placeholder="Pilih range penghasilan"
                 isRequired
                 error={errors.ibu_penghasilan}
+                disabled={isFieldDisabled("ibu_penghasilan")}
               />
             </div>
             <div id="ibu_status_hidup">
@@ -332,6 +339,7 @@ const DataOrtu = ({
                 options={statusHidupOptions}
                 placeholder="Pilih status hidup"
                 error={errors.ibu_status_hidup}
+                disabled={isFieldDisabled("ibu_status_hidup")}
                 isRequired
               />
             </div>
@@ -492,6 +500,7 @@ const DataOrtu = ({
                 options={penghasilanOptions}
                 placeholder="Pilih range penghasilan"
                 error={errors.wali_penghasilan}
+                disabled={isFieldDisabled("wali_penghasilan")}
               />
             </div>
             <div id="wali_status_hidup">
@@ -502,6 +511,7 @@ const DataOrtu = ({
                 options={statusHidupOptions}
                 placeholder="Pilih status hidup"
                 error={errors.wali_status_hidup}
+                disabled={isFieldDisabled("wali_status_hidup")}
               />
             </div>
           </div>

@@ -16,24 +16,31 @@ type ExtendedPersyaratan = IPersyaratanKhususBeasiswa & { size?: string };
 interface UploadPersyaratanKhususProps {
   idTrxBeasiswa: number;
   persyaratanKhusus: ExtendedPersyaratan[];
+  isFieldDisabled?: boolean;
 }
 
 export interface UploadPersyaratanKhususRef {
   uploadAllPending: () => Promise<void>;
   hasPendingFiles: () => boolean;
   resetAll: () => void;
+  hasCatatanBelumDiuploadUlang: () => boolean;
 }
 
 const UploadPersyaratanKhusus = forwardRef<
   UploadPersyaratanKhususRef,
   UploadPersyaratanKhususProps
->(({ idTrxBeasiswa, persyaratanKhusus }, ref) => {
+>(({ idTrxBeasiswa, persyaratanKhusus, isFieldDisabled = false }, ref) => {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(
+    {},
+  );
   const [compressingId, setCompressingId] = useState<number | null>(null);
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
   const [pendingFiles, setPendingFiles] = useState<Record<number, File>>({});
   const [skipNextFetch, setSkipNextFetch] = useState(false);
+  // const [statusVerifikasiMap, setStatusVerifikasiMap] = useState<
+  //   Record<number, string>
+  // >({});
 
   const uploadAllPending = async () => {
     for (const [idStr, file] of Object.entries(pendingFiles)) {
@@ -84,6 +91,11 @@ const UploadPersyaratanKhusus = forwardRef<
       setUploadedFiles({});
       setCatatanMap({});
     },
+    hasCatatanBelumDiuploadUlang: () => {
+      return Object.keys(catatanMap).some(
+        (idStr) => !pendingFiles[Number(idStr)],
+      );
+    },
   }));
 
   useEffect(() => {
@@ -107,17 +119,23 @@ const UploadPersyaratanKhusus = forwardRef<
 
         const fileMap: Record<number, string> = {};
         const catatanMapTemp: Record<number, string> = {};
+        const statusVerifikasiMapTemp: Record<number, string> = {}; // ← local var
 
         uploaded.forEach((item: any) => {
           if (!relevantIds.has(item.id_ref_dokumen)) return;
           fileMap[item.id_ref_dokumen] = item.file;
+          // console.log(item);
+
           if (item.verifikator_catatan) {
             catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
+            statusVerifikasiMapTemp[item.id_ref_dokumen] =
+              item.verifikator_catatan;
           }
         });
 
         setUploadedFiles(fileMap);
         setCatatanMap(catatanMapTemp);
+        // setStatusVerifikasiMap(statusVerifikasiMapTemp);
       } catch (error) {
         toast.error("Gagal memuat data persyaratan yang sudah diunggah");
       }
@@ -147,7 +165,7 @@ const UploadPersyaratanKhusus = forwardRef<
 
       if (processedFile.size > maxSizeBytes) {
         toast.error(
-          `Ukuran file terlalu besar! Maksimal ${item.size || "2 MB"}. Silakan kompres file Anda terlebih dahulu.`
+          `Ukuran file terlalu besar! Maksimal ${item.size || "2 MB"}. Silakan kompres file Anda terlebih dahulu.`,
         );
         return;
       }
@@ -160,7 +178,9 @@ const UploadPersyaratanKhusus = forwardRef<
         return newMap;
       });
 
-      toast.info(`File "${processedFile.name}" dipilih. Akan diunggah saat submit.`);
+      toast.info(
+        `File "${processedFile.name}" dipilih. Akan diunggah saat submit.`,
+      );
     } catch (error) {
       toast.error("Terjadi kesalahan saat memproses file");
     } finally {
@@ -177,7 +197,7 @@ const UploadPersyaratanKhusus = forwardRef<
         const catatan = catatanMap[item.id];
         const hasCatatan = !!catatan;
         const isRequired = item.is_required === "Y";
-
+        const isItemDisabled = isFieldDisabled && isUploaded && !hasCatatan;
         const isPending = !!pendingFiles[item.id];
         const pendingFileName = pendingFiles[item.id]?.name;
 
@@ -307,7 +327,9 @@ const UploadPersyaratanKhusus = forwardRef<
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                {compressingId === item.id ? "Memproses file..." : "Mengunggah..."}
+                {compressingId === item.id
+                  ? "Memproses file..."
+                  : "Mengunggah..."}
               </span>
             )}
 
@@ -316,15 +338,21 @@ const UploadPersyaratanKhusus = forwardRef<
                 <div className="flex-1">
                   <label
                     htmlFor={`persyaratan-${item.id}`}
-                    className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
-                      hasCatatan
-                        ? "border-amber-400 bg-white hover:bg-amber-50"
-                        : isPending
-                          ? "border-blue-400 bg-white hover:bg-blue-50"
-                          : isUploaded
-                            ? "border-green-300 bg-white hover:bg-green-50"
-                            : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
-                    }`}>
+                    className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 
+                      ${
+                        isItemDisabled
+                          ? "cursor-not-allowed opacity-60 pointer-events-none"
+                          : "cursor-pointer"
+                      }
+      ${
+        hasCatatan
+          ? "border-amber-400 bg-white hover:bg-amber-50"
+          : isPending
+            ? "border-blue-400 bg-white hover:bg-blue-50"
+            : isUploaded
+              ? "border-green-300 bg-white hover:bg-green-50"
+              : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+      }`}>
                     <input
                       id={`persyaratan-${item.id}`}
                       type="file"
@@ -336,7 +364,11 @@ const UploadPersyaratanKhusus = forwardRef<
                         handleFileChange(item, e.target.files?.[0] ?? null);
                         e.target.value = "";
                       }}
-                      disabled={isUploading || compressingId === item.id}
+                      disabled={
+                        isUploading ||
+                        compressingId === item.id ||
+                        isItemDisabled
+                      }
                     />
 
                     <div
@@ -351,7 +383,9 @@ const UploadPersyaratanKhusus = forwardRef<
                       }`}>
                       {isPending ? (
                         <div className="flex flex-col items-center">
-                          <span className="text-xs font-bold text-blue-700">OK</span>
+                          <span className="text-xs font-bold text-blue-700">
+                            OK
+                          </span>
                         </div>
                       ) : hasCatatan ? (
                         <svg
@@ -427,14 +461,14 @@ const UploadPersyaratanKhusus = forwardRef<
                             Ekstensi yang diterima:{" "}
                             {validTypeToAccept(item.valid_type)}.
                             <br />
-                            Maksimal {item.size || "10 MB"} Mb. Jika PDF kebesaran, silakan kompres melalui{" "}
+                            Maksimal {item.size || "10 MB"} Mb. Jika PDF
+                            kebesaran, silakan kompres melalui{" "}
                             <a
                               href="https://www.ilovepdf.com/compress_pdf"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-700 underline font-medium relative z-10"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                              onClick={(e) => e.stopPropagation()}>
                               iLovePDF
                             </a>
                           </p>
@@ -452,21 +486,33 @@ const UploadPersyaratanKhusus = forwardRef<
                       try {
                         let extractedName = `Dokumen_Khusus_${item.id}.pdf`;
                         try {
-                          const urlObj = new URL(fileName, window.location.origin);
+                          const urlObj = new URL(
+                            fileName,
+                            window.location.origin,
+                          );
                           const fileParam = urlObj.searchParams.get("file");
                           if (fileParam) {
-                            const actualFile = fileParam.split('/').pop() || "";
-                            const ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
-                            const cleanTitle = item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_');
+                            const actualFile = fileParam.split("/").pop() || "";
+                            const ext = actualFile.includes(".")
+                              ? actualFile.substring(
+                                  actualFile.lastIndexOf("."),
+                                )
+                              : ".pdf";
+                            const cleanTitle = item.persyaratan.replace(
+                              /[^a-zA-Z0-9 \-]/g,
+                              "_",
+                            );
                             extractedName = `${cleanTitle}${ext}`;
                           }
                         } catch (e) {
-                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_')}.pdf`;
+                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, "_")}.pdf`;
                         }
 
                         await downloadSecureFile(fileName, extractedName);
                       } catch (error) {
-                        toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                        toast.error(
+                          "Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.",
+                        );
                       }
                     }}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

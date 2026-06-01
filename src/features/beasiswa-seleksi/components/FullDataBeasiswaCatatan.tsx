@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-useless-escape */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type FC, useState } from "react";
+import { type FC, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,7 @@ import {
   Building2,
   Ruler,
   Weight,
-  Map,
+  Map as MapIcon,
   Camera,
   ChevronLeft,
   ChevronRight,
@@ -55,6 +55,7 @@ import KoreksiInfoItem from "@/components/beasiswa/KoreksiInfoItem";
 import { SecureImage } from "@/components/SecureImage";
 import { downloadSecureFile } from "@/utils/fileHelper";
 import { toast } from "sonner";
+import { masterService } from "@/services/masterService";
 
 interface FullDataBeasiswaCatatanProps {
   idTrxBeasiswa: number;
@@ -272,6 +273,25 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
     staleTime: STALE_TIME,
   });
 
+  // ✅ Pindahkan ke sini
+  const { data: refPersyaratanUmum } = useQuery({
+    queryKey: ["persyaratan-umum-aktif-beasiswa"],
+    queryFn: () => masterService.getPersyaratanUmumAktifBeasiswa(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: STALE_TIME,
+  });
+
+  // ✅ useMemo dari React, bukan stub
+  const isRequiredMap = useMemo(() => {
+    const map = new Map<number, "Y" | "N">();
+    (refPersyaratanUmum?.data ?? []).forEach((item: any) => {
+      map.set(item.id, item.is_required);
+    });
+    return map;
+  }, [refPersyaratanUmum]);
+  // console.log(isRequiredMap);
+
   const nilaiRapor = nilaiRaporData?.data ?? null;
 
   if (isLoading) {
@@ -414,7 +434,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               showKoreksi={false}
               fieldKey="nama_lengkap"
             />
-            
+
             {/* LINK KTP */}
             <KoreksiInfoItem
               icon={IdCard}
@@ -433,7 +453,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 }
               }}
             />
-            
+
             {/* LINK KK */}
             <KoreksiInfoItem
               icon={IdCard}
@@ -452,7 +472,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 }
               }}
             />
-            
+
             <KoreksiInfoItem
               icon={User}
               label="Jenis Kelamin"
@@ -718,7 +738,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 fieldKey="tinggal_rw"
               />
               <KoreksiInfoItem
-                icon={Map}
+                icon={MapIcon}
                 label="Alamat Lengkap"
                 value={data_beasiswa.tinggal_alamat}
                 showKoreksi={false}
@@ -791,7 +811,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 fieldKey="kerja_rw"
               />
               <KoreksiInfoItem
-                icon={Map}
+                icon={MapIcon}
                 label="Alamat Lengkap"
                 value={data_beasiswa.kerja_alamat}
                 showKoreksi={false}
@@ -909,7 +929,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   fieldKey="ayah_email"
                 />
                 <KoreksiInfoItem
-                  icon={Map}
+                  icon={MapIcon}
                   label="Alamat"
                   value={data_beasiswa.ayah_alamat}
                   showKoreksi={false}
@@ -1002,7 +1022,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   fieldKey="ibu_email"
                 />
                 <KoreksiInfoItem
-                  icon={Map}
+                  icon={MapIcon}
                   label="Alamat"
                   value={data_beasiswa.ibu_alamat}
                   showKoreksi={false}
@@ -1101,7 +1121,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                     fieldKey="wali_email"
                   />
                   <KoreksiInfoItem
-                    icon={Map}
+                    icon={MapIcon}
                     label="Alamat"
                     value={data_beasiswa.wali_alamat}
                     showKoreksi={false}
@@ -1158,14 +1178,14 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               fieldKey="sekolah"
             />
             <KoreksiInfoItem
-              icon={Map}
+              icon={MapIcon}
               label="Provinsi Sekolah"
               value={data_beasiswa.sekolah_prov}
               showKoreksi={false}
               fieldKey="sekolah_prov"
             />
             <KoreksiInfoItem
-              icon={Map}
+              icon={MapIcon}
               label="Kabupaten / Kota Sekolah"
               value={data_beasiswa.sekolah_kab_kota}
               showKoreksi={false}
@@ -1324,6 +1344,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors as any}
                   fieldName="data_persyaratan_umum"
+                  isRequired={
+                    isRequiredMap.get(dokumen.id_ref_dokumen ?? 0) !== "N"
+                  }
                 />
               ))}
             </div>

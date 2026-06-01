@@ -187,12 +187,13 @@ const AsalSekolah = ({
   }, [selectedJenjangSekolah, setValue]);
 
   return (
-    <div 
-      id="section-asal-sekolah" 
+    <div
+      id="section-asal-sekolah"
       className={`space-y-6 transition-all duration-300 ${
-        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
-      }`}
-    >
+        sectionCatatan.isValid === "N"
+          ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl"
+          : ""
+      }`}>
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_pendidikan"
@@ -211,6 +212,7 @@ const AsalSekolah = ({
               placeholder="Pilih provinsi"
               isRequired={true}
               error={errors.sekolah_provinsi}
+              disabled={isFieldDisabled("sekolah_provinsi")}
             />
           </div>
           <div id="sekolah_kabkot">
@@ -222,6 +224,7 @@ const AsalSekolah = ({
               placeholder="Pilih kabupaten/kota"
               isRequired={true}
               error={errors.sekolah_kabkot}
+              disabled={isFieldDisabled("sekolah_kabkot")}
             />
           </div>
         </div>
@@ -236,6 +239,7 @@ const AsalSekolah = ({
               placeholder="Pilih jenjang sekolah"
               isRequired={true}
               error={errors.jenjang_sekolah}
+              disabled={isFieldDisabled("jenjang_sekolah")}
             />
           </div>
           <div id="sekolah">
@@ -247,6 +251,7 @@ const AsalSekolah = ({
               placeholder="Pilih sekolah"
               isRequired={true}
               error={errors.sekolah}
+              disabled={isFieldDisabled("sekolah")}
             />
           </div>
           <div id="jurusan_sekolah">
@@ -258,6 +263,7 @@ const AsalSekolah = ({
               placeholder="Pilih jurusan sekolah"
               isRequired={true}
               error={errors.jurusan_sekolah}
+              disabled={isFieldDisabled("jurusan_sekolah")}
             />
           </div>
 
@@ -285,6 +291,7 @@ const AsalSekolah = ({
               placeholder="Pilih tahun lulus"
               isRequired={true}
               error={errors.tahun_lulus}
+              disabled={isFieldDisabled("tahun_lulus")}
             />
           </div>
         </div>

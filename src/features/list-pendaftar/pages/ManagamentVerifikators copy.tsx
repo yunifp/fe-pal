@@ -98,7 +98,7 @@ const ManajemenVerifikator = () => {
     return verifikatorIds.map((id) => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
       const namaData = namaList.find((n) => n.id === id); // ← ambil dari auth
-      console.log(id);
+      // console.log(id);
 
       return {
         id,
@@ -812,7 +812,7 @@ const ManajemenVerifikator = () => {
                   .slice()
                   .sort((a, b) => a.total_beban - b.total_beban) // ringan di atas
                   .map((v) => {
-                    console.log(v);
+                    // console.log(v);
 
                     const inputVal = jumlahMap[v.id] ?? "";
                     const inputNum = parseInt(inputVal);

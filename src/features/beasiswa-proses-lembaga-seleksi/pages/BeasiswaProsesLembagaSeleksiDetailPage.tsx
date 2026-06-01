@@ -239,7 +239,7 @@ const BeasiswaSeleksiDetailPage = () => {
   const onSubmit = (data: VerifikasiFormData) => {
     const submitData = { ...data };
     delete submitData.selectedStatus;
-    console.log(submitData);
+    // console.log(submitData);
 
     // mutation.mutate(submitData);
   };

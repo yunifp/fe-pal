@@ -78,9 +78,9 @@ const BeasiswaPendaftaranPage = () => {
         <>
           {/* Flow 1: Draft - Hanya Form */}
           {existBeasiswa.id_flow === 0 && (
-            <BeasiswaForm 
-              existBeasiswa={existBeasiswa} 
-              batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir} 
+            <BeasiswaForm
+              existBeasiswa={existBeasiswa}
+              batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir}
             />
           )}
 
@@ -94,15 +94,15 @@ const BeasiswaPendaftaranPage = () => {
             existBeasiswa.id_flow === 1 ||
             existBeasiswa.id_flow === 13 ||
             existBeasiswa.id_flow === 7) && (
-              <>
-                {/* 🔴 PERBAIKAN: PASSING idFlow KE KOMPONEN INI */}
-                <AlertSudahSubmit 
-                  idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} 
-                  idFlow={existBeasiswa.id_flow} 
-                />
-                <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
-              </>
-            )}
+            <>
+              {/* 🔴 PERBAIKAN: PASSING idFlow KE KOMPONEN INI */}
+              <AlertSudahSubmit
+                idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
+                idFlow={existBeasiswa.id_flow}
+              />
+              <FullDataBeasiswa idTrxBeasiswa={existBeasiswa.id_trx_beasiswa} />
+            </>
+          )}
 
           {/* Flow 3: Ditolak - Alert Tolak + Full Data */}
           {existBeasiswa.id_flow === 3 && (
@@ -122,7 +122,7 @@ const BeasiswaPendaftaranPage = () => {
                   window.dispatchEvent(
                     new CustomEvent("PALMA_NAVIGATE_STEP", {
                       detail: { step: targetStepIndex },
-                    })
+                    }),
                   );
 
                   document
@@ -133,9 +133,9 @@ const BeasiswaPendaftaranPage = () => {
                 }}
               />
               <div id="form-pendaftaran-anchor">
-                <BeasiswaForm 
-                  existBeasiswa={existBeasiswa} 
-                  batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir} 
+                <BeasiswaForm
+                  existBeasiswa={existBeasiswa}
+                  batasTanggalLahir={beasiswaAktif?.batas_tanggal_lahir}
                 />
               </div>
             </>

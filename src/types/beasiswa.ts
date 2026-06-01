@@ -830,6 +830,7 @@ const persyaratanSchema = z.object({
   is_valid: z.enum(["Y", "N"], {
     required_error: "Kesesuaian wajib dipilih",
   }),
+  is_required: z.enum(["Y", "N"]).optional(),
   catatan: z.string().optional(),
 });
 
@@ -889,7 +890,7 @@ export const verifikasiSchema = z
     data_persyaratan_khusus: z.array(persyaratanSchema),
     data_persyaratan_dinas: z.array(persyaratanDinasSchema),
     fileSuratKeputusan: z.string().optional(),
-    
+
     koreksi_fields: z
       .array(
         z.object({
@@ -901,7 +902,6 @@ export const verifikasiSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-
     // ── [+] UBAH DI SINI: Jika status 4, cukup wajibkan catatan umum ──
     if (data.selectedStatus === 4) {
       if (!data.catatan || data.catatan.trim() === "") {

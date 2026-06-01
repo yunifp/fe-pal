@@ -21,77 +21,68 @@ const VerticalStepper = ({
 }: VerticalStepperProps) => {
   return (
     <Card className="w-full md:w-80 shadow-none">
-      <CardContent>
-        {/* Mobile: Horizontal */}
-        <div className="md:hidden flex overflow-x-auto gap-2 pb-2">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            const isActive = currentStep === index;
-            const isCompleted = currentStep > index;
+      <CardContent className="p-3 md:p-6">
+        {/* ── Mobile: Progress bar + dot indicators ── */}
+        <div className="md:hidden">
+          {/* Label aktif + counter */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-blue-700">
+              {steps[currentStep]?.title}
+            </span>
+            <span className="text-xs text-slate-500 font-medium">
+              {currentStep + 1}/{steps.length}
+            </span>
+          </div>
 
-            return (
-              <div key={step.id} className="flex items-center gap-2">
-                {/* Step Item */}
-                <div
-                  className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-300 min-w-[100px] ${
-                    isActive
-                      ? "bg-blue-50 border-2 border-blue-500"
-                      : isCompleted
-                      ? "bg-white border-2 border-green-500"
-                      : "bg-white border-2 border-slate-200"
-                  }`}
-                >
-                  {/* Icon Circle */}
+          {/* Progress bar */}
+          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-500"
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Dot icons */}
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              const isActive = currentStep === index;
+              const isCompleted = currentStep > index;
+
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => onStepClick?.(index)}
+                  className="flex flex-col items-center gap-1 flex-1">
                   <div
-                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                       isCompleted
                         ? "bg-green-500"
                         : isActive
-                        ? "bg-blue-500"
-                        : "bg-slate-200"
-                    }`}
-                  >
+                          ? "bg-blue-500 ring-2 ring-blue-200 ring-offset-1"
+                          : "bg-slate-200"
+                    }`}>
                     {isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-white" />
+                      <CheckCircle2 className="w-4 h-4 text-white" />
                     ) : (
                       <Icon
-                        className={`h-5 w-5 ${
-                          isActive ? "text-white" : "text-slate-500"
-                        }`}
+                        className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`}
                       />
                     )}
                   </div>
+                </button>
+              );
+            })}
+          </div>
 
-                  {/* Step Content */}
-                  <div className="text-center">
-                    <p
-                      className={`text-xs font-semibold ${
-                        isActive
-                          ? "text-blue-700"
-                          : isCompleted
-                          ? "text-green-700"
-                          : "text-slate-600"
-                      }`}
-                    >
-                      {step.title}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Connector Line Horizontal */}
-                {index < steps.length - 1 && (
-                  <div
-                    className={`w-8 h-0.5 transition-all duration-300 ${
-                      currentStep > index ? "bg-green-500" : "bg-slate-300"
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
+          {/* Deskripsi step aktif */}
+          <p className="text-xs text-slate-500 mt-2 text-center">
+            {steps[currentStep]?.description}
+          </p>
         </div>
 
-        {/* Desktop: Vertical */}
+        {/* ── Desktop: Vertical stepper (tidak diubah) ── */}
         <div className="hidden md:block space-y-1">
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -107,10 +98,9 @@ const VerticalStepper = ({
                     isActive
                       ? "bg-blue-50 border-2 border-blue-500"
                       : isCompleted
-                      ? "bg-white border-2 border-green-500"
-                      : "bg-white border-2 border-slate-200 hover:border-slate-400"
-                  }`}
-                >
+                        ? "bg-white border-2 border-green-500"
+                        : "bg-white border-2 border-slate-200 hover:border-slate-400"
+                  }`}>
                   {/* Icon Circle with Number */}
                   <div className="flex flex-col items-center gap-1">
                     <div
@@ -118,10 +108,9 @@ const VerticalStepper = ({
                         isCompleted
                           ? "bg-green-500"
                           : isActive
-                          ? "bg-blue-500"
-                          : "bg-slate-200"
-                      }`}
-                    >
+                            ? "bg-blue-500"
+                            : "bg-slate-200"
+                      }`}>
                       {isCompleted ? (
                         <CheckCircle2 className="h-6 w-6 text-white" />
                       ) : (
@@ -141,10 +130,9 @@ const VerticalStepper = ({
                         isActive
                           ? "text-blue-700"
                           : isCompleted
-                          ? "text-green-700"
-                          : "text-slate-600"
-                      }`}
-                    >
+                            ? "text-green-700"
+                            : "text-slate-600"
+                      }`}>
                       {step.title}
                     </p>
                     <p className="text-xs text-slate-500">{step.description}</p>

@@ -58,28 +58,33 @@ import { useKoreksiFields } from "@/hooks/useKoreksiFields";
 
 interface BeasiswaFormProps {
   existBeasiswa: ITrxBeasiswa;
-  batasTanggalLahir?: string | null; // <-- Prop batas umur yang diterima dari Page
+  batasTanggalLahir?: string | null;
 }
 
 const beasiswaSchema = createBeasiswaSchema();
 const beasiswaEditSchema = editBeasiswaSchema();
 const beasiswaDraftSchema = createBeasiswaDraftSchema();
 
-const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir }) => {
+const BeasiswaForm: FC<BeasiswaFormProps> = ({
+  existBeasiswa,
+  batasTanggalLahir,
+}) => {
   const user = useAuthStore((state) => state.user);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isDraftMode, setIsDraftMode] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [customErrorMessages, setCustomErrorMessages] = useState<string[]>([]);
-  
+
   const [previewData, setPreviewData] = useState<BeasiswaFormData | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isNextLoading, setIsNextLoading] = useState(false);
   const [isPrevLoading, setIsPrevLoading] = useState(false);
   const [umurMelebihi, setUmurMelebihi] = useState(false);
   const [prevJalurId, setPrevJalurId] = useState<string | null>(null);
-  const [pendingJalurValue, setPendingJalurValue] = useState<string | null>(null);
+  const [pendingJalurValue, setPendingJalurValue] = useState<string | null>(
+    null,
+  );
   const [showGantiJalurDialog, setShowGantiJalurDialog] = useState(false);
   const [isResettingJalur, setIsResettingJalur] = useState(false);
 
@@ -95,26 +100,75 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
   const stepFields: Record<number, (keyof BeasiswaFormData)[]> = {
     0: [
-      "nama_lengkap", "nik", "nkk", "jenis_kelamin", "no_hp", "email",
-      "tanggal_lahir", "tempat_lahir", "agama", "suku", "berat_badan",
-      "tinggi_badan", "foto_depan", "foto_samping_kiri", "foto_samping_kanan", "foto_belakang",
+      "nama_lengkap",
+      "nik",
+      "nkk",
+      "jenis_kelamin",
+      "no_hp",
+      "email",
+      "tanggal_lahir",
+      "tempat_lahir",
+      "agama",
+      "suku",
+      "berat_badan",
+      "tinggi_badan",
+      "foto_depan",
+      "foto_samping_kiri",
+      "foto_samping_kanan",
+      "foto_belakang",
     ],
     1: [
-      "tinggal_provinsi", "tinggal_kabkot", "tinggal_kecamatan", "tinggal_kelurahan",
-      "tinggal_dusun", "tinggal_kode_pos", "tinggal_rt", "tinggal_rw", "tinggal_alamat",
-      "kerja_provinsi", "kerja_kabkot", "kerja_kecamatan", "kerja_kelurahan",
-      "kerja_dusun", "kerja_kode_pos", "kerja_rt", "kerja_rw", "kerja_alamat",
+      "tinggal_provinsi",
+      "tinggal_kabkot",
+      "tinggal_kecamatan",
+      "tinggal_kelurahan",
+      "tinggal_dusun",
+      "tinggal_kode_pos",
+      "tinggal_rt",
+      "tinggal_rw",
+      "tinggal_alamat",
+      "kerja_provinsi",
+      "kerja_kabkot",
+      "kerja_kecamatan",
+      "kerja_kelurahan",
+      "kerja_dusun",
+      "kerja_kode_pos",
+      "kerja_rt",
+      "kerja_rw",
+      "kerja_alamat",
     ],
     2: [
-      "ayah_nama", "ayah_nik", "ayah_jenjang_pendidikan", "ayah_pekerjaan",
-      "ayah_penghasilan", "ayah_status_hidup", "ayah_tempat_lahir", "ayah_tanggal_lahir",
-      "ayah_status_kekerabatan", "ayah_no_hp", "ayah_alamat", "ibu_nama", "ibu_nik",
-      "ibu_jenjang_pendidikan", "ibu_pekerjaan", "ibu_penghasilan", "ibu_status_hidup",
-      "ibu_tempat_lahir", "ibu_tanggal_lahir", "ibu_status_kekerabatan", "ibu_no_hp", "ibu_alamat",
+      "ayah_nama",
+      "ayah_nik",
+      "ayah_jenjang_pendidikan",
+      "ayah_pekerjaan",
+      "ayah_penghasilan",
+      "ayah_status_hidup",
+      "ayah_tempat_lahir",
+      "ayah_tanggal_lahir",
+      "ayah_status_kekerabatan",
+      "ayah_no_hp",
+      "ayah_alamat",
+      "ibu_nama",
+      "ibu_nik",
+      "ibu_jenjang_pendidikan",
+      "ibu_pekerjaan",
+      "ibu_penghasilan",
+      "ibu_status_hidup",
+      "ibu_tempat_lahir",
+      "ibu_tanggal_lahir",
+      "ibu_status_kekerabatan",
+      "ibu_no_hp",
+      "ibu_alamat",
     ],
     3: [
-      "jenjang_sekolah", "sekolah", "jurusan_sekolah", "tahun_lulus",
-      "sekolah_provinsi", "sekolah_kabkot", "nama_jurusan_sekolah",
+      "jenjang_sekolah",
+      "sekolah",
+      "jurusan_sekolah",
+      "tahun_lulus",
+      "sekolah_provinsi",
+      "sekolah_kabkot",
+      "nama_jurusan_sekolah",
     ],
     4: ["kondisi_buta_warna"],
     5: [],
@@ -191,7 +245,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
   useEffect(() => {
     if (existBeasiswa) {
-      const formatSelectValue = (kode?: string | number | null, nama?: string | null) => {
+      const formatSelectValue = (
+        kode?: string | number | null,
+        nama?: string | null,
+      ) => {
         if (!kode || kode === "") return "";
         return `${kode}#${nama ?? ""}`;
       };
@@ -205,28 +262,65 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
         email: existBeasiswa.email ?? user?.email ?? "",
         tanggal_lahir: existBeasiswa.tanggal_lahir ?? "",
         tempat_lahir: existBeasiswa.tempat_lahir ?? "",
-        agama: agamaOptions.find((opt: { value: string; label: string }) => opt.label === existBeasiswa.agama)?.value ?? existBeasiswa.agama ?? "",
-        suku: sukuOptions.find((opt: { value: string; label: string }) => opt.label === existBeasiswa.suku)?.value ?? existBeasiswa.suku ?? "",
+        agama:
+          agamaOptions.find(
+            (opt: { value: string; label: string }) =>
+              opt.label === existBeasiswa.agama,
+          )?.value ??
+          existBeasiswa.agama ??
+          "",
+        suku:
+          sukuOptions.find(
+            (opt: { value: string; label: string }) =>
+              opt.label === existBeasiswa.suku,
+          )?.value ??
+          existBeasiswa.suku ??
+          "",
         pekerjaan: existBeasiswa.pekerjaan ?? "",
         instansi_pekerjaan: existBeasiswa.instansi_pekerjaan ?? "",
         berat_badan: existBeasiswa.berat_badan?.toString(),
         tinggi_badan: existBeasiswa.tinggi_badan?.toString(),
-        alamat_kerja_sama_dengan_tinggal: existBeasiswa.alamat_kerja_sama_dengan_tinggal ?? false,
+        alamat_kerja_sama_dengan_tinggal:
+          existBeasiswa.alamat_kerja_sama_dengan_tinggal ?? false,
 
-        tinggal_provinsi: formatSelectValue(existBeasiswa.tinggal_kode_prov, existBeasiswa.tinggal_prov),
-        tinggal_kabkot: formatSelectValue(existBeasiswa.tinggal_kode_kab, existBeasiswa.tinggal_kab_kota),
-        tinggal_kecamatan: formatSelectValue(existBeasiswa.tinggal_kode_kec, existBeasiswa.tinggal_kec),
-        tinggal_kelurahan: formatSelectValue(existBeasiswa.tinggal_kode_kel, existBeasiswa.tinggal_kel),
+        tinggal_provinsi: formatSelectValue(
+          existBeasiswa.tinggal_kode_prov,
+          existBeasiswa.tinggal_prov,
+        ),
+        tinggal_kabkot: formatSelectValue(
+          existBeasiswa.tinggal_kode_kab,
+          existBeasiswa.tinggal_kab_kota,
+        ),
+        tinggal_kecamatan: formatSelectValue(
+          existBeasiswa.tinggal_kode_kec,
+          existBeasiswa.tinggal_kec,
+        ),
+        tinggal_kelurahan: formatSelectValue(
+          existBeasiswa.tinggal_kode_kel,
+          existBeasiswa.tinggal_kel,
+        ),
         tinggal_dusun: existBeasiswa.tinggal_dusun ?? "",
         tinggal_kode_pos: existBeasiswa.tinggal_kode_pos ?? "",
         tinggal_rt: existBeasiswa.tinggal_rt ?? "",
         tinggal_rw: existBeasiswa.tinggal_rw ?? "",
         tinggal_alamat: existBeasiswa.tinggal_alamat ?? "",
 
-        kerja_provinsi: formatSelectValue(existBeasiswa.kerja_kode_prov, existBeasiswa.kerja_prov),
-        kerja_kabkot: formatSelectValue(existBeasiswa.kerja_kode_kab, existBeasiswa.kerja_kab_kota),
-        kerja_kecamatan: formatSelectValue(existBeasiswa.kerja_kode_kec, existBeasiswa.kerja_kec),
-        kerja_kelurahan: formatSelectValue(existBeasiswa.kerja_kode_kel, existBeasiswa.kerja_kel),
+        kerja_provinsi: formatSelectValue(
+          existBeasiswa.kerja_kode_prov,
+          existBeasiswa.kerja_prov,
+        ),
+        kerja_kabkot: formatSelectValue(
+          existBeasiswa.kerja_kode_kab,
+          existBeasiswa.kerja_kab_kota,
+        ),
+        kerja_kecamatan: formatSelectValue(
+          existBeasiswa.kerja_kode_kec,
+          existBeasiswa.kerja_kec,
+        ),
+        kerja_kelurahan: formatSelectValue(
+          existBeasiswa.kerja_kode_kel,
+          existBeasiswa.kerja_kel,
+        ),
         kerja_dusun: existBeasiswa.kerja_dusun ?? "",
         kerja_kode_pos: existBeasiswa.kerja_kode_pos ?? "",
         kerja_rt: existBeasiswa.kerja_rt ?? "",
@@ -272,14 +366,24 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
         wali_email: existBeasiswa.wali_email ?? "",
         wali_alamat: existBeasiswa.wali_alamat ?? "",
 
-        sekolah_provinsi: formatSelectValue(existBeasiswa.sekolah_kode_prov, existBeasiswa.sekolah_prov),
-        sekolah_kabkot: formatSelectValue(existBeasiswa.sekolah_kode_kab, existBeasiswa.sekolah_kab_kota),
-        jenjang_sekolah: existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
-          ? existBeasiswa.id_jenjang_sekolah + "#" + existBeasiswa.jenjang_sekolah
-          : "",
-        sekolah: existBeasiswa.sekolah && existBeasiswa.nisn_sekolah
-          ? `${existBeasiswa.sekolah}#NPSN:${existBeasiswa.nisn_sekolah}`
-          : (existBeasiswa.sekolah ?? ""),
+        sekolah_provinsi: formatSelectValue(
+          existBeasiswa.sekolah_kode_prov,
+          existBeasiswa.sekolah_prov,
+        ),
+        sekolah_kabkot: formatSelectValue(
+          existBeasiswa.sekolah_kode_kab,
+          existBeasiswa.sekolah_kab_kota,
+        ),
+        jenjang_sekolah:
+          existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
+            ? existBeasiswa.id_jenjang_sekolah +
+              "#" +
+              existBeasiswa.jenjang_sekolah
+            : "",
+        sekolah:
+          existBeasiswa.sekolah && existBeasiswa.nisn_sekolah
+            ? `${existBeasiswa.sekolah}#NPSN:${existBeasiswa.nisn_sekolah}`
+            : (existBeasiswa.sekolah ?? ""),
         jurusan_sekolah: existBeasiswa.jurusan ?? "",
         tahun_lulus: existBeasiswa.tahun_lulus ?? "",
         nama_jurusan_sekolah: existBeasiswa.nama_jurusan_sekolah ?? "",
@@ -295,19 +399,56 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
         jalur: formatSelectValue(existBeasiswa.id_jalur, existBeasiswa.jalur),
       });
-      const initialJalurId = existBeasiswa.id_jalur ? String(existBeasiswa.id_jalur) : null;
+      const initialJalurId = existBeasiswa.id_jalur
+        ? String(existBeasiswa.id_jalur)
+        : null;
       setPrevJalurId(initialJalurId);
     }
   }, [existBeasiswa, agamaOptions, sukuOptions, reset, user]);
 
   const steps = [
-    { id: 0, title: "Identitas Pribadi", description: "Informasi Data Diri dan Kontak", icon: UserCheck },
-    { id: 1, title: "Alamat Lengkap", description: "Domisili dan Lokasi Kerja/Kebun", icon: MapPin },
-    { id: 2, title: "Data Orang Tua/Wali", description: "Informasi Identitas dan Pekerjaan Orang Tua/Wali", icon: Users },
-    { id: 3, title: "Asal Sekolah", description: "Riwayat Pendidikan Sekolah", icon: GraduationCap },
-    { id: 4, title: "Pilihan Jurusan", description: "Program Studi dan Perguruan Tinggi", icon: BookOpen },
-    { id: 5, title: "Persyaratan Umum", description: "Berkas Dokumen Persyaratan Umum", icon: FileText },
-    { id: 6, title: "Persyaratan Khusus", description: "Berkas Dokumen Persyaratan Khusus", icon: FolderOpen },
+    {
+      id: 0,
+      title: "Identitas Pribadi",
+      description: "Informasi Data Diri dan Kontak",
+      icon: UserCheck,
+    },
+    {
+      id: 1,
+      title: "Alamat Lengkap",
+      description: "Domisili dan Lokasi Kerja/Kebun",
+      icon: MapPin,
+    },
+    {
+      id: 2,
+      title: "Data Orang Tua/Wali",
+      description: "Informasi Identitas dan Pekerjaan Orang Tua/Wali",
+      icon: Users,
+    },
+    {
+      id: 3,
+      title: "Asal Sekolah",
+      description: "Riwayat Pendidikan Sekolah",
+      icon: GraduationCap,
+    },
+    {
+      id: 4,
+      title: "Pilihan Jurusan",
+      description: "Program Studi dan Perguruan Tinggi",
+      icon: BookOpen,
+    },
+    {
+      id: 5,
+      title: "Persyaratan Umum",
+      description: "Berkas Dokumen Persyaratan Umum",
+      icon: FileText,
+    },
+    {
+      id: 6,
+      title: "Persyaratan Khusus",
+      description: "Berkas Dokumen Persyaratan Khusus",
+      icon: FolderOpen,
+    },
   ];
 
   const { data: responseProvinsi } = useQuery({
@@ -363,7 +504,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
   const { data: responsePersyaratanKhusus } = useQuery({
     queryKey: ["persyaratan-khusus-aktif-beasiswa", jalurId],
-    queryFn: () => beasiswaService.getPersyaratanUmumAktifBeasiswaByJalur(jalurId!!),
+    queryFn: () =>
+      beasiswaService.getPersyaratanUmumAktifBeasiswaByJalur(jalurId!!),
     enabled: !!jalurId,
     retry: false,
     refetchOnWindowFocus: false,
@@ -375,14 +517,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
   const saveDraftSilent = async (data: BeasiswaFormData) => {
     try {
       const currentPilihan = data.pilihan_program_studi ?? [];
-      const adaYangTidakLengkap = currentPilihan.some((p) => p.perguruan_tinggi !== "" && p.program_studi === "");
-      const adaYangLengkap = currentPilihan.some((p) => p.perguruan_tinggi !== "" && p.program_studi !== "");
+      const adaYangTidakLengkap = currentPilihan.some(
+        (p) => p.perguruan_tinggi !== "" && p.program_studi === "",
+      );
+      const adaYangLengkap = currentPilihan.some(
+        (p) => p.perguruan_tinggi !== "" && p.program_studi !== "",
+      );
 
       let pilihanToSave = currentPilihan;
 
       if (adaYangTidakLengkap || !adaYangLengkap) {
         try {
-          const existing = await beasiswaService.getPilihanProgramStudiForForm(existBeasiswa.id_trx_beasiswa);
+          const existing = await beasiswaService.getPilihanProgramStudiForForm(
+            existBeasiswa.id_trx_beasiswa,
+          );
           pilihanToSave = existing?.data ?? [];
         } catch {
           pilihanToSave = [];
@@ -392,12 +540,19 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       const [namaSekolah, npsn] = (data.sekolah ?? "").split("#NPSN:");
       const formData = new FormData();
       formData.append("is_draft", "true");
-      formData.append("id_trx_beasiswa", existBeasiswa.id_trx_beasiswa.toString());
+      formData.append(
+        "id_trx_beasiswa",
+        existBeasiswa.id_trx_beasiswa.toString(),
+      );
       if (data.foto instanceof File) formData.append("foto", data.foto);
-      if (data.foto_depan instanceof File) formData.append("foto_depan", data.foto_depan);
-      if (data.foto_samping_kiri instanceof File) formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      if (data.foto_samping_kanan instanceof File) formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      if (data.foto_belakang instanceof File) formData.append("foto_belakang", data.foto_belakang);
+      if (data.foto_depan instanceof File)
+        formData.append("foto_depan", data.foto_depan);
+      if (data.foto_samping_kiri instanceof File)
+        formData.append("foto_samping_kiri", data.foto_samping_kiri);
+      if (data.foto_samping_kanan instanceof File)
+        formData.append("foto_samping_kanan", data.foto_samping_kanan);
+      if (data.foto_belakang instanceof File)
+        formData.append("foto_belakang", data.foto_belakang);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -408,10 +563,16 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("tanggal_lahir", data.tanggal_lahir ?? "");
       formData.append("tempat_lahir", data.tempat_lahir ?? "");
       formData.append("agama", data.agama ?? "");
-      const sukuFinal = data.suku_lainnya && data.suku_lainnya.trim() !== "" ? data.suku_lainnya : data.suku;
+      const sukuFinal =
+        data.suku_lainnya && data.suku_lainnya.trim() !== ""
+          ? data.suku_lainnya
+          : data.suku;
       formData.append("suku", sukuFinal ?? "");
       formData.append("pekerjaan", "0#" + (data.pekerjaan ?? ""));
-      formData.append("instansi_pekerjaan", "0#" + (data.instansi_pekerjaan ?? ""));
+      formData.append(
+        "instansi_pekerjaan",
+        "0#" + (data.instansi_pekerjaan ?? ""),
+      );
       formData.append("berat_badan", data.berat_badan ?? "");
       formData.append("tinggi_badan", data.tinggi_badan ?? "");
       formData.append("tinggal_provinsi", data.tinggal_provinsi ?? "");
@@ -432,14 +593,26 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("kerja_rt", data.kerja_rt ?? "");
       formData.append("kerja_rw", data.kerja_rw ?? "");
       formData.append("kerja_alamat", data.kerja_alamat ?? "");
-      formData.append("alamat_kerja_sama_dengan_tinggal", data.alamat_kerja_sama_dengan_tinggal ? "1" : "0");
+      formData.append(
+        "alamat_kerja_sama_dengan_tinggal",
+        data.alamat_kerja_sama_dengan_tinggal ? "1" : "0",
+      );
       formData.append("ayah_nama", data.ayah_nama ?? "");
       formData.append("ayah_nik", data.ayah_nik ?? "");
-      formData.append("ayah_jenjang_pendidikan", data.ayah_jenjang_pendidikan ?? "");
+      formData.append(
+        "ayah_jenjang_pendidikan",
+        data.ayah_jenjang_pendidikan ?? "",
+      );
       formData.append("ayah_pekerjaan", data.ayah_pekerjaan ?? "");
       formData.append("ayah_penghasilan", data.ayah_penghasilan ?? "");
-      formData.append("ayah_status_hidup", "0#" + (data.ayah_status_hidup ?? ""));
-      formData.append("ayah_status_kekerabatan", "0#" + (data.ayah_status_kekerabatan ?? ""));
+      formData.append(
+        "ayah_status_hidup",
+        "0#" + (data.ayah_status_hidup ?? ""),
+      );
+      formData.append(
+        "ayah_status_kekerabatan",
+        "0#" + (data.ayah_status_kekerabatan ?? ""),
+      );
       formData.append("ayah_tempat_lahir", data.ayah_tempat_lahir ?? "");
       formData.append("ayah_tanggal_lahir", data.ayah_tanggal_lahir ?? "");
       formData.append("ayah_no_hp", data.ayah_no_hp ?? "");
@@ -447,11 +620,17 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ayah_alamat", data.ayah_alamat ?? "");
       formData.append("ibu_nama", data.ibu_nama ?? "");
       formData.append("ibu_nik", data.ibu_nik ?? "");
-      formData.append("ibu_jenjang_pendidikan", data.ibu_jenjang_pendidikan ?? "");
+      formData.append(
+        "ibu_jenjang_pendidikan",
+        data.ibu_jenjang_pendidikan ?? "",
+      );
       formData.append("ibu_pekerjaan", data.ibu_pekerjaan ?? "");
       formData.append("ibu_penghasilan", data.ibu_penghasilan ?? "");
       formData.append("ibu_status_hidup", "0#" + (data.ibu_status_hidup ?? ""));
-      formData.append("ibu_status_kekerabatan", "0#" + (data.ibu_status_kekerabatan ?? ""));
+      formData.append(
+        "ibu_status_kekerabatan",
+        "0#" + (data.ibu_status_kekerabatan ?? ""),
+      );
       formData.append("ibu_tempat_lahir", data.ibu_tempat_lahir ?? "");
       formData.append("ibu_tanggal_lahir", data.ibu_tanggal_lahir ?? "");
       formData.append("ibu_no_hp", data.ibu_no_hp ?? "");
@@ -459,11 +638,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ibu_alamat", data.ibu_alamat ?? "");
       formData.append("wali_nama", data.wali_nama ?? "");
       formData.append("wali_nik", data.wali_nik ?? "");
-      formData.append("wali_jenjang_pendidikan", data.wali_jenjang_pendidikan ?? "");
+      formData.append(
+        "wali_jenjang_pendidikan",
+        data.wali_jenjang_pendidikan ?? "",
+      );
       formData.append("wali_pekerjaan", data.wali_pekerjaan ?? "");
       formData.append("wali_penghasilan", data.wali_penghasilan ?? "");
-      formData.append("wali_status_hidup", "0#" + (data.wali_status_hidup ?? ""));
-      formData.append("wali_status_kekerabatan", "0#" + (data.wali_status_kekerabatan ?? ""));
+      formData.append(
+        "wali_status_hidup",
+        "0#" + (data.wali_status_hidup ?? ""),
+      );
+      formData.append(
+        "wali_status_kekerabatan",
+        "0#" + (data.wali_status_kekerabatan ?? ""),
+      );
       formData.append("wali_tempat_lahir", data.wali_tempat_lahir ?? "");
       formData.append("wali_tanggal_lahir", data.wali_tanggal_lahir ?? "");
       formData.append("wali_no_hp", data.wali_no_hp ?? "");
@@ -490,15 +678,16 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
   const handleNext = async () => {
     if (currentStep >= steps.length - 1) return;
     setIsNextLoading(true);
-    setCustomErrorMessages([]); 
+    setCustomErrorMessages([]);
 
     try {
       const fieldsToValidate = stepFields[currentStep] ?? [];
       if (currentStep >= steps.length - 1) return;
 
-      const isValid = fieldsToValidate.length > 0
-        ? await trigger(fieldsToValidate as any)
-        : true;
+      const isValid =
+        fieldsToValidate.length > 0
+          ? await trigger(fieldsToValidate as any)
+          : true;
 
       if (!isValid) {
         setShowErrorDialog(true);
@@ -516,40 +705,70 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
         const [cekalResult, duplikatResult] = await Promise.allSettled([
           masterService.checkNikCekal(nikValue),
-          beasiswaService.checkNikDuplikat(nikValue, existBeasiswa.id_trx_beasiswa),
+          beasiswaService.checkNikDuplikat(
+            nikValue,
+            existBeasiswa.id_trx_beasiswa,
+          ),
         ]);
 
         if (cekalResult.status === "fulfilled") {
           if (cekalResult.value?.data?.is_cekal) {
-            setCustomErrorMessages(["NIK Anda tidak dapat digunakan untuk mendaftar. Silakan hubungi panitia."]);
+            setCustomErrorMessages([
+              "NIK Anda tidak dapat digunakan untuk mendaftar. Silakan hubungi panitia.",
+            ]);
             setShowErrorDialog(true);
             return;
           }
         } else {
-          setCustomErrorMessages(["Gagal memverifikasi NIK. Silakan coba lagi."]);
+          setCustomErrorMessages([
+            "Gagal memverifikasi NIK. Silakan coba lagi.",
+          ]);
           setShowErrorDialog(true);
           return;
         }
 
         if (duplikatResult.status === "fulfilled") {
           if (duplikatResult.value?.data?.is_duplikat) {
-            setCustomErrorMessages(["NIK ini sudah terdaftar pada pendaftaran lain. Setiap NIK hanya dapat digunakan satu kali."]);
+            setCustomErrorMessages([
+              "NIK ini sudah terdaftar pada pendaftaran lain. Setiap NIK hanya dapat digunakan satu kali.",
+            ]);
             setShowErrorDialog(true);
             return;
           }
         } else {
-          setCustomErrorMessages(["Gagal memverifikasi NIK. Silakan coba lagi."]);
+          setCustomErrorMessages([
+            "Gagal memverifikasi NIK. Silakan coba lagi.",
+          ]);
           setShowErrorDialog(true);
           return;
         }
       }
-
+      if (currentStep === 6) {
+        // Cek dokumen khusus yang ada catatan tapi belum diupload ulang
+        if (uploadKhususRef.current?.hasCatatanBelumDiuploadUlang()) {
+          setCustomErrorMessages([
+            "Terdapat dokumen khusus yang perlu diperbaiki. Silakan unggah ulang dokumen yang ada catatan dari verifikator sebelum melanjutkan.",
+          ]);
+          setShowErrorDialog(true);
+          return;
+        }
+      }
       if (currentStep === 5) {
         try {
-          const res = await beasiswaService.getUploadedPersyaratan("umum", existBeasiswa.id_trx_beasiswa);
-          const uploaded = (res.data ?? []) as Array<{ id_ref_dokumen: number | null }>;
+          const res = await beasiswaService.getUploadedPersyaratan(
+            "umum",
+            existBeasiswa.id_trx_beasiswa,
+          );
+          const uploaded = (res.data ?? []) as Array<{
+            id_ref_dokumen: number | null;
+            verifikator_catatan: string | null;
+          }>;
+
+          // Cek dokumen wajib belum upload
           const uploadedIds = new Set(
-            uploaded.filter((u): u is { id_ref_dokumen: number } => u.id_ref_dokumen !== null).map((u) => u.id_ref_dokumen),
+            uploaded
+              .filter((u) => u.id_ref_dokumen !== null)
+              .map((u) => u.id_ref_dokumen as number),
           );
 
           const belumUpload = persyaratanUmum.filter(
@@ -557,43 +776,71 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
           );
 
           if (belumUpload.length > 0) {
-            const messages = belumUpload.map((doc) => `Dokumen wajib belum diunggah: ${doc.persyaratan}`);
+            const messages = belumUpload.map(
+              (doc) => `Dokumen wajib belum diunggah: ${doc.persyaratan}`,
+            );
             setCustomErrorMessages(messages);
             setShowErrorDialog(true);
             return;
           }
+
+          const belumDiperbaiki = uploaded.filter(
+            (u) => u.verifikator_catatan && u.verifikator_catatan.trim() !== "",
+          );
+
+          if (belumDiperbaiki.length > 0) {
+            setCustomErrorMessages([
+              "Terdapat dokumen yang perlu diperbaiki. Silakan unggah ulang dokumen yang ada catatan dari verifikator sebelum melanjutkan.",
+            ]);
+            setShowErrorDialog(true);
+            return;
+          }
         } catch {
-          setCustomErrorMessages(["Gagal memverifikasi dokumen umum. Coba lagi."]);
+          setCustomErrorMessages([
+            "Gagal memverifikasi dokumen umum. Coba lagi.",
+          ]);
           setShowErrorDialog(true);
           return;
         }
       }
 
       if (currentStep === 4) {
-        const currentPilihan = (getValues("pilihan_program_studi") ?? []) as Array<{
+        const currentPilihan = (getValues("pilihan_program_studi") ??
+          []) as Array<{
           perguruan_tinggi?: string;
           program_studi?: string;
         }>;
 
         const adaYangMasihFetching = currentPilihan.some(
-          (p) => (p?.perguruan_tinggi ?? "") !== "" && (p?.program_studi ?? "") === "",
+          (p) =>
+            (p?.perguruan_tinggi ?? "") !== "" &&
+            (p?.program_studi ?? "") === "",
         );
 
         if (adaYangMasihFetching) {
-          setCustomErrorMessages(["Masih ada program studi yang sedang dimuat. Mohon tunggu sebentar, lalu lengkapi pilihan Anda."]);
+          setCustomErrorMessages([
+            "Masih ada program studi yang sedang dimuat. Mohon tunggu sebentar, lalu lengkapi pilihan Anda.",
+          ]);
           setShowErrorDialog(true);
           return;
         }
 
-        const adaPTTerisi = currentPilihan.some((p) => (p?.perguruan_tinggi ?? "") !== "");
+        const adaPTTerisi = currentPilihan.some(
+          (p) => (p?.perguruan_tinggi ?? "") !== "",
+        );
         let pilihanUntukValidasi = currentPilihan;
 
         if (!adaPTTerisi) {
           try {
-            const existing = await beasiswaService.getPilihanProgramStudiForForm(existBeasiswa.id_trx_beasiswa);
+            const existing =
+              await beasiswaService.getPilihanProgramStudiForForm(
+                existBeasiswa.id_trx_beasiswa,
+              );
             pilihanUntukValidasi = existing?.data ?? [];
           } catch {
-            setCustomErrorMessages(["Gagal memuat pilihan program studi. Silakan coba lagi."]);
+            setCustomErrorMessages([
+              "Gagal memuat pilihan program studi. Silakan coba lagi.",
+            ]);
             setShowErrorDialog(true);
             return;
           }
@@ -603,17 +850,25 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
           const jurusanSekolahRaw = getValues("jurusan_sekolah") as string;
           const idJurusanSekolah = jurusanSekolahRaw?.split("#")[0];
           if (idJurusanSekolah) {
-            const resPT = await masterService.getPerguruanTinggiByJurusanSekolah(idJurusanSekolah);
-            (resPT?.data ?? []).forEach((pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
-              const raw = pt.has_d1_d2;
-              const s = raw != null ? String(raw).trim().toUpperCase() : "";
-              ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
-            });
+            const resPT =
+              await masterService.getPerguruanTinggiByJurusanSekolah(
+                idJurusanSekolah,
+              );
+            (resPT?.data ?? []).forEach(
+              (pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
+                const raw = pt.has_d1_d2;
+                const s = raw != null ? String(raw).trim().toUpperCase() : "";
+                ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
+              },
+            );
           }
-        } catch { }
+        } catch {}
 
         const ptProdiMap = new Map<string, string[]>();
-        const validationErrors = validatePilihan(pilihanUntukValidasi, ptProdiMap);
+        const validationErrors = validatePilihan(
+          pilihanUntukValidasi,
+          ptProdiMap,
+        );
 
         if (validationErrors.length > 0) {
           setCustomErrorMessages(validationErrors);
@@ -623,10 +878,17 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       }
 
       if (currentStep === 3) {
-        const getKode = (val: string | undefined) => (val ?? "").split("#")[0].trim();
+        const getKode = (val: string | undefined) =>
+          (val ?? "").split("#")[0].trim();
         const asalSekolahChecks: { label: string; valid: boolean }[] = [
-          { label: "Provinsi sekolah", valid: getKode(getValues("sekolah_provinsi")) !== "" },
-          { label: "Kabupaten / Kota sekolah", valid: getKode(getValues("sekolah_kabkot")) !== "" },
+          {
+            label: "Provinsi sekolah",
+            valid: getKode(getValues("sekolah_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota sekolah",
+            valid: getKode(getValues("sekolah_kabkot")) !== "",
+          },
           {
             label: "Jenjang sekolah",
             valid: (() => {
@@ -654,10 +916,15 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
               return kode !== "" && kode !== "0";
             })(),
           },
-          { label: "Tahun lulus", valid: (getValues("tahun_lulus") ?? "").trim() !== "" },
+          {
+            label: "Tahun lulus",
+            valid: (getValues("tahun_lulus") ?? "").trim() !== "",
+          },
         ];
 
-        const isSmk = (getValues("jenjang_sekolah") ?? "").toLowerCase().includes("smk");
+        const isSmk = (getValues("jenjang_sekolah") ?? "")
+          .toLowerCase()
+          .includes("smk");
         if (isSmk) {
           asalSekolahChecks.push({
             label: "Nama jurusan sekolah",
@@ -667,7 +934,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
 
         const invalidFields = asalSekolahChecks.filter((c) => !c.valid);
         if (invalidFields.length > 0) {
-          const msgs = invalidFields.map(({ label }) => `${label} wajib diisi / dipilih.`);
+          const msgs = invalidFields.map(
+            ({ label }) => `${label} wajib diisi / dipilih.`,
+          );
           setCustomErrorMessages(msgs);
           setShowErrorDialog(true);
           return;
@@ -698,35 +967,92 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
             id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
             ...nilaiRaporRef.current,
           });
-        } catch { }
+        } catch {}
       }
 
       if (currentStep === 1) {
-        const getKode = (val: string | undefined) => (val ?? "").split("#")[0].trim();
+        const getKode = (val: string | undefined) =>
+          (val ?? "").split("#")[0].trim();
         const alamatChecks: { label: string; valid: boolean }[] = [
-          { label: "Provinsi tempat tinggal", valid: getKode(getValues("tinggal_provinsi")) !== "" },
-          { label: "Kabupaten / Kota tempat tinggal", valid: getKode(getValues("tinggal_kabkot")) !== "" },
-          { label: "Kecamatan tempat tinggal", valid: getKode(getValues("tinggal_kecamatan")) !== "" },
-          { label: "Kelurahan tempat tinggal", valid: getKode(getValues("tinggal_kelurahan")) !== "" },
-          { label: "Dusun tempat tinggal", valid: (getValues("tinggal_dusun") ?? "").trim() !== "" },
-          { label: "Kode pos tempat tinggal", valid: (getValues("tinggal_kode_pos") ?? "").trim() !== "" },
-          { label: "RT tempat tinggal", valid: (getValues("tinggal_rt") ?? "").trim() !== "" },
-          { label: "RW tempat tinggal", valid: (getValues("tinggal_rw") ?? "").trim() !== "" },
-          { label: "Alamat lengkap tempat tinggal", valid: (getValues("tinggal_alamat") ?? "").trim() !== "" },
-          { label: "Provinsi tempat bekerja / kebun", valid: getKode(getValues("kerja_provinsi")) !== "" },
-          { label: "Kabupaten / Kota tempat bekerja / kebun", valid: getKode(getValues("kerja_kabkot")) !== "" },
-          { label: "Kecamatan tempat bekerja / kebun", valid: getKode(getValues("kerja_kecamatan")) !== "" },
-          { label: "Kelurahan tempat bekerja / kebun", valid: getKode(getValues("kerja_kelurahan")) !== "" },
-          { label: "Dusun tempat bekerja / kebun", valid: (getValues("kerja_dusun") ?? "").trim() !== "" },
-          { label: "Kode pos tempat bekerja / kebun", valid: (getValues("kerja_kode_pos") ?? "").trim() !== "" },
-          { label: "RT tempat bekerja / kebun", valid: (getValues("kerja_rt") ?? "").trim() !== "" },
-          { label: "RW tempat bekerja / kebun", valid: (getValues("kerja_rw") ?? "").trim() !== "" },
-          { label: "Alamat lengkap tempat bekerja / kebun", valid: (getValues("kerja_alamat") ?? "").trim() !== "" },
+          {
+            label: "Provinsi tempat tinggal",
+            valid: getKode(getValues("tinggal_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota tempat tinggal",
+            valid: getKode(getValues("tinggal_kabkot")) !== "",
+          },
+          {
+            label: "Kecamatan tempat tinggal",
+            valid: getKode(getValues("tinggal_kecamatan")) !== "",
+          },
+          {
+            label: "Kelurahan tempat tinggal",
+            valid: getKode(getValues("tinggal_kelurahan")) !== "",
+          },
+          {
+            label: "Dusun tempat tinggal",
+            valid: (getValues("tinggal_dusun") ?? "").trim() !== "",
+          },
+          {
+            label: "Kode pos tempat tinggal",
+            valid: (getValues("tinggal_kode_pos") ?? "").trim() !== "",
+          },
+          {
+            label: "RT tempat tinggal",
+            valid: (getValues("tinggal_rt") ?? "").trim() !== "",
+          },
+          {
+            label: "RW tempat tinggal",
+            valid: (getValues("tinggal_rw") ?? "").trim() !== "",
+          },
+          {
+            label: "Alamat lengkap tempat tinggal",
+            valid: (getValues("tinggal_alamat") ?? "").trim() !== "",
+          },
+          {
+            label: "Provinsi tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_provinsi")) !== "",
+          },
+          {
+            label: "Kabupaten / Kota tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kabkot")) !== "",
+          },
+          {
+            label: "Kecamatan tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kecamatan")) !== "",
+          },
+          {
+            label: "Kelurahan tempat bekerja / kebun",
+            valid: getKode(getValues("kerja_kelurahan")) !== "",
+          },
+          {
+            label: "Dusun tempat bekerja / kebun",
+            valid: (getValues("kerja_dusun") ?? "").trim() !== "",
+          },
+          {
+            label: "Kode pos tempat bekerja / kebun",
+            valid: (getValues("kerja_kode_pos") ?? "").trim() !== "",
+          },
+          {
+            label: "RT tempat bekerja / kebun",
+            valid: (getValues("kerja_rt") ?? "").trim() !== "",
+          },
+          {
+            label: "RW tempat bekerja / kebun",
+            valid: (getValues("kerja_rw") ?? "").trim() !== "",
+          },
+          {
+            label: "Alamat lengkap tempat bekerja / kebun",
+            valid: (getValues("kerja_alamat") ?? "").trim() !== "",
+          },
         ];
 
         const invalidFields = alamatChecks.filter((c) => !c.valid);
         if (invalidFields.length > 0) {
-          const msgs = invalidFields.map(({ label }) => `${label} wajib diisi / dipilih.`);
+          const msgs = invalidFields.map(
+            ({ label }) => `${label} wajib diisi / dipilih.`,
+          );
           setCustomErrorMessages(msgs);
           setShowErrorDialog(true);
           return;
@@ -755,23 +1081,42 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
   };
 
   const onSubmit = async (data: BeasiswaFormData) => {
-    setCustomErrorMessages([]); 
+    setCustomErrorMessages([]);
+    // ← tambah di awal onSubmit
+    if (uploadKhususRef.current?.hasCatatanBelumDiuploadUlang()) {
+      setCustomErrorMessages([
+        "Terdapat dokumen khusus yang perlu diperbaiki. Silakan unggah ulang dokumen yang ada catatan dari verifikator.",
+      ]);
+      setShowErrorDialog(true);
+      return;
+    }
     if (uploadKhususRef.current?.hasPendingFiles()) {
       try {
         await uploadKhususRef.current.uploadAllPending();
       } catch {
-        setCustomErrorMessages(["Gagal mengunggah beberapa dokumen khusus. Silakan coba lagi."]);
+        setCustomErrorMessages([
+          "Gagal mengunggah beberapa dokumen khusus. Silakan coba lagi.",
+        ]);
         setShowErrorDialog(true);
         return;
       }
     }
-    
+
     if (persyaratanKhusus.length > 0) {
       try {
-        const res = await beasiswaService.getUploadedPersyaratan("khusus", existBeasiswa.id_trx_beasiswa);
-        const uploaded = (res.data ?? []) as Array<{ id_ref_dokumen: number | null }>;
+        const res = await beasiswaService.getUploadedPersyaratan(
+          "khusus",
+          existBeasiswa.id_trx_beasiswa,
+        );
+        const uploaded = (res.data ?? []) as Array<{
+          id_ref_dokumen: number | null;
+        }>;
         const uploadedIds = new Set(
-          uploaded.filter((u): u is { id_ref_dokumen: number } => u.id_ref_dokumen !== null).map((u) => u.id_ref_dokumen),
+          uploaded
+            .filter(
+              (u): u is { id_ref_dokumen: number } => u.id_ref_dokumen !== null,
+            )
+            .map((u) => u.id_ref_dokumen),
         );
 
         const belumUpload = persyaratanKhusus.filter(
@@ -779,23 +1124,31 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
         );
 
         if (belumUpload.length > 0) {
-          const msgs = belumUpload.map((doc) => `Dokumen wajib belum diunggah: ${doc.persyaratan}`);
+          const msgs = belumUpload.map(
+            (doc) => `Dokumen wajib belum diunggah: ${doc.persyaratan}`,
+          );
           setCustomErrorMessages(msgs);
           setShowErrorDialog(true);
           return;
         }
       } catch {
-        setCustomErrorMessages(["Gagal memverifikasi dokumen khusus. Coba lagi."]);
+        setCustomErrorMessages([
+          "Gagal memverifikasi dokumen khusus. Coba lagi.",
+        ]);
         setShowErrorDialog(true);
         return;
       }
     }
 
-    const adaPilihanTerisi = data.pilihan_program_studi?.some((p) => p.perguruan_tinggi !== "");
+    const adaPilihanTerisi = data.pilihan_program_studi?.some(
+      (p) => p.perguruan_tinggi !== "",
+    );
 
     if (!adaPilihanTerisi) {
       try {
-        const existing = await beasiswaService.getPilihanProgramStudiForForm(existBeasiswa.id_trx_beasiswa);
+        const existing = await beasiswaService.getPilihanProgramStudiForForm(
+          existBeasiswa.id_trx_beasiswa,
+        );
         const pilihanFromApi = existing?.data ?? [];
 
         if (pilihanFromApi.length === 0) {
@@ -825,7 +1178,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
     try {
       const formData = new FormData();
       formData.append("is_draft", "false");
-      formData.append("id_trx_beasiswa", existBeasiswa.id_trx_beasiswa.toString());
+      formData.append(
+        "id_trx_beasiswa",
+        existBeasiswa.id_trx_beasiswa.toString(),
+      );
 
       if (data.foto instanceof File) {
         formData.append("foto", data.foto);
@@ -854,7 +1210,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("agama", data.agama ?? "");
       formData.append("suku", data.suku ?? "");
       formData.append("pekerjaan", "0#" + (data.pekerjaan ?? ""));
-      formData.append("instansi_pekerjaan", "0#" + (data.instansi_pekerjaan ?? ""));
+      formData.append(
+        "instansi_pekerjaan",
+        "0#" + (data.instansi_pekerjaan ?? ""),
+      );
       formData.append("berat_badan", data.berat_badan ?? "");
       formData.append("tinggi_badan", data.tinggi_badan ?? "");
       formData.append("tinggal_provinsi", data.tinggal_provinsi ?? "");
@@ -875,14 +1234,26 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("kerja_rt", data.kerja_rt ?? "");
       formData.append("kerja_rw", data.kerja_rw ?? "");
       formData.append("kerja_alamat", data.kerja_alamat ?? "");
-      formData.append("alamat_kerja_sama_dengan_tinggal", data.alamat_kerja_sama_dengan_tinggal ? "1" : "0");
+      formData.append(
+        "alamat_kerja_sama_dengan_tinggal",
+        data.alamat_kerja_sama_dengan_tinggal ? "1" : "0",
+      );
       formData.append("ayah_nama", data.ayah_nama ?? "");
       formData.append("ayah_nik", data.ayah_nik ?? "");
-      formData.append("ayah_jenjang_pendidikan", data.ayah_jenjang_pendidikan ?? "");
+      formData.append(
+        "ayah_jenjang_pendidikan",
+        data.ayah_jenjang_pendidikan ?? "",
+      );
       formData.append("ayah_pekerjaan", data.ayah_pekerjaan ?? "");
       formData.append("ayah_penghasilan", data.ayah_penghasilan ?? "");
-      formData.append("ayah_status_hidup", "0#" + (data.ayah_status_hidup ?? ""));
-      formData.append("ayah_status_kekerabatan", "0#" + (data.ayah_status_kekerabatan ?? ""));
+      formData.append(
+        "ayah_status_hidup",
+        "0#" + (data.ayah_status_hidup ?? ""),
+      );
+      formData.append(
+        "ayah_status_kekerabatan",
+        "0#" + (data.ayah_status_kekerabatan ?? ""),
+      );
       formData.append("ayah_tempat_lahir", data.ayah_tempat_lahir ?? "");
       formData.append("ayah_tanggal_lahir", data.ayah_tanggal_lahir ?? "");
       formData.append("ayah_no_hp", data.ayah_no_hp ?? "");
@@ -890,11 +1261,17 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ayah_alamat", data.ayah_alamat ?? "");
       formData.append("ibu_nama", data.ibu_nama ?? "");
       formData.append("ibu_nik", data.ibu_nik ?? "");
-      formData.append("ibu_jenjang_pendidikan", data.ibu_jenjang_pendidikan ?? "");
+      formData.append(
+        "ibu_jenjang_pendidikan",
+        data.ibu_jenjang_pendidikan ?? "",
+      );
       formData.append("ibu_pekerjaan", data.ibu_pekerjaan ?? "");
       formData.append("ibu_penghasilan", data.ibu_penghasilan ?? "");
       formData.append("ibu_status_hidup", "0#" + (data.ibu_status_hidup ?? ""));
-      formData.append("ibu_status_kekerabatan", "0#" + (data.ibu_status_kekerabatan ?? ""));
+      formData.append(
+        "ibu_status_kekerabatan",
+        "0#" + (data.ibu_status_kekerabatan ?? ""),
+      );
       formData.append("ibu_tempat_lahir", data.ibu_tempat_lahir ?? "");
       formData.append("ibu_tanggal_lahir", data.ibu_tanggal_lahir ?? "");
       formData.append("ibu_no_hp", data.ibu_no_hp ?? "");
@@ -902,11 +1279,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ibu_alamat", data.ibu_alamat ?? "");
       formData.append("wali_nama", data.wali_nama ?? "");
       formData.append("wali_nik", data.wali_nik ?? "");
-      formData.append("wali_jenjang_pendidikan", data.wali_jenjang_pendidikan ?? "");
+      formData.append(
+        "wali_jenjang_pendidikan",
+        data.wali_jenjang_pendidikan ?? "",
+      );
       formData.append("wali_pekerjaan", data.wali_pekerjaan ?? "");
       formData.append("wali_penghasilan", data.wali_penghasilan ?? "");
-      formData.append("wali_status_hidup", "0#" + (data.wali_status_hidup ?? ""));
-      formData.append("wali_status_kekerabatan", "0#" + (data.wali_status_kekerabatan ?? ""));
+      formData.append(
+        "wali_status_hidup",
+        "0#" + (data.wali_status_hidup ?? ""),
+      );
+      formData.append(
+        "wali_status_kekerabatan",
+        "0#" + (data.wali_status_kekerabatan ?? ""),
+      );
       formData.append("wali_tempat_lahir", data.wali_tempat_lahir ?? "");
       formData.append("wali_tanggal_lahir", data.wali_tanggal_lahir ?? "");
       formData.append("wali_no_hp", data.wali_no_hp ?? "");
@@ -927,7 +1313,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("sequence", "");
       formData.append("kode_pendaftaran", "");
       formData.append("kondisi_buta_warna", data.kondisi_buta_warna ?? "");
-      formData.append("pilihan_program_studi", JSON.stringify(data.pilihan_program_studi));
+      formData.append(
+        "pilihan_program_studi",
+        JSON.stringify(data.pilihan_program_studi),
+      );
       formData.append("jalur", data.jalur ?? "");
 
       const response = await beasiswaService.submitBeasiswa(formData);
@@ -955,13 +1344,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
     try {
       const formData = new FormData();
       formData.append("is_draft", "true");
-      formData.append("id_trx_beasiswa", existBeasiswa.id_trx_beasiswa.toString());
+      formData.append(
+        "id_trx_beasiswa",
+        existBeasiswa.id_trx_beasiswa.toString(),
+      );
 
       if (data.foto instanceof File) formData.append("foto", data.foto);
-      if (data.foto_depan instanceof File) formData.append("foto_depan", data.foto_depan);
-      if (data.foto_samping_kiri instanceof File) formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      if (data.foto_samping_kanan instanceof File) formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      if (data.foto_belakang instanceof File) formData.append("foto_belakang", data.foto_belakang);
+      if (data.foto_depan instanceof File)
+        formData.append("foto_depan", data.foto_depan);
+      if (data.foto_samping_kiri instanceof File)
+        formData.append("foto_samping_kiri", data.foto_samping_kiri);
+      if (data.foto_samping_kanan instanceof File)
+        formData.append("foto_samping_kanan", data.foto_samping_kanan);
+      if (data.foto_belakang instanceof File)
+        formData.append("foto_belakang", data.foto_belakang);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -974,7 +1370,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("agama", data.agama ?? "");
       formData.append("suku", data.suku ?? "");
       formData.append("pekerjaan", "0#" + (data.pekerjaan ?? ""));
-      formData.append("instansi_pekerjaan", "0#" + (data.instansi_pekerjaan ?? ""));
+      formData.append(
+        "instansi_pekerjaan",
+        "0#" + (data.instansi_pekerjaan ?? ""),
+      );
       formData.append("berat_badan", data.berat_badan ?? "");
       formData.append("tinggi_badan", data.tinggi_badan ?? "");
       formData.append("tinggal_provinsi", data.tinggal_provinsi ?? "");
@@ -995,14 +1394,26 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("kerja_rt", data.kerja_rt ?? "");
       formData.append("kerja_rw", data.kerja_rw ?? "");
       formData.append("kerja_alamat", data.kerja_alamat ?? "");
-      formData.append("alamat_kerja_sama_dengan_tinggal", data.alamat_kerja_sama_dengan_tinggal ? "1" : "0");
+      formData.append(
+        "alamat_kerja_sama_dengan_tinggal",
+        data.alamat_kerja_sama_dengan_tinggal ? "1" : "0",
+      );
       formData.append("ayah_nama", data.ayah_nama ?? "");
       formData.append("ayah_nik", data.ayah_nik ?? "");
-      formData.append("ayah_jenjang_pendidikan", data.ayah_jenjang_pendidikan ?? "");
+      formData.append(
+        "ayah_jenjang_pendidikan",
+        data.ayah_jenjang_pendidikan ?? "",
+      );
       formData.append("ayah_pekerjaan", data.ayah_pekerjaan ?? "");
       formData.append("ayah_penghasilan", data.ayah_penghasilan ?? "");
-      formData.append("ayah_status_hidup", "0#" + (data.ayah_status_hidup ?? ""));
-      formData.append("ayah_status_kekerabatan", "0#" + (data.ayah_status_kekerabatan ?? ""));
+      formData.append(
+        "ayah_status_hidup",
+        "0#" + (data.ayah_status_hidup ?? ""),
+      );
+      formData.append(
+        "ayah_status_kekerabatan",
+        "0#" + (data.ayah_status_kekerabatan ?? ""),
+      );
       formData.append("ayah_tempat_lahir", data.ayah_tempat_lahir ?? "");
       formData.append("ayah_tanggal_lahir", data.ayah_tanggal_lahir ?? "");
       formData.append("ayah_no_hp", data.ayah_no_hp ?? "");
@@ -1010,11 +1421,17 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ayah_alamat", data.ayah_alamat ?? "");
       formData.append("ibu_nama", data.ibu_nama ?? "");
       formData.append("ibu_nik", data.ibu_nik ?? "");
-      formData.append("ibu_jenjang_pendidikan", data.ibu_jenjang_pendidikan ?? "");
+      formData.append(
+        "ibu_jenjang_pendidikan",
+        data.ibu_jenjang_pendidikan ?? "",
+      );
       formData.append("ibu_pekerjaan", data.ibu_pekerjaan ?? "");
       formData.append("ibu_penghasilan", data.ibu_penghasilan ?? "");
       formData.append("ibu_status_hidup", "0#" + (data.ibu_status_hidup ?? ""));
-      formData.append("ibu_status_kekerabatan", "0#" + (data.ibu_status_kekerabatan ?? ""));
+      formData.append(
+        "ibu_status_kekerabatan",
+        "0#" + (data.ibu_status_kekerabatan ?? ""),
+      );
       formData.append("ibu_tempat_lahir", data.ibu_tempat_lahir ?? "");
       formData.append("ibu_tanggal_lahir", data.ibu_tanggal_lahir ?? "");
       formData.append("ibu_no_hp", data.ibu_no_hp ?? "");
@@ -1022,11 +1439,20 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("ibu_alamat", data.ibu_alamat ?? "");
       formData.append("wali_nama", data.wali_nama ?? "");
       formData.append("wali_nik", data.wali_nik ?? "");
-      formData.append("wali_jenjang_pendidikan", data.wali_jenjang_pendidikan ?? "");
+      formData.append(
+        "wali_jenjang_pendidikan",
+        data.wali_jenjang_pendidikan ?? "",
+      );
       formData.append("wali_pekerjaan", data.wali_pekerjaan ?? "");
       formData.append("wali_penghasilan", data.wali_penghasilan ?? "");
-      formData.append("wali_status_hidup", "0#" + (data.wali_status_hidup ?? ""));
-      formData.append("wali_status_kekerabatan", "0#" + (data.wali_status_kekerabatan ?? ""));
+      formData.append(
+        "wali_status_hidup",
+        "0#" + (data.wali_status_hidup ?? ""),
+      );
+      formData.append(
+        "wali_status_kekerabatan",
+        "0#" + (data.wali_status_kekerabatan ?? ""),
+      );
       formData.append("wali_tempat_lahir", data.wali_tempat_lahir ?? "");
       formData.append("wali_tanggal_lahir", data.wali_tanggal_lahir ?? "");
       formData.append("wali_no_hp", data.wali_no_hp ?? "");
@@ -1044,7 +1470,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
       formData.append("tahun_lulus", data.tahun_lulus ?? "");
       formData.append("nama_jurusan_sekolah", data.nama_jurusan_sekolah ?? "");
       formData.append("kondisi_buta_warna", data.kondisi_buta_warna ?? "");
-      formData.append("pilihan_program_studi", JSON.stringify(data.pilihan_program_studi));
+      formData.append(
+        "pilihan_program_studi",
+        JSON.stringify(data.pilihan_program_studi),
+      );
       formData.append("jalur", data.jalur ?? "");
 
       const response = await beasiswaService.submitBeasiswa(formData);
@@ -1072,14 +1501,18 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
     if (!pendingJalurValue) return;
     setIsResettingJalur(true);
     try {
-      await beasiswaService.deletePersyaratanKhususByTrx(existBeasiswa.id_trx_beasiswa);
+      await beasiswaService.deletePersyaratanKhususByTrx(
+        existBeasiswa.id_trx_beasiswa,
+      );
       uploadKhususRef.current?.resetAll();
       isSettingJalurFromConfirm.current = true;
       setValue("jalur", pendingJalurValue);
       setPrevJalurId(pendingJalurValue.split("#")[0]);
       setPendingJalurValue(null);
       setShowGantiJalurDialog(false);
-      toast.success("Jalur berhasil diganti, dokumen khusus sebelumnya dihapus.");
+      toast.success(
+        "Jalur berhasil diganti, dokumen khusus sebelumnya dihapus.",
+      );
     } catch {
       toast.error("Gagal menghapus dokumen khusus. Coba lagi.");
     } finally {
@@ -1107,7 +1540,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
     if (!prevJalurId || prevJalurId === newJalurId) return;
 
     setPendingJalurValue(selectedJalur);
-    const jalurLama = jalurOptions.find((opt) => opt.value.split("#")[0] === prevJalurId);
+    const jalurLama = jalurOptions.find(
+      (opt) => opt.value.split("#")[0] === prevJalurId,
+    );
     if (jalurLama) {
       setValue("jalur", jalurLama.value, { shouldDirty: false });
     }
@@ -1126,7 +1561,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
     <>
       {!isPreviewOpen && (
         <div className="flex flex-col md:flex-row gap-6 items-start">
-          <div className="w-full md:w-fit sticky top-4 z-10">
+          {/* <div className="w-full md:w-fit sticky top-4 z-10"> */}
+          <div className="w-full md:w-fit md:sticky md:top-4 md:z-10">
             <VerticalStepper steps={steps} currentStep={currentStep} />
           </div>
 
@@ -1139,11 +1575,16 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                   setTimeout(() => {
                     const el = document.getElementById(fieldName);
                     if (el) {
-                      el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      el.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
                       el.style.transition = "all 0.5s";
                       const originalShadow = el.style.boxShadow;
                       el.style.boxShadow = "0 0 0 4px rgba(251, 191, 36, 0.6)";
-                      setTimeout(() => { el.style.boxShadow = originalShadow; }, 2500);
+                      setTimeout(() => {
+                        el.style.boxShadow = originalShadow;
+                      }, 2500);
                     }
                   }, 300);
                 }}
@@ -1154,7 +1595,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
               <CardContent className="pt-6">
                 <div>
                   <div className={currentStep === 0 ? "block" : "hidden"}>
-                    {isPerbaikan && sectionValid?.data_pribadi_is_valid === "Y" ? (
+                    {isPerbaikan &&
+                    sectionValid?.data_pribadi_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <IdentitasPribadi
                           sectionCatatan={{
@@ -1164,7 +1606,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                           existFoto={existBeasiswa.foto}
                           existFotoDepan={existBeasiswa.foto_depan}
                           existFotoSampingKiri={existBeasiswa.foto_samping_kiri}
-                          existFotoSampingKanan={existBeasiswa.foto_samping_kanan}
+                          existFotoSampingKanan={
+                            existBeasiswa.foto_samping_kanan
+                          }
                           existFotoBelakang={existBeasiswa.foto_belakang}
                           setValue={setValue}
                           register={register}
@@ -1202,7 +1646,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                   </div>
 
                   <div className={currentStep === 1 ? "block" : "hidden"}>
-                    {isPerbaikan && sectionValid?.data_tempat_tinggal_bekerja_is_valid === "Y" ? (
+                    {isPerbaikan &&
+                    sectionValid?.data_tempat_tinggal_bekerja_is_valid ===
+                      "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <Alamat
                           sectionCatatanTempatTinggal={{
@@ -1242,7 +1688,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                   </div>
 
                   <div className={currentStep === 2 ? "block" : "hidden"}>
-                    {isPerbaikan && sectionValid?.data_orang_tua_is_valid === "Y" ? (
+                    {isPerbaikan &&
+                    sectionValid?.data_orang_tua_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <DataOrtu
                           sectionCatatan={{
@@ -1270,7 +1717,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                   </div>
 
                   <div className={currentStep === 3 ? "block" : "hidden"}>
-                    {isPerbaikan && sectionValid?.data_pendidikan_is_valid === "Y" ? (
+                    {isPerbaikan &&
+                    sectionValid?.data_pendidikan_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <AsalSekolah
                           sectionCatatan={{
@@ -1317,6 +1765,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                       errors={errors}
                       setValue={setValue}
                       idTrxBeasiswa={existBeasiswa?.id_trx_beasiswa}
+                      isFieldDisabled={isDisabled}
                     />
                   </div>
 
@@ -1324,6 +1773,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                     <UploadPersyaratanUmum
                       idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                       persyaratanUmum={persyaratanUmum}
+                      isFieldDisabled={isPerbaikan}
                     />
                   </div>
 
@@ -1343,6 +1793,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                         key={jalurId ?? "no-jalur"}
                         idTrxBeasiswa={existBeasiswa.id_trx_beasiswa}
                         persyaratanKhusus={persyaratanKhusus}
+                        isFieldDisabled={isPerbaikan}
                       />
                     </div>
                   </div>
@@ -1352,7 +1803,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                   <Button
                     variant="outline"
                     onClick={handlePrev}
-                    disabled={currentStep === 0 || isPrevLoading || isNextLoading}>
+                    disabled={
+                      currentStep === 0 || isPrevLoading || isNextLoading
+                    }>
                     {isPrevLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1387,7 +1840,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                       <Button
                         type="button"
                         onClick={handleNext}
-                        disabled={isNextLoading || (currentStep === 0 && umurMelebihi)}>
+                        disabled={
+                          isNextLoading || (currentStep === 0 && umurMelebihi)
+                        }>
                         {isNextLoading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1423,8 +1878,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
         />
       )}
 
-      <Dialog 
-        open={showErrorDialog} 
+      <Dialog
+        open={showErrorDialog}
         onOpenChange={(open) => {
           setShowErrorDialog(open);
           if (!open) {
@@ -1457,9 +1912,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({ existBeasiswa, batasTanggalLahir 
                 <li
                   key={`custom-err-${idx}`}
                   className="flex items-start gap-2 text-sm border-l-2 border-destructive pl-3 py-1">
-                  <span className="text-muted-foreground">
-                    {msg}
-                  </span>
+                  <span className="text-muted-foreground">{msg}</span>
                 </li>
               ))}
             </ul>

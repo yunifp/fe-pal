@@ -35,6 +35,7 @@ type Props = {
   isPopulating?: boolean;
   isEmpty?: boolean;
   onResetSlot?: () => void;
+  isFieldDisabled?: (fieldName: string) => boolean;
 };
 
 const PerguruanTinggiItem: FC<Props> = ({
@@ -49,6 +50,7 @@ const PerguruanTinggiItem: FC<Props> = ({
   isEmpty = false,
   onResetSlot,
   onProdiReady,
+  isFieldDisabled,
 }) => {
   const selectedPT = useWatch({
     control,
@@ -81,12 +83,12 @@ const PerguruanTinggiItem: FC<Props> = ({
 
     prevIdPtRef.current = idPt;
     isProdiLoadedRef.current = false;
-    pendingProdiValueRef.current = undefined; 
+    pendingProdiValueRef.current = undefined;
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
       shouldDirty: true,
       shouldValidate: true,
     });
-  }, [idPt]); 
+  }, [idPt]);
 
   const { data: responseProdi, isFetching: isFetchingProdi } = useQuery({
     queryKey: ["program-studi", idPt, kondisiButaWarna, selectedJurusanSekolah],
@@ -139,7 +141,7 @@ const PerguruanTinggiItem: FC<Props> = ({
 
     perguruanTinggiOptions.forEach((opt) => {
       const optIdPT = extractIdPT(opt.value);
-      if (optIdPT === idPt) return; 
+      if (optIdPT === idPt) return;
 
       const countInOtherSlots = allPilihan.filter((p, i) => {
         if (i === index) return false;
@@ -149,9 +151,10 @@ const PerguruanTinggiItem: FC<Props> = ({
       if (countInOtherSlots === 0) return;
 
       const rawProdiList = ptProdiMap.get(optIdPT) ?? [];
-      const prodiList = kondisiButaWarna === "Y" 
-        ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
-        : rawProdiList;
+      const prodiList =
+        kondisiButaWarna === "Y"
+          ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+          : rawProdiList;
 
       const ptCanDouble =
         prodiList.some((j) => isJenjangD1D2(j.jenjang || j)) &&
@@ -168,7 +171,14 @@ const PerguruanTinggiItem: FC<Props> = ({
     });
 
     return disabled;
-  }, [perguruanTinggiOptions, allPilihan, index, idPt, ptProdiMap, kondisiButaWarna]);
+  }, [
+    perguruanTinggiOptions,
+    allPilihan,
+    index,
+    idPt,
+    ptProdiMap,
+    kondisiButaWarna,
+  ]);
 
   const filteredPtOptions = useMemo(
     () =>
@@ -184,7 +194,7 @@ const PerguruanTinggiItem: FC<Props> = ({
       onProdiReady?.(index);
       return;
     }
-    if (isFetchingProdi) return; 
+    if (isFetchingProdi) return;
 
     isProdiLoadedRef.current = true;
     onProdiReady?.(index);
@@ -248,7 +258,7 @@ const PerguruanTinggiItem: FC<Props> = ({
     isFetchingProdi,
     isPopulating,
     filteredProdiOptions,
-  ]); 
+  ]);
 
   const handleResetProdi = () => {
     setValue(`pilihan_program_studi.${index}.program_studi`, "", {
@@ -321,6 +331,7 @@ const PerguruanTinggiItem: FC<Props> = ({
             label="Perguruan Tinggi"
             options={filteredPtOptions}
             placeholder="Pilih perguruan tinggi"
+            disabled={isFieldDisabled?.("pilihan_program_studi")}
             isRequired
           />
 
@@ -350,6 +361,7 @@ const PerguruanTinggiItem: FC<Props> = ({
                     ? "Tidak ada program studi tersedia"
                     : "Pilih program studi"
                 }
+                disabled={isFieldDisabled?.("pilihan_program_studi")}
                 isRequired
               />
             )}

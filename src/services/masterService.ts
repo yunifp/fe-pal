@@ -214,10 +214,14 @@ export const masterService = {
   },
   updateTanggalBeasiswa: async (
     idBeasiswa: number,
-    data: { tanggal_mulai: string; tanggal_selesai: string;batas_tanggal_lahir?: string; },
+    data: {
+      tanggal_mulai: string;
+      tanggal_selesai: string;
+      batas_tanggal_lahir?: string;
+    },
   ): Promise<Response<null>> => {
     const response = await axiosInstanceJson.put(
-     `${MASTER_SERVICE_BASE_URL}/beasiswa/set-pengaturan/${idBeasiswa}`,
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/set-pengaturan/${idBeasiswa}`,
       data,
     );
     return response.data;
@@ -468,7 +472,8 @@ export const masterService = {
   createCmsHero: async (
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsHero>> => {
-    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.post(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero`,
       data,
     );
@@ -483,7 +488,8 @@ export const masterService = {
     id: number,
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.put(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/hero/${id}`,
       data,
     );
@@ -559,7 +565,8 @@ export const masterService = {
   createCmsJalur: async (
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsJalurPendaftaran>> => {
-    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.post(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/jalur`,
       data,
     );
@@ -574,7 +581,8 @@ export const masterService = {
     id: number,
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.put(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/jalur/${id}`,
       data,
     );
@@ -829,7 +837,8 @@ export const masterService = {
   createCmsTentang: async (
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<ICmsTentang>> => {
-    const response = await axiosInstanceFormData.post( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.post(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/tentang`,
       data,
     );
@@ -844,7 +853,8 @@ export const masterService = {
     id: number,
     data: any, // UBAH: Jadi menerima FormData
   ): Promise<Response<null>> => {
-    const response = await axiosInstanceFormData.put( // UBAH: Pakai FormData
+    const response = await axiosInstanceFormData.put(
+      // UBAH: Pakai FormData
       `${MASTER_SERVICE_BASE_URL}/cms/tentang/${id}`,
       data,
     );
@@ -900,6 +910,23 @@ export const masterService = {
     const response = await axiosInstanceJson.post(
       `${MASTER_SERVICE_BASE_URL}/beasiswa/submit-cekal`,
       data,
+    );
+    return response.data;
+  },
+  getPersyaratanUmumAktifBeasiswa: async (): Promise<
+    Response<
+      {
+        id: number;
+        persyaratan: string;
+        status_aktif: string;
+        is_required: "Y" | "N";
+        valid_type: string;
+        size: string;
+      }[]
+    >
+  > => {
+    const response = await axiosInstanceJson.get(
+      `${MASTER_SERVICE_BASE_URL}/beasiswa/persyaratan-umum-aktif`,
     );
     return response.data;
   },

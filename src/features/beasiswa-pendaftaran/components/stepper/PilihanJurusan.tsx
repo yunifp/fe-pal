@@ -28,13 +28,14 @@ interface PilihanJurusanProps {
   errors: FieldErrors<BeasiswaFormData>;
   setValue: UseFormSetValue<BeasiswaFormData>;
   idTrxBeasiswa?: number;
+  isFieldDisabled?: (fieldName: string) => boolean;
 }
 
 export type ProdiCacheItem = { jenjang: string; boleh_buta_warna?: string };
 
 // ── Konstanta jenjang ────────────────────────────────────────────────────────
 const D1D2_JENJANG = new Set(["D2"]);
-const NON_D1D2_JENJANG = new Set(["D1","D3", "D4", "S1"]);
+const NON_D1D2_JENJANG = new Set(["D1", "D3", "D4", "S1"]);
 
 export const isJenjangD1D2 = (jenjang: string): boolean =>
   D1D2_JENJANG.has(jenjang?.trim().toUpperCase());
@@ -67,7 +68,7 @@ export const buildSlotCount = (
     has_d1_d2?: string | number | null;
   }>,
   ptProdiMap: Map<string, ProdiCacheItem[]>,
-  kondisiButaWarna: string = ""
+  kondisiButaWarna: string = "",
 ): number => {
   let total = 0;
   ptList.forEach((pt) => {
@@ -76,9 +77,10 @@ export const buildSlotCount = (
     if (!rawProdiList || rawProdiList.length === 0) return;
 
     // Filter by buta warna
-    const prodiList = kondisiButaWarna === "Y" 
-      ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
-      : rawProdiList;
+    const prodiList =
+      kondisiButaWarna === "Y"
+        ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+        : rawProdiList;
 
     if (prodiList.length === 0) return; // skip this PT if no valid prodi left
 
@@ -99,7 +101,7 @@ export const validatePilihan = (
     program_studi?: string;
   }>,
   ptProdiMap: Map<string, any[]>,
-  kondisiButaWarna: string = ""
+  kondisiButaWarna: string = "",
 ): string[] => {
   const errs: string[] = [];
 
@@ -136,12 +138,15 @@ export const validatePilihan = (
     }
 
     const rawProdiList = ptProdiMap.get(idPT) ?? [];
-    const prodiList = kondisiButaWarna === "Y" 
-      ? rawProdiList.filter(p => p.boleh_buta_warna === "Y") 
-      : rawProdiList;
+    const prodiList =
+      kondisiButaWarna === "Y"
+        ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+        : rawProdiList;
 
     const ptHasD1D2 = prodiList.some((j) => isJenjangD1D2(j.jenjang || j));
-    const ptHasNonD1D2 = prodiList.some((j) => isJenjangNonD1D2(j.jenjang || j));
+    const ptHasNonD1D2 = prodiList.some((j) =>
+      isJenjangNonD1D2(j.jenjang || j),
+    );
 
     const jenjangList = rows.map((r) => r.jenjang.trim().toUpperCase());
     const hasD1D2Slot = jenjangList.some((j) => D1D2_JENJANG.has(j));
@@ -168,6 +173,7 @@ const PilihanJurusan = ({
   errors,
   setValue,
   idTrxBeasiswa,
+  isFieldDisabled,
 }: PilihanJurusanProps) => {
   const butaWarnaOptions = [
     { value: "Y", label: "Ya" },
@@ -250,12 +256,10 @@ const PilihanJurusan = ({
           )
           .then((res) => ({
             idPT: String(pt.id_pt),
-            jenjangList: (res?.data ?? []).map(
-              (ps: any) => ({
-                jenjang: ps.jenjang,
-                boleh_buta_warna: ps.boleh_buta_warna,
-              }),
-            ),
+            jenjangList: (res?.data ?? []).map((ps: any) => ({
+              jenjang: ps.jenjang,
+              boleh_buta_warna: ps.boleh_buta_warna,
+            })),
           })),
       ),
     ).then((results) => {
@@ -285,7 +289,9 @@ const PilihanJurusan = ({
 
         // 🔥 HIDE PT jika pendaftar buta warna & tidak ada prodi yang mengizinkan
         if (selectedKondisiButaWarna === "Y") {
-          const hasValidProdi = prodiList.some((p) => p.boleh_buta_warna === "Y");
+          const hasValidProdi = prodiList.some(
+            (p) => p.boleh_buta_warna === "Y",
+          );
           if (!hasValidProdi) return false;
         }
 
@@ -303,16 +309,21 @@ const PilihanJurusan = ({
   const totalSlot = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
     if (ptProdiMap.size === 0) return 0;
-    return buildSlotCount(responsePerguruanTinggi.data, ptProdiMap, selectedKondisiButaWarna);
+    return buildSlotCount(
+      responsePerguruanTinggi.data,
+      ptProdiMap,
+      selectedKondisiButaWarna,
+    );
   }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
   const extraSlotCount = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return 0;
     return responsePerguruanTinggi.data.filter((pt) => {
       const rawProdiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
-      const prodiList = selectedKondisiButaWarna === "Y" 
-        ? rawProdiList.filter(p => p.boleh_buta_warna === "Y")
-        : rawProdiList;
+      const prodiList =
+        selectedKondisiButaWarna === "Y"
+          ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
+          : rawProdiList;
 
       return (
         prodiList.some((j) => isJenjangD1D2(j.jenjang)) &&
@@ -363,7 +374,7 @@ const PilihanJurusan = ({
     isLoadingExisting,
     totalSlot,
   ]);
-  
+
   const [readySet, setReadySet] = useState<Set<number>>(new Set());
 
   const handleProdiReady = useCallback((index: number) => {
@@ -376,18 +387,18 @@ const PilihanJurusan = ({
   }, []);
 
   const allProdiReady = fields.length === 0 || readySet.size >= fields.length;
-  
+
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
     setPtProdiMap(new Map());
-    setReadySet(new Set()); 
+    setReadySet(new Set());
   }, [selectedIdJurusanSekolah]);
 
   useEffect(() => {
     hasPopulatedRef.current = false;
     lastTotalSlotRef.current = 0;
-    setReadySet(new Set()); 
+    setReadySet(new Set());
   }, [selectedKondisiButaWarna]);
 
   const handleResetSlot = (index: number) => {
@@ -567,7 +578,8 @@ const PilihanJurusan = ({
                         !(allPilihan as any[])?.[index]?.program_studi
                       }
                       onResetSlot={() => handleResetSlot(index)}
-                      onProdiReady={handleProdiReady} 
+                      onProdiReady={handleProdiReady}
+                      isFieldDisabled={isFieldDisabled}
                     />
                   ))}
 

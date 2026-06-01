@@ -39,10 +39,15 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
   const watchUmum = watch("data_persyaratan_umum") ?? [];
   const watchKhusus = watch("data_persyaratan_khusus") ?? [];
 
+  // const hasAnyInvalid =
+  //   VALID_FIELDS.some((field) => watch(field) === "N") ||
+  //   watchUmum.some((d) => d?.is_valid === "N") ||
+  //   watchKhusus.some((d) => d?.is_valid === "N");
+
   const hasAnyInvalid =
     VALID_FIELDS.some((field) => watch(field) === "N") ||
-    watchUmum.some((d) => d?.is_valid === "N") ||
-    watchKhusus.some((d) => d?.is_valid === "N");
+    watchUmum.some((d) => d?.is_valid === "N" && d?.is_required !== "N") || // ← hanya blokir jika wajib
+    watchKhusus.some((d) => d?.is_valid === "N" && d?.is_required !== "N"); // ← sama
 
   const statusOptions = [
     {

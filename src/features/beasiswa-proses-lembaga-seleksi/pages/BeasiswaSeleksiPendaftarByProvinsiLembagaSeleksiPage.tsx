@@ -65,7 +65,7 @@ const BeasiswaSeleksiPendaftarByProvinsiLembagaSeleksiPage = () => {
   });
 
   const data: ITrxBeasiswa[] = response?.data?.result ?? [];
-  console.log(data);
+  // console.log(data);
 
   const totalPages: number = response?.data?.total_pages ?? 0;
 

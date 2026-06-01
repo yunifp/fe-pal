@@ -78,7 +78,6 @@ const IdentitasPribadi = ({
   isFieldDisabled = () => false,
   batasTanggalLahir, // <-- Tangkap prop di sini
 }: Step1IdentitasPribadiProps) => {
-  
   const onFotoChange = async (file: File | null) => {
     if (!file) {
       setValue("foto", undefined, { shouldValidate: true });
@@ -97,12 +96,12 @@ const IdentitasPribadi = ({
 
   const umurMelebihi = useMemo(() => {
     if (!tanggalLahir || !batasTanggalLahir) return false;
-    
+
     const lahir = new Date(tanggalLahir);
-    lahir.setHours(0,0,0,0);
+    lahir.setHours(0, 0, 0, 0);
 
     const batasLahir = new Date(batasTanggalLahir);
-    batasLahir.setHours(0,0,0,0);
+    batasLahir.setHours(0, 0, 0, 0);
 
     return lahir < batasLahir;
   }, [tanggalLahir, batasTanggalLahir]);
@@ -114,12 +113,13 @@ const IdentitasPribadi = ({
   }, [umurMelebihi]);
 
   return (
-    <div 
-      id="section-data-pribadi" 
+    <div
+      id="section-data-pribadi"
       className={`space-y-6 transition-all duration-300 ${
-        sectionCatatan.isValid === "N" ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl" : ""
-      }`}
-    >
+        sectionCatatan.isValid === "N"
+          ? "p-5 border-2 border-amber-300 bg-amber-50/40 rounded-xl"
+          : ""
+      }`}>
       {sectionCatatan.isValid === "N" && (
         <AlertPerbaikanSection
           section="data_pribadi"
@@ -195,8 +195,16 @@ const IdentitasPribadi = ({
               errorMessage={errors.nik?.message}
               disabled={isFieldDisabled("nik")}
               onKeyDown={(e) => {
-                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
               }}
               {...register("nik")}
             />
@@ -219,8 +227,16 @@ const IdentitasPribadi = ({
               errorMessage={errors.nkk?.message}
               disabled={isFieldDisabled("nkk")}
               onKeyDown={(e) => {
-                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
               }}
               {...register("nkk")}
             />
@@ -234,6 +250,7 @@ const IdentitasPribadi = ({
               placeholder="Pilih jenis kelamin"
               isRequired={true}
               error={errors.jenis_kelamin}
+              disabled={isFieldDisabled("jenis_kelamin")}
             />
           </div>
         </div>
@@ -306,7 +323,8 @@ const IdentitasPribadi = ({
         {umurMelebihi && (
           <div className="flex items-center gap-2 rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            Umur Anda melebihi batas ketentuan (maksimal 23 tahun). Anda tidak dapat melanjutkan pendaftaran.
+            Umur Anda melebihi batas ketentuan (maksimal 23 tahun). Anda tidak
+            dapat melanjutkan pendaftaran.
           </div>
         )}
 
@@ -320,6 +338,7 @@ const IdentitasPribadi = ({
               placeholder="Pilih agama"
               isRequired={true}
               error={errors.agama}
+              disabled={isFieldDisabled("agama")}
             />
           </div>
           <div id="suku">
@@ -331,6 +350,7 @@ const IdentitasPribadi = ({
               placeholder="Pilih suku"
               isRequired={true}
               error={errors.suku}
+              disabled={isFieldDisabled("suku")}
             />
           </div>
         </div>
@@ -372,8 +392,16 @@ const IdentitasPribadi = ({
               error={!!errors.berat_badan}
               errorMessage={errors.berat_badan?.message}
               onKeyDown={(e) => {
-                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
               }}
               {...register("berat_badan")}
               disabled={isFieldDisabled("berat_badan")}
@@ -390,8 +418,16 @@ const IdentitasPribadi = ({
               error={!!errors.tinggi_badan}
               errorMessage={errors.tinggi_badan?.message}
               onKeyDown={(e) => {
-                const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
-                if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                ];
+                if (!allowed.includes(e.key) && !/^\d$/.test(e.key))
+                  e.preventDefault();
               }}
               {...register("tinggi_badan")}
               disabled={isFieldDisabled("tinggi_badan")}

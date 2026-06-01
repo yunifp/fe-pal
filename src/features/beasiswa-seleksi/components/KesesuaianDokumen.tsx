@@ -31,6 +31,7 @@ interface KesesuaianDokumenProps {
   register: UseFormRegister<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
   revisedAt?: string | null;
+  isRequired?: boolean;
 }
 
 export const KesesuaianDokumen = ({
@@ -41,6 +42,7 @@ export const KesesuaianDokumen = ({
   register,
   errors,
   revisedAt,
+  isRequired = true,
 }: KesesuaianDokumenProps) => {
   const nameValid = `${fieldName}.${index}.is_valid` as const;
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
@@ -53,6 +55,12 @@ export const KesesuaianDokumen = ({
 
   // Pre-populate nilai radio & catatan berdasarkan status_verifikasi yang sudah ada di DB
   useEffect(() => {
+    setValue(`${fieldName}.${index}.id` as const, String(dokumen.id));
+    setValue(
+      `${fieldName}.${index}.is_required` as const,
+      isRequired ? "Y" : "N",
+    );
+
     const statusVerifikasi = (dokumen as any).status_verifikasi as
       | "sesuai"
       | "tidak sesuai"
@@ -69,6 +77,8 @@ export const KesesuaianDokumen = ({
       }
     }
   }, [
+    dokumen.id,
+    isRequired,
     (dokumen as any).status_verifikasi,
     dokumen.verifikator_catatan,
     nameValid,
@@ -86,24 +96,28 @@ export const KesesuaianDokumen = ({
 
       if (dokumen.nama_dokumen_persyaratan) {
         let ext = ".pdf";
-        
+
         try {
           // Parsing URL untuk mengambil parameter "file" yang bersih dari &t=
           const urlObj = new URL(dokumen.file, window.location.origin);
           const fileParam = urlObj.searchParams.get("file");
-          
+
           if (fileParam) {
-            const actualFile = fileParam.split('/').pop() || "";
+            const actualFile = fileParam.split("/").pop() || "";
             // Ambil ekstensi asli (misal .png, .jpg, .pdf)
-            ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
+            ext = actualFile.includes(".")
+              ? actualFile.substring(actualFile.lastIndexOf("."))
+              : ".pdf";
           }
         } catch (e) {
           // Fallback jika URL gagal di-parsing
         }
 
         // Ganti spasi/karakter aneh di nama dokumen dengan underscore
-        // eslint-disable-next-line no-useless-escape
-        const cleanName = dokumen.nama_dokumen_persyaratan.replace(/[^a-zA-Z0-9 \-]/g, "_");
+        const cleanName = dokumen.nama_dokumen_persyaratan.replace(
+          /[^a-zA-Z0-9 -]/g,
+          "_",
+        );
         fileName = `${cleanName}${ext}`;
       }
 
@@ -142,6 +156,11 @@ export const KesesuaianDokumen = ({
               type="hidden"
               {...register(`${fieldName}.${index}.kategori` as const)}
               value={fieldName === "data_persyaratan_umum" ? "Umum" : "Khusus"}
+            />
+            <input
+              type="hidden"
+              {...register(`${fieldName}.${index}.is_required` as const)}
+              value={isRequired ? "Y" : "N"}
             />
             {/* Banner biru dokumen diupload ulang */}
             {revisedAt && (
@@ -219,13 +238,12 @@ export const KesesuaianDokumen = ({
 
               {/* ✅ Ganti tag a dengan Button onClick dan handleDownload */}
               {dokumen.file && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleDownload}
                   disabled={isDownloading}
-                  type="button"
-                >
+                  type="button">
                   {isDownloading ? (
                     <Clock className="w-4 h-4 mr-1 animate-spin" />
                   ) : (

@@ -13,11 +13,13 @@ import { downloadSecureFile } from "@/utils/fileHelper";
 interface UploadPersyaratanUmumProps {
   idTrxBeasiswa: number;
   persyaratanUmum: IPersyaratanUmumBeasiswa[];
+  isFieldDisabled?: boolean;
 }
 
 const UploadPersyaratanUmum = ({
   idTrxBeasiswa,
   persyaratanUmum,
+  isFieldDisabled = false,
 }: UploadPersyaratanUmumProps) => {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(
@@ -74,22 +76,22 @@ const UploadPersyaratanUmum = ({
       const processedFile = await compressIfImage(file, item.size);
 
       const maxSizeBytes = parseSizeToBytes(item.size);
-      
+
       if (processedFile.size > maxSizeBytes) {
         toast.error(
-          `Ukuran file terlalu besar! Maksimal ${item.size || "2"} Mb. Silakan kompres file Anda terlebih dahulu.`
+          `Ukuran file terlalu besar! Maksimal ${item.size || "2"} Mb. Silakan kompres file Anda terlebih dahulu.`,
         );
-        return; 
+        return;
       }
 
       setUploadingId(item.id);
 
       const formData = new FormData();
       formData.append("id_trx_beasiswa", idTrxBeasiswa.toString());
-      formData.append("file", processedFile); 
+      formData.append("file", processedFile);
       formData.append("id_ref_dokumen", item.id.toString());
       formData.append("nama_dokumen_persyaratan", item.persyaratan);
-      formData.append("max_size", item.size ?? "2 mb"); 
+      formData.append("max_size", item.size ?? "2 mb");
 
       const response = await beasiswaService.uploadPersyaratan(
         "umum",
@@ -111,7 +113,7 @@ const UploadPersyaratanUmum = ({
     } catch (error: any) {
       toast.error(error.response?.data?.message ?? "Gagal upload");
     } finally {
-      setCompressingId(null); 
+      setCompressingId(null);
       setUploadingId(null);
     }
   };
@@ -122,8 +124,9 @@ const UploadPersyaratanUmum = ({
         const isUploaded = !!uploadedFiles[item.id];
         const isUploading = uploadingId === item.id;
         const fileName = uploadedFiles[item.id];
-        const catatan = catatanMap[item.id]; 
+        const catatan = catatanMap[item.id];
         const hasCatatan = !!catatan;
+        const isItemDisabled = isFieldDisabled && isUploaded && !hasCatatan;
 
         return (
           <div
@@ -215,28 +218,28 @@ const UploadPersyaratanUmum = ({
             )}
 
             {(isUploading || compressingId === item.id) && (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  {compressingId === item.id
-                    ? "Memproses file..."
-                    : "Mengunggah..."}
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                {compressingId === item.id
+                  ? "Memproses file..."
+                  : "Mengunggah..."}
+              </span>
+            )}
 
             {!isUploading && (
               <div className="flex items-center gap-3">
@@ -244,16 +247,21 @@ const UploadPersyaratanUmum = ({
                   <label
                     htmlFor={`persyaratan-umum-${item.id}`}
                     className={`
-          flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg
-          cursor-pointer transition-all duration-200
-          ${
-            hasCatatan
-              ? "border-amber-400 bg-white hover:bg-amber-50"
-              : isUploaded
-                ? "border-green-300 bg-white hover:bg-green-50"
-                : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
-          }
-        `}>
+    flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg
+    transition-all duration-200
+    ${
+      isItemDisabled
+        ? "cursor-not-allowed opacity-60 pointer-events-none" // ← ganti
+        : "cursor-pointer"
+    }
+    ${
+      hasCatatan
+        ? "border-amber-400 bg-white hover:bg-amber-50"
+        : isUploaded
+          ? "border-green-300 bg-white hover:bg-green-50"
+          : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+    }
+  `}>
                     <input
                       id={`persyaratan-umum-${item.id}`}
                       type="file"
@@ -263,9 +271,14 @@ const UploadPersyaratanUmum = ({
                         .join(",")}
                       onChange={(e) => {
                         handleFileChange(item, e.target.files?.[0] ?? null);
-                        e.target.value = ""; 
+                        e.target.value = "";
                       }}
-                      disabled={isUploading || compressingId === item.id}
+                      // disabled={isUploading || compressingId === item.id}
+                      disabled={
+                        isUploading ||
+                        compressingId === item.id ||
+                        isItemDisabled
+                      }
                     />
 
                     <div
@@ -344,14 +357,14 @@ const UploadPersyaratanUmum = ({
                             Ekstensi yang diterima:{" "}
                             {validTypeToAccept(item.valid_type)}.
                             <br />
-                            Maksimal {item.size || "10 MB"} Mb. Jika PDF kebesaran, silakan kompres melalui{" "}
+                            Maksimal {item.size || "10 MB"} Mb. Jika PDF
+                            kebesaran, silakan kompres melalui{" "}
                             <a
                               href="https://www.ilovepdf.com/compress_pdf"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-700 underline font-medium relative z-10"
-                              onClick={(e) => e.stopPropagation()} 
-                            >
+                              onClick={(e) => e.stopPropagation()}>
                               iLovePDF
                             </a>
                           </p>
@@ -372,21 +385,33 @@ const UploadPersyaratanUmum = ({
                       try {
                         let extractedName = `Dokumen_Umum_${item.id}.pdf`;
                         try {
-                          const urlObj = new URL(fileName, window.location.origin);
+                          const urlObj = new URL(
+                            fileName,
+                            window.location.origin,
+                          );
                           const fileParam = urlObj.searchParams.get("file");
                           if (fileParam) {
-                            const actualFile = fileParam.split('/').pop() || "";
-                            const ext = actualFile.includes('.') ? actualFile.substring(actualFile.lastIndexOf('.')) : '.pdf';
-                            const cleanTitle = item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_');
+                            const actualFile = fileParam.split("/").pop() || "";
+                            const ext = actualFile.includes(".")
+                              ? actualFile.substring(
+                                  actualFile.lastIndexOf("."),
+                                )
+                              : ".pdf";
+                            const cleanTitle = item.persyaratan.replace(
+                              /[^a-zA-Z0-9 \-]/g,
+                              "_",
+                            );
                             extractedName = `${cleanTitle}${ext}`;
                           }
                         } catch (e) {
-                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, '_')}.pdf`;
+                          extractedName = `${item.persyaratan.replace(/[^a-zA-Z0-9 \-]/g, "_")}.pdf`;
                         }
 
                         await downloadSecureFile(fileName, extractedName);
                       } catch (error) {
-                        toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
+                        toast.error(
+                          "Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.",
+                        );
                       }
                     }}
                     className="

@@ -8,6 +8,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface Option {
   label: string;
@@ -23,6 +24,7 @@ interface CustSelectProps {
   error?: FieldError;
   className?: string;
   isRequired?: boolean; // optional, default false
+  disabled?: boolean;
 }
 
 export const CustSelect = ({
@@ -34,6 +36,7 @@ export const CustSelect = ({
   error,
   className = "",
   isRequired = false, // default value false
+  disabled = false,
 }: CustSelectProps) => {
   return (
     <div className={`grid items-center gap-1 ${className}`}>
@@ -49,17 +52,20 @@ export const CustSelect = ({
             key={field.value}
             value={field.value?.toString() ?? ""}
             onValueChange={(val) => field.onChange(val)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={placeholder} />
+            disabled={disabled}>
+            <SelectTrigger
+              className={cn(
+                "w-full overflow-hidden",
+                disabled && "cursor-not-allowed opacity-50 bg-muted", // ← styling disabled
+              )}>
+              <SelectValue placeholder={placeholder} className="truncate" />
             </SelectTrigger>
             <SelectContent>
               {options.map((option, index) => (
                 <SelectItem
-                  key={`${option.value}-${index}`} 
+                  key={`${option.value}-${index}`}
                   value={option.value.toString()}
-                  className="font-inter"
-                >
+                  className="font-inter">
                   {option.label}
                 </SelectItem>
               ))}

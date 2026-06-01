@@ -26,6 +26,7 @@ interface Option {
 
 interface CustSelectProps {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   label?: string;
   options: Option[];
@@ -70,16 +71,26 @@ const Combobox = React.forwardRef<
     );
 
     return (
-      <Popover modal={false} open={open} onOpenChange={setOpen}>
+      // <Popover modal={false} open={open} onOpenChange={setOpen}>
+      <Popover
+        modal={false}
+        open={open}
+        onOpenChange={(next) => !disabled && setOpen(next)}>
         <PopoverTrigger asChild ref={ref}>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className={cn("w-full justify-between", className)}
+            className={cn(
+              "w-full justify-between overflow-hidden",
+              disabled && "cursor-not-allowed opacity-50 bg-muted",
+              className,
+            )}
             {...props}>
-            {selectedOption ? selectedOption.label : placeholder}
+            <span className="truncate text-left">
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -158,8 +169,7 @@ export const CustSearchableSelect = ({
             className={cn(
               "focus-visible:ring focus-visible:ring-primary",
               error && "border-red-500",
-              disabled && "opacity-60 cursor-not-allowed", // ← tambah
-              className,
+              // ← hapus disabled styling di sini, sudah ditangani di dalam Combobox
             )}
             options={options}
             placeholder={placeholder}

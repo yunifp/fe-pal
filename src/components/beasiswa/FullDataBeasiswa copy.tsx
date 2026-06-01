@@ -36,9 +36,9 @@ import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "./CollapsibleSection";
 import { formatRupiah } from "@/utils/stringFormatter";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
-import { SecureImage } from "@/components/SecureImage";
-import { downloadSecureFile } from "@/utils/fileHelper";
-import { toast } from "sonner";
+import { SecureImage } from "@/components/SecureImage"; 
+import { downloadSecureFile } from "@/utils/fileHelper"; 
+import { toast } from "sonner"; 
 
 interface FullDataBeasiswaProps {
   idTrxBeasiswa: number;
@@ -57,11 +57,11 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
   useEffect(() => {
     if (data?.data?.data_beasiswa) {
       const { email, no_hp } = data.data.data_beasiswa;
-
+      
       if (email && !email.includes("@")) {
         toast.error("Email belum sesuai format (harus mengandung karakter @)");
       }
-
+      
       if (no_hp && no_hp.length > 13) {
         toast.error("Nomor HP belum sesuai format (maksimal 13 digit)");
       }
@@ -99,8 +99,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
       <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p
-          className={`text-sm mt-1 break-words ${isWarning ? "text-red-500 font-medium" : ""}`}>
+        <p className={`text-sm mt-1 break-words ${isWarning ? "text-red-500 font-medium" : ""}`}>
           {value || "-"}
         </p>
       </div>
@@ -113,8 +112,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
     const handleDownload = async () => {
       try {
         setIsDownloading(true);
-        const fileName =
-          dokumen.nama_dokumen_persyaratan || `Dokumen_${index + 1}.pdf`;
+        const fileName = dokumen.nama_dokumen_persyaratan || `Dokumen_${index + 1}.pdf`;
         await downloadSecureFile(dokumen.file, fileName);
       } catch (error) {
         toast.error("Gagal mengunduh dokumen. Sesi mungkin kedaluwarsa.");
@@ -125,8 +123,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
 
     return (
       <div className="border rounded-lg p-4 space-y-3">
-        {/* Mobile: stack vertikal. Desktop: baris (tidak berubah) */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <p className="font-medium text-sm">
               {dokumen.nama_dokumen_persyaratan || `Dokumen ${index + 1}`}
@@ -138,13 +135,12 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
             )}
           </div>
           {dokumen.file && (
-            // Mobile: full-width agar mudah di-tap. Desktop: lebar otomatis (tidak berubah)
             <Button
               variant="outline"
               size="sm"
               onClick={handleDownload}
               disabled={isDownloading}
-              className="w-full md:w-auto">
+            >
               <Download className="w-4 h-4 mr-1" />
               {isDownloading ? "Mengunduh..." : "Unduh"}
             </Button>
@@ -188,11 +184,10 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <p className="text-sm font-medium text-muted-foreground">
                   Foto Profil
                 </p>
-                {/* Mobile: foto lebih kecil. Desktop: h-64 (tidak berubah) */}
                 <SecureImage
                   src={data_beasiswa.foto!!}
                   alt="Foto Profil"
-                  className="h-44 md:h-64 w-auto rounded-lg mx-auto"
+                  className="h-64 w-auto rounded-lg mx-auto"
                 />
               </div>
             </div>
@@ -206,7 +201,6 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                     Foto Badan (4 Sisi)
                   </p>
                 </div>
-                {/* Mobile: 2 kolom (2x2). Desktop: 4 kolom (tidak berubah) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {fotoTambahanConfig.map((foto) => {
                     const url = data_beasiswa[foto.key] as
@@ -222,10 +216,10 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                           <SecureImage
                             src={url}
                             alt={foto.label}
-                            className="w-full aspect-[3/4] object-cover rounded-lg border"
+                            className="w-full h-100 object-cover rounded-lg border"
                           />
                         ) : (
-                          <div className="w-full aspect-[3/4] rounded-lg border border-dashed bg-muted flex items-center justify-center">
+                          <div className="w-full h-100 rounded-lg border border-dashed bg-muted flex items-center justify-center">
                             <span className="text-xs text-muted-foreground">
                               Tidak ada foto
                             </span>
@@ -279,21 +273,17 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
               value={data_beasiswa.agama}
             />
             <InfoItem icon={Users} label="Suku" value={data_beasiswa.suku} />
-            <InfoItem
-              icon={Phone}
-              label="No. HP"
-              value={data_beasiswa.no_hp}
-              isWarning={
-                !!data_beasiswa.no_hp && data_beasiswa.no_hp.length > 13
-              }
+            <InfoItem 
+              icon={Phone} 
+              label="No. HP" 
+              value={data_beasiswa.no_hp} 
+              isWarning={!!data_beasiswa.no_hp && data_beasiswa.no_hp.length > 13}
             />
-            <InfoItem
-              icon={Mail}
-              label="Email"
-              value={data_beasiswa.email}
-              isWarning={
-                !!data_beasiswa.email && !data_beasiswa.email.includes("@")
-              }
+            <InfoItem 
+              icon={Mail} 
+              label="Email" 
+              value={data_beasiswa.email} 
+              isWarning={!!data_beasiswa.email && !data_beasiswa.email.includes("@")}
             />
             <InfoItem
               icon={Briefcase}
@@ -433,8 +423,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <User className="w-5 h-5" />
                 Data Ayah
               </h4>
-              {/* Mobile: hilangkan pl-7 agar tidak mepet tepi layar. Desktop: pl-7 (tidak berubah) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-0 md:pl-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
                 <InfoItem
                   icon={User}
                   label="Nama Ayah"
@@ -503,7 +492,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <User className="w-5 h-5" />
                 Data Ibu
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-0 md:pl-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
                 <InfoItem
                   icon={User}
                   label="Nama Ibu"
@@ -578,7 +567,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                     Opsional
                   </Badge>
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-0 md:pl-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-7">
                   <InfoItem
                     icon={User}
                     label="Nama Wali"
