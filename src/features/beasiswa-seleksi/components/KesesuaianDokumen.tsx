@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { CheckCircle, Clock, Download } from "lucide-react";
+import { CheckCircle, Clock, Eye, Loader2 } from "lucide-react";
 import {
   Controller,
   useFormContext,
@@ -20,7 +20,7 @@ import type {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { downloadSecureFile } from "@/utils/fileHelper";
+import { getSecureFileUrl } from "@/utils/fileHelper"; // GANTI downloadSecureFile dengan getSecureFileUrl
 import { toast } from "sonner";
 
 interface KesesuaianDokumenProps {
@@ -48,12 +48,10 @@ export const KesesuaianDokumen = ({
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
   const errorRadio = errors[fieldName]?.[index]?.is_valid;
 
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
 
-  // Ambil setValue dari FormProvider context
   const { setValue } = useFormContext<VerifikasiFormData>();
 
-  // Pre-populate nilai radio & catatan berdasarkan status_verifikasi yang sudah ada di DB
   useEffect(() => {
     setValue(`${fieldName}.${index}.id` as const, String(dokumen.id));
     setValue(
@@ -71,7 +69,6 @@ export const KesesuaianDokumen = ({
       setValue(nameValid, "Y");
     } else if (statusVerifikasi === "tidak sesuai") {
       setValue(nameValid, "N");
-      // Pre-populate catatan verifikator jika ada
       if (dokumen.verifikator_catatan) {
         setValue(nameCatatan, dokumen.verifikator_catatan);
       }
@@ -86,46 +83,38 @@ export const KesesuaianDokumen = ({
     setValue,
   ]);
 
-  // ✅ Fungsi khusus untuk handle download dengan ekstensi yang akurat
-  const handleDownload = async () => {
+  // ✅ Fungsi PRATINJAU untuk menggantikan handleDownload
+  const handlePreview = async () => {
     if (!dokumen.file) return;
 
-    setIsDownloading(true);
+    setIsLoadingFile(true);
     try {
-      let fileName = `Dokumen_${index + 1}.pdf`;
-
-      if (dokumen.nama_dokumen_persyaratan) {
-        let ext = ".pdf";
-
-        try {
-          // Parsing URL untuk mengambil parameter "file" yang bersih dari &t=
-          const urlObj = new URL(dokumen.file, window.location.origin);
-          const fileParam = urlObj.searchParams.get("file");
-
-          if (fileParam) {
-            const actualFile = fileParam.split("/").pop() || "";
-            // Ambil ekstensi asli (misal .png, .jpg, .pdf)
-            ext = actualFile.includes(".")
-              ? actualFile.substring(actualFile.lastIndexOf("."))
-              : ".pdf";
-          }
-        } catch (e) {
-          // Fallback jika URL gagal di-parsing
-        }
-
-        // Ganti spasi/karakter aneh di nama dokumen dengan underscore
-        const cleanName = dokumen.nama_dokumen_persyaratan.replace(
-          /[^a-zA-Z0-9 -]/g,
-          "_",
-        );
-        fileName = `${cleanName}${ext}`;
+      const data = await getSecureFileUrl(dokumen.file);
+      
+      // Ambil isi blob untuk menghilangkan header download bawaan server
+      const response = await fetch(data.url);
+      const blobContent = await response.blob();
+      
+      let expectedType = data.type || "application/pdf";
+      if (expectedType.includes("octet-stream") || expectedType === "") {
+        const lowerUrl = dokumen.file.toLowerCase();
+        if (lowerUrl.includes(".png")) expectedType = "image/png";
+        else if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg")) expectedType = "image/jpeg";
+        else expectedType = "application/pdf";
       }
 
-      await downloadSecureFile(dokumen.file, fileName);
+      const newBlob = new Blob([blobContent], { type: expectedType });
+      const finalUrl = window.URL.createObjectURL(newBlob);
+      
+      // Buka pratinjau di tab baru
+      window.open(finalUrl, "_blank");
+
+      // Revoke URL presigned lama
+      window.URL.revokeObjectURL(data.url);
     } catch (error) {
-      toast.error("Gagal mengunduh file. Sesi Anda mungkin sudah berakhir.");
+      toast.error("Gagal memuat dokumen. Sesi Anda mungkin sudah berakhir.");
     } finally {
-      setIsDownloading(false);
+      setIsLoadingFile(false);
     }
   };
 
@@ -134,7 +123,7 @@ export const KesesuaianDokumen = ({
       control={control}
       name={nameValid}
       render={({ field }) => {
-        const status = field.value; // "Y" | "N" | undefined
+        const status = field.value;
 
         const bgClass =
           status === "Y"
@@ -144,9 +133,7 @@ export const KesesuaianDokumen = ({
               : "bg-white border-gray-200";
 
         return (
-          <div
-            className={`border rounded-lg p-4 space-y-3 transition-all ${bgClass}`}>
-            {/* Hidden fields untuk id dan kategori */}
+          <div className={`border rounded-lg p-4 space-y-3 transition-all ${bgClass}`}>
             <input
               type="hidden"
               {...register(`${fieldName}.${index}.id` as const)}
@@ -162,7 +149,7 @@ export const KesesuaianDokumen = ({
               {...register(`${fieldName}.${index}.is_required` as const)}
               value={isRequired ? "Y" : "N"}
             />
-            {/* Banner biru dokumen diupload ulang */}
+
             {revisedAt && (
               <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-r-lg p-3 mb-2 text-sm text-blue-800">
                 <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-500" />
@@ -175,7 +162,6 @@ export const KesesuaianDokumen = ({
                     terbaru sebelum memverifikasi.
                   </p>
 
-                  {/* Catatan verifikasi sebelumnya */}
                   {dokumen.verifikator_catatan && (
                     <div className="mt-2 bg-white/60 border border-blue-200 rounded-md p-2">
                       <p className="text-xs font-medium text-blue-900 mb-1">
@@ -198,7 +184,6 @@ export const KesesuaianDokumen = ({
               </div>
             )}
 
-            {/* HEADER */}
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <p className="font-medium text-sm">
@@ -213,7 +198,6 @@ export const KesesuaianDokumen = ({
                   </p>
                 )}
 
-                {/* Tampilkan info sudah pernah diverifikasi */}
                 {(dokumen as any).status_verifikasi && (
                   <p
                     className={`text-xs mt-1 flex items-center gap-1 font-medium ${
@@ -236,27 +220,25 @@ export const KesesuaianDokumen = ({
                 )}
               </div>
 
-              {/* ✅ Ganti tag a dengan Button onClick dan handleDownload */}
               {dokumen.file && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDownload}
-                  disabled={isDownloading}
+                  onClick={handlePreview}
+                  disabled={isLoadingFile}
                   type="button">
-                  {isDownloading ? (
-                    <Clock className="w-4 h-4 mr-1 animate-spin" />
+                  {isLoadingFile ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                   ) : (
-                    <Download className="w-4 h-4 mr-1" />
+                    <Eye className="w-4 h-4 mr-1" />
                   )}
-                  {isDownloading ? "Mengunduh..." : "Lihat File"}
+                  {isLoadingFile ? "Memuat..." : "Lihat File"}
                 </Button>
               )}
             </div>
 
             <Separator />
 
-            {/* Radio tetap bisa diubah oleh verifikator */}
             <RadioGroup
               value={field.value?.toString() ?? ""}
               onValueChange={field.onChange}
@@ -276,7 +258,6 @@ export const KesesuaianDokumen = ({
               <p className="text-xs text-red-500">{errorRadio.message}</p>
             )}
 
-            {/* CATATAN — tampil jika N */}
             {status === "N" && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700">
@@ -290,7 +271,6 @@ export const KesesuaianDokumen = ({
               </div>
             )}
 
-            {/* INFO SESUAI */}
             {status === "Y" && (
               <div className="text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" />

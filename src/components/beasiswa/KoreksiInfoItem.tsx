@@ -45,18 +45,16 @@ const KoreksiInfoItem: FC<KoreksiInfoItemProps> = ({
   const isChecked = !!koreksiFields.find((k) => k.field === fieldKey);
   const current = koreksiFields.find((k) => k.field === fieldKey);
 
-  // State untuk Pratinjau
   const [previewData, setPreviewData] = useState<{ url: string; type: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Membersihkan URL Blob dari memori browser ketika modal ditutup
   useEffect(() => {
     if (!isModalOpen && previewData?.url) {
       const timer = setTimeout(() => {
         window.URL.revokeObjectURL(previewData.url);
         setPreviewData(null);
-      }, 300); // Jeda agar animasi tutup modal berjalan mulus
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [isModalOpen, previewData]);
@@ -68,7 +66,28 @@ const KoreksiInfoItem: FC<KoreksiInfoItemProps> = ({
     setIsLoading(true);
     try {
       const data = await getSecureFileUrl(fileUrl);
-      setPreviewData(data);
+      
+      // PERBAIKAN FINAL: Selalu fetch data ke memori lokal untuk membuang header 'attachment'
+      const response = await fetch(data.url);
+      const blobContent = await response.blob();
+      
+      let expectedType = data.type || "application/pdf";
+      
+      if (expectedType.includes("octet-stream") || expectedType === "") {
+        const lowerUrl = fileUrl.toLowerCase();
+        if (lowerUrl.includes(".png")) expectedType = "image/png";
+        else if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg")) expectedType = "image/jpeg";
+        else expectedType = "application/pdf";
+      }
+
+      // Buat URL lokal yang bersih dari paksaan download server
+      const newBlob = new Blob([blobContent], { type: expectedType });
+      const finalUrl = window.URL.createObjectURL(newBlob);
+      
+      // Bersihkan url presigned lama
+      window.URL.revokeObjectURL(data.url);
+
+      setPreviewData({ url: finalUrl, type: expectedType });
       setIsModalOpen(true);
     } catch (error) {
       toast.error("Gagal memuat pratinjau dokumen. Sesi mungkin kedaluwarsa.");
@@ -134,7 +153,6 @@ const KoreksiInfoItem: FC<KoreksiInfoItemProps> = ({
         </div>
       </div>
 
-      {/* Komponen Modal Pratinjau */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent size="lg" className="h-[85vh] flex flex-col p-4 sm:p-6">
           <DialogHeader className="mb-2">

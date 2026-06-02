@@ -1,6 +1,6 @@
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import CardVerifikasiBeasiswa from "../components/CardVerifikasiBeasiswa";
 import FullDataBeasiswaCatatan from "../components/FullDataBeasiswaCatatan";
 import FullDataBeasiswa from "../../../components/beasiswa/FullDataBeasiswa";
@@ -67,7 +67,7 @@ const BeasiswaSeleksiDetailPage = () => {
   const { idTrxBeasiswa } = useParams();
   const id = parseInt(idTrxBeasiswa ?? "");
 
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -159,7 +159,7 @@ const BeasiswaSeleksiDetailPage = () => {
       if (res.success) {
         toast.success(res.message);
         queryClient.invalidateQueries({ queryKey: ["trx-beasiswa"] });
-        // navigate("/beasiswa_seleksi");
+        navigate("/beasiswa_seleksi");
       } else {
         toast.error(res.message);
       }
