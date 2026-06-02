@@ -36,7 +36,7 @@ const UploadPersyaratanUmum = ({
           idTrxBeasiswa,
         );
         const uploaded = res.data ?? [];
-        console.log(uploaded);
+        // console.log(uploaded);
 
         const fileMap: Record<number, string> = {};
         const catatanMapTemp: Record<number, string> = {};

@@ -57,7 +57,7 @@ export const getColumns = (
   },
   {
     id: "wilayah_papua_nusateng",
-    header: () => <div className="text-center">Papua & Nusra</div>,
+    header: () => <div className="text-center">Papua, Maluku, Maluku Utara, dan NT</div>,
     cell: ({ row }) => <RenderStatusIcon isActive={row.original.wilayah_papua_nusateng} />,
   },
   {

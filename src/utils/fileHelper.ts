@@ -42,3 +42,33 @@ export const downloadSecureFile = async (fileUrl: string, fileName: string) => {
     throw error;
   }
 };
+
+
+export const getSecureFileUrl = async (fileUrl: string): Promise<{ url: string; type: string }> => {
+  const token = useAuthStore.getState().accessToken;
+  const cleanUrl = fileUrl.split("&token=")[0];
+
+  try {
+    const response = await axios.get(cleanUrl, {
+      headers: {
+        "X-Palma-Auth": `Bearer ${token}`,
+      },
+      responseType: "blob",
+    });
+
+    const contentType = response.headers["content-type"] || "";
+    if (contentType.includes("text/html") || contentType.includes("application/json")) {
+      throw new Error("Gagal mengambil file: Server mengembalikan HTML/JSON.");
+    }
+
+    const blob = new Blob([response.data], {
+      type: contentType || "application/pdf",
+    });
+
+    const blobUrl = window.URL.createObjectURL(blob);
+    return { url: blobUrl, type: contentType };
+  } catch (error) {
+    console.error("Preview Error:", error);
+    throw error;
+  }
+};

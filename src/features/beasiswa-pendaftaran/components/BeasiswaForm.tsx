@@ -99,6 +99,15 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
 
   const uploadKhususRef = useRef<UploadPersyaratanKhususRef>(null);
 
+  // Tracker untuk mencatat file yang sudah berhasil diupload ke server S3
+  const uploadedFilesRef = useRef<Record<string, File | null>>({
+    foto: null,
+    foto_depan: null,
+    foto_samping_kiri: null,
+    foto_samping_kanan: null,
+    foto_belakang: null,
+  });
+
   const stepFields: Record<number, (keyof BeasiswaFormData)[]> = {
     0: [
       "nama_lengkap",
@@ -545,15 +554,24 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         "id_trx_beasiswa",
         existBeasiswa.id_trx_beasiswa.toString(),
       );
-      if (data.foto instanceof File) formData.append("foto", data.foto);
-      if (data.foto_depan instanceof File)
-        formData.append("foto_depan", data.foto_depan);
-      if (data.foto_samping_kiri instanceof File)
-        formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      if (data.foto_samping_kanan instanceof File)
-        formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      if (data.foto_belakang instanceof File)
-        formData.append("foto_belakang", data.foto_belakang);
+
+      const filesToUpload: Record<string, File> = {};
+
+      const checkAndAppendFile = (fieldName: string, fileData: any) => {
+        if (
+          fileData instanceof File &&
+          uploadedFilesRef.current[fieldName] !== fileData
+        ) {
+          formData.append(fieldName, fileData);
+          filesToUpload[fieldName] = fileData;
+        }
+      };
+
+      checkAndAppendFile("foto", data.foto);
+      checkAndAppendFile("foto_depan", data.foto_depan);
+      checkAndAppendFile("foto_samping_kiri", data.foto_samping_kiri);
+      checkAndAppendFile("foto_samping_kanan", data.foto_samping_kanan);
+      checkAndAppendFile("foto_belakang", data.foto_belakang);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -671,6 +689,11 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       formData.append("jalur", data.jalur ?? "");
 
       await beasiswaService.submitBeasiswa(formData);
+
+      Object.keys(filesToUpload).forEach((key) => {
+        uploadedFilesRef.current[key] = filesToUpload[key];
+      });
+
     } catch (error) {
       // silent
     }
@@ -804,80 +827,6 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
           return;
         }
       }
-
-      // if (currentStep === 4) {
-      //   const currentPilihan = (getValues("pilihan_program_studi") ??
-      //     []) as Array<{
-      //     perguruan_tinggi?: string;
-      //     program_studi?: string;
-      //   }>;
-
-      //   const adaYangMasihFetching = currentPilihan.some(
-      //     (p) =>
-      //       (p?.perguruan_tinggi ?? "") !== "" &&
-      //       (p?.program_studi ?? "") === "",
-      //   );
-
-      //   if (adaYangMasihFetching) {
-      //     setCustomErrorMessages([
-      //       "Masih ada program studi yang sedang dimuat. Mohon tunggu sebentar, lalu lengkapi pilihan Anda.",
-      //     ]);
-      //     setShowErrorDialog(true);
-      //     return;
-      //   }
-
-      //   const adaPTTerisi = currentPilihan.some(
-      //     (p) => (p?.perguruan_tinggi ?? "") !== "",
-      //   );
-      //   let pilihanUntukValidasi = currentPilihan;
-
-      //   if (!adaPTTerisi) {
-      //     try {
-      //       const existing =
-      //         await beasiswaService.getPilihanProgramStudiForForm(
-      //           existBeasiswa.id_trx_beasiswa,
-      //         );
-      //       pilihanUntukValidasi = existing?.data ?? [];
-      //     } catch {
-      //       setCustomErrorMessages([
-      //         "Gagal memuat pilihan program studi. Silakan coba lagi.",
-      //       ]);
-      //       setShowErrorDialog(true);
-      //       return;
-      //     }
-      //   }
-      //   let ptHasD1D2Map = new Map<string, boolean>();
-      //   try {
-      //     const jurusanSekolahRaw = getValues("jurusan_sekolah") as string;
-      //     const idJurusanSekolah = jurusanSekolahRaw?.split("#")[0];
-      //     if (idJurusanSekolah) {
-      //       const resPT =
-      //         await masterService.getPerguruanTinggiByJurusanSekolah(
-      //           idJurusanSekolah,
-      //         );
-      //       (resPT?.data ?? []).forEach(
-      //         (pt: { id_pt: number; has_d1_d2?: string | number | null }) => {
-      //           const raw = pt.has_d1_d2;
-      //           const s = raw != null ? String(raw).trim().toUpperCase() : "";
-      //           ptHasD1D2Map.set(String(pt.id_pt), s === "Y" || s === "1");
-      //         },
-      //       );
-      //     }
-      //   } catch {}
-
-      //   // const ptProdiMap = new Map<string, string[]>();
-      //   const ptProdiMap = new Map<string, ProdiCacheItem[]>();
-      //   const validationErrors = validatePilihan(
-      //     pilihanUntukValidasi,
-      //     ptProdiMap,
-      //   );
-
-      //   if (validationErrors.length > 0) {
-      //     setCustomErrorMessages(validationErrors);
-      //     setShowErrorDialog(true);
-      //     return;
-      //   }
-      // }
 
       if (currentStep === 4) {
         const currentPilihan = (getValues("pilihan_program_studi") ??
@@ -1278,21 +1227,23 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         existBeasiswa.id_trx_beasiswa.toString(),
       );
 
-      if (data.foto instanceof File) {
-        formData.append("foto", data.foto);
-      }
-      if (data.foto_depan instanceof File) {
-        formData.append("foto_depan", data.foto_depan);
-      }
-      if (data.foto_samping_kiri instanceof File) {
-        formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      }
-      if (data.foto_samping_kanan instanceof File) {
-        formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      }
-      if (data.foto_belakang instanceof File) {
-        formData.append("foto_belakang", data.foto_belakang);
-      }
+      const filesToUpload: Record<string, File> = {};
+
+      const checkAndAppendFile = (fieldName: string, fileData: any) => {
+        if (
+          fileData instanceof File &&
+          uploadedFilesRef.current[fieldName] !== fileData
+        ) {
+          formData.append(fieldName, fileData);
+          filesToUpload[fieldName] = fileData;
+        }
+      };
+
+      checkAndAppendFile("foto", data.foto);
+      checkAndAppendFile("foto_depan", data.foto_depan);
+      checkAndAppendFile("foto_samping_kiri", data.foto_samping_kiri);
+      checkAndAppendFile("foto_samping_kanan", data.foto_samping_kanan);
+      checkAndAppendFile("foto_belakang", data.foto_belakang);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -1417,6 +1368,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       const response = await beasiswaService.submitBeasiswa(formData);
 
       if (response.success) {
+        Object.keys(filesToUpload).forEach((key) => {
+          uploadedFilesRef.current[key] = filesToUpload[key];
+        });
+
         toast.success("Form berhasil dikirim!");
         window.location.reload();
       } else {
@@ -1444,15 +1399,23 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         existBeasiswa.id_trx_beasiswa.toString(),
       );
 
-      if (data.foto instanceof File) formData.append("foto", data.foto);
-      if (data.foto_depan instanceof File)
-        formData.append("foto_depan", data.foto_depan);
-      if (data.foto_samping_kiri instanceof File)
-        formData.append("foto_samping_kiri", data.foto_samping_kiri);
-      if (data.foto_samping_kanan instanceof File)
-        formData.append("foto_samping_kanan", data.foto_samping_kanan);
-      if (data.foto_belakang instanceof File)
-        formData.append("foto_belakang", data.foto_belakang);
+      const filesToUpload: Record<string, File> = {};
+
+      const checkAndAppendFile = (fieldName: string, fileData: any) => {
+        if (
+          fileData instanceof File &&
+          uploadedFilesRef.current[fieldName] !== fileData
+        ) {
+          formData.append(fieldName, fileData);
+          filesToUpload[fieldName] = fileData;
+        }
+      };
+
+      checkAndAppendFile("foto", data.foto);
+      checkAndAppendFile("foto_depan", data.foto_depan);
+      checkAndAppendFile("foto_samping_kiri", data.foto_samping_kiri);
+      checkAndAppendFile("foto_samping_kanan", data.foto_samping_kanan);
+      checkAndAppendFile("foto_belakang", data.foto_belakang);
 
       formData.append("nama_lengkap", data.nama_lengkap ?? "");
       formData.append("nik", data.nik ?? "");
@@ -1574,6 +1537,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       const response = await beasiswaService.submitBeasiswa(formData);
 
       if (response.success) {
+        Object.keys(filesToUpload).forEach((key) => {
+          uploadedFilesRef.current[key] = filesToUpload[key];
+        });
+
         toast.success("Draft berhasil disimpan!");
         window.location.reload();
       } else {

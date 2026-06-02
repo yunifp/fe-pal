@@ -12,7 +12,7 @@ const S = {
   section: (): React.CSSProperties => ({
     position: "relative",
     height: "100vh", 
-    minHeight: "700px", // Ditambah sedikit agar countdown punya ruang lega di bawah
+    minHeight: "700px", 
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -81,7 +81,7 @@ const S = {
     zIndex: 10,
     maxWidth: 800,
     width: "100%",
-    transform: "translateY(-60px)", // Naikkan sedikit agar tidak nabrak Countdown Card
+    transform: "translateY(-20px)", // Disesuaikan agar posisinya pas karena countdown sudah ada di dalam
   }),
 
   // ── Tombol Navigasi Manual (Solid, tanpa blur) ──
@@ -305,6 +305,14 @@ const Hero = ({ beasiswaAktif, isPendaftaranTutup, onTimeUp }: HeroProps) => {
                     <p style={S.subtitle()}>{slide.subtitle}</p>
                   )}
 
+                  {/* === PENEMPATAN COUNTDOWN DIPINDAH KE SINI === */}
+                  {beasiswaAktif && !isHeroLoading && (
+                    <div style={{ marginBottom: "24px", display: "flex", justifyContent: "center" }}>
+                      <Countdown beasiswa={beasiswaAktif} onTimeUp={onTimeUp} />
+                    </div>
+                  )}
+
+                  {/* === TOMBOL CTA === */}
                   {beasiswaAktif && !isPendaftaranTutup && (
                     <div style={S.buttonGroup()}>
                       {slide.cta1Url && (
@@ -338,20 +346,13 @@ const Hero = ({ beasiswaAktif, isPendaftaranTutup, onTimeUp }: HeroProps) => {
           </>
         )}
 
-        {/* === KONTEN STATIS COUNTDOWN === */}
-        {!isHeroLoading && (
-          beasiswaAktif ? (
-            <div style={S.staticSection(isMobile)}>
-              {/* Teks "Pendaftaran ditutup dalam" tidak perlu di-render di sini karena sudah ada di dalam Card Countdown */}
-              <Countdown beasiswa={beasiswaAktif} onTimeUp={onTimeUp} />
-            </div>
-          ) : (
-            <div style={S.staticSection(isMobile)}>
-                <p style={S.subtitleNoBeasiswa()}>
-                  Saat ini belum ada beasiswa yang sedang dibuka. Pantau terus halaman ini.
-                </p>
-            </div>
-          )
+        {/* === PESAN JIKA TIDAK ADA BEASISWA AKTIF === */}
+        {!isHeroLoading && !beasiswaAktif && (
+          <div style={S.staticSection(isMobile)}>
+            <p style={S.subtitleNoBeasiswa()}>
+              Saat ini belum ada beasiswa yang sedang dibuka. Pantau terus halaman ini.
+            </p>
+          </div>
         )}
       </section>
     </>

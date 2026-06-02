@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CustSearchableSelect } from "@/components/CustSearchableSelect";
+import { CustSearchableSelectPT } from "@/components/CustSearchableSelectPT";
 import { Card, CardContent } from "@/components/ui/card";
 import { masterService } from "@/services/masterService";
 import { useQuery } from "@tanstack/react-query";
@@ -323,7 +323,7 @@ const PerguruanTinggiItem: FC<Props> = ({
         )}
 
         <div className="grid grid-cols-1 gap-4">
-          <CustSearchableSelect
+          <CustSearchableSelectPT
             name={`pilihan_program_studi.${index}.perguruan_tinggi`}
             control={control}
             label="Perguruan Tinggi"
@@ -349,7 +349,7 @@ const PerguruanTinggiItem: FC<Props> = ({
                 </p>
               </>
             ) : (
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name={`pilihan_program_studi.${index}.program_studi`}
                 control={control}
                 label="Program Studi"
