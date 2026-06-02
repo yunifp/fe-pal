@@ -387,8 +387,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         jenjang_sekolah:
           existBeasiswa.id_jenjang_sekolah && existBeasiswa.jenjang_sekolah
             ? existBeasiswa.id_jenjang_sekolah +
-              "#" +
-              existBeasiswa.jenjang_sekolah
+            "#" +
+            existBeasiswa.jenjang_sekolah
             : "",
         sekolah:
           existBeasiswa.sekolah && existBeasiswa.nisn_sekolah
@@ -831,9 +831,9 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       if (currentStep === 4) {
         const currentPilihan = (getValues("pilihan_program_studi") ??
           []) as Array<{
-          perguruan_tinggi?: string;
-          program_studi?: string;
-        }>;
+            perguruan_tinggi?: string;
+            program_studi?: string;
+          }>;
 
         const adaYangMasihFetching = currentPilihan.some(
           (p) =>
@@ -1011,7 +1011,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
             id_ref_beasiswa: existBeasiswa.id_ref_beasiswa,
             ...nilaiRaporRef.current,
           });
-        } catch {}
+        } catch { }
       }
 
       if (currentStep === 1) {
@@ -1658,7 +1658,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
                 <div>
                   <div className={currentStep === 0 ? "block" : "hidden"}>
                     {isPerbaikan &&
-                    sectionValid?.data_pribadi_is_valid === "Y" ? (
+                      sectionValid?.data_pribadi_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <IdentitasPribadi
                           sectionCatatan={{
@@ -1709,7 +1709,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
 
                   <div className={currentStep === 1 ? "block" : "hidden"}>
                     {isPerbaikan &&
-                    sectionValid?.data_tempat_tinggal_bekerja_is_valid ===
+                      sectionValid?.data_tempat_tinggal_bekerja_is_valid ===
                       "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <Alamat
@@ -1751,7 +1751,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
 
                   <div className={currentStep === 2 ? "block" : "hidden"}>
                     {isPerbaikan &&
-                    sectionValid?.data_orang_tua_is_valid === "Y" ? (
+                      sectionValid?.data_orang_tua_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <DataOrtu
                           sectionCatatan={{
@@ -1780,9 +1780,10 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
 
                   <div className={currentStep === 3 ? "block" : "hidden"}>
                     {isPerbaikan &&
-                    sectionValid?.data_pendidikan_is_valid === "Y" ? (
+                      sectionValid?.data_pendidikan_is_valid === "Y" ? (
                       <fieldset disabled className="w-full border-0 p-0 m-0">
                         <AsalSekolah
+                          isActive={currentStep === 3} // <--- TAMBAHAN: passing state apakah step ini aktif
                           sectionCatatan={{
                             isValid: sectionValid?.data_pendidikan_is_valid,
                             catatan: sectionValid?.data_pendidikan_catatan,
@@ -1802,6 +1803,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
                       </fieldset>
                     ) : (
                       <AsalSekolah
+                        isActive={currentStep === 3} // <--- TAMBAHAN: passing state apakah step ini aktif
                         sectionCatatan={{
                           isValid: sectionValid?.data_pendidikan_is_valid,
                           catatan: sectionValid?.data_pendidikan_catatan,
@@ -1823,6 +1825,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
 
                   <div className={currentStep === 4 ? "block" : "hidden"}>
                     <PilihanJurusan
+                      isActive={currentStep === 4}
                       control={control}
                       errors={errors}
                       setValue={setValue}

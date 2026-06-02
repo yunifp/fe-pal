@@ -16,6 +16,7 @@ import {
 } from "./stepper/PilihanJurusan";
 
 type Props = {
+  isActive?: boolean; // <--- TAMBAHAN: Untuk mendeteksi step aktif
   kondisiButaWarna: string;
   index: number;
   control: Control<any>;
@@ -39,6 +40,7 @@ type Props = {
 };
 
 const PerguruanTinggiItem: FC<Props> = ({
+  isActive = false, // <--- TAMBAHAN: Tangkap prop
   kondisiButaWarna,
   index,
   control,
@@ -97,7 +99,7 @@ const PerguruanTinggiItem: FC<Props> = ({
         selectedJurusanSekolah,
         idPt,
       ),
-    enabled: !!idPt && !!selectedJurusanSekolah,
+    enabled: isActive && !!idPt && !!selectedJurusanSekolah, // <--- TAMBAHAN: Tahan query jika tidak aktif
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });

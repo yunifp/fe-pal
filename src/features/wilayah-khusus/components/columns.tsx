@@ -61,6 +61,12 @@ export const getColumns = (
     cell: ({ row }) => <RenderStatusIcon isActive={row.original.wilayah_papua_nusateng} />,
   },
   {
+    // <-- Tambahan Kolom Wilayah Terluar
+    id: "wilayah_terluar",
+    header: () => <div className="text-center">Wilayah Terluar</div>,
+    cell: ({ row }) => <RenderStatusIcon isActive={row.original.wilayah_terluar} />,
+  },
+  {
     id: "is_khusus",
     header: () => <div className="text-center">Status Khusus</div>,
     cell: ({ row }) => {

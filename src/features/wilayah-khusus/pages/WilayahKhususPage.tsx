@@ -35,6 +35,7 @@ const WilayahKhususPage: React.FC = () => {
     wilayah_3t: false,
     wilayah_perbatasan: false,
     wilayah_papua_nusateng: false,
+    wilayah_terluar: false, // <-- Tambahan state
   });
 
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -65,6 +66,7 @@ const WilayahKhususPage: React.FC = () => {
       wilayah_3t: data.wilayah_3t,
       wilayah_perbatasan: data.wilayah_perbatasan,
       wilayah_papua_nusateng: data.wilayah_papua_nusateng,
+      wilayah_terluar: data.wilayah_terluar, // <-- Mapping state dari data tabel
     });
     setIsEditDialogOpen(true);
   };
@@ -119,7 +121,7 @@ const WilayahKhususPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Master Wilayah Khusus</h1>
-              <p className="text-sm text-slate-500 mt-1">Kelola status 3T, Perbatasan, dan Papua/Nusra untuk Kabupaten/Kota.</p>
+              <p className="text-sm text-slate-500 mt-1">Kelola status 3T, Perbatasan, Terluar, dan Papua/Nusra untuk Kabupaten/Kota.</p>
             </div>
           </div>
         </div>
@@ -181,6 +183,19 @@ const WilayahKhususPage: React.FC = () => {
                 />
                 <label htmlFor="c_perbatasan" className="text-sm font-bold text-slate-700 leading-none cursor-pointer">
                   Termasuk Wilayah Perbatasan
+                </label>
+              </div>
+
+              {/* Tambahan UI Checkbox untuk Wilayah Terluar */}
+              <div className="flex items-center space-x-3 bg-white p-3 rounded-xl border border-slate-200">
+                <Checkbox 
+                  id="c_terluar" 
+                  checked={editFlags.wilayah_terluar} 
+                  onCheckedChange={(checked) => setEditFlags({ ...editFlags, wilayah_terluar: !!checked })} 
+                  className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 w-5 h-5"
+                />
+                <label htmlFor="c_terluar" className="text-sm font-bold text-slate-700 leading-none cursor-pointer">
+                  Termasuk Wilayah Terluar
                 </label>
               </div>
 

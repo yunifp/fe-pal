@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PilihanJurusanProps {
+  isActive?: boolean; // <--- TAMBAHAN: untuk mendeteksi step aktif
   control: Control<BeasiswaFormData>;
   errors: FieldErrors<BeasiswaFormData>;
   setValue: UseFormSetValue<BeasiswaFormData>;
@@ -127,6 +128,7 @@ export const buildSlotCount = (
   });
   return total;
 };
+
 export const validatePilihan = (
   pilihan: Array<{
     perguruan_tinggi?: string;
@@ -298,6 +300,7 @@ export const validatePilihan = (
 // ── Komponen ─────────────────────────────────────────────────────────────────
 
 const PilihanJurusan = ({
+  isActive = false, // <--- TAMBAHAN: Tangkap prop
   control,
   errors,
   setValue,
@@ -348,7 +351,7 @@ const PilihanJurusan = ({
       masterService.getPerguruanTinggiByJurusanSekolah(
         selectedIdJurusanSekolah!,
       ),
-    enabled: !!selectedIdJurusanSekolah,
+    enabled: isActive && !!selectedIdJurusanSekolah, // <--- TAMBAHAN: Tahan query jika tidak aktif
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -359,7 +362,7 @@ const PilihanJurusan = ({
       queryKey: ["pilihan-program-studi-existing", idTrxBeasiswa],
       queryFn: () =>
         beasiswaService.getPilihanProgramStudiForForm(idTrxBeasiswa!),
-      enabled: !!idTrxBeasiswa,
+      enabled: isActive && !!idTrxBeasiswa, // <--- TAMBAHAN: Tahan query jika tidak aktif
       retry: false,
       refetchOnWindowFocus: false,
       staleTime: STALE_TIME,
@@ -368,6 +371,7 @@ const PilihanJurusan = ({
   const isLoadingPTAny = isLoadingPT || isFetchingPT;
 
   useEffect(() => {
+    if (!isActive) return; // <--- TAMBAHAN: Tahan Promise.allSettled jika step tidak aktif
     if (!responsePerguruanTinggi?.data?.length) return;
     if (!selectedIdJurusanSekolah) return;
 
@@ -408,7 +412,7 @@ const PilihanJurusan = ({
     return () => {
       cancelled = true;
     };
-  }, [responsePerguruanTinggi, selectedIdJurusanSekolah]);
+  }, [isActive, responsePerguruanTinggi, selectedIdJurusanSekolah]); // <--- TAMBAHAN: Dependency isActive
 
   const perguruanTinggiOptions = useMemo(() => {
     if (!responsePerguruanTinggi?.data) return [];
@@ -459,23 +463,8 @@ const PilihanJurusan = ({
     }, 0);
   }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
 
-  // const extraSlotCount = useMemo(() => {
-  //   if (!responsePerguruanTinggi?.data) return 0;
-  //   return responsePerguruanTinggi.data.filter((pt) => {
-  //     const rawProdiList = ptProdiMap.get(String(pt.id_pt)) ?? [];
-  //     const prodiList =
-  //       selectedKondisiButaWarna === "Y"
-  //         ? rawProdiList.filter((p) => p.boleh_buta_warna === "Y")
-  //         : rawProdiList;
-
-  //     return (
-  //       prodiList.some((j) => isJenjangD1D2(j.jenjang)) &&
-  //       prodiList.some((j) => isJenjangNonD1D2(j.jenjang))
-  //     );
-  //   }).length;
-  // }, [responsePerguruanTinggi, ptProdiMap, selectedKondisiButaWarna]);
-
   useEffect(() => {
+    if (!isActive) return; // <--- TAMBAHAN: Tahan populating form jika tidak aktif
     if (!selectedKondisiButaWarna) return;
     if (!hasPerguruanTinggi) return;
     if (isLoadingPTAny) return;
@@ -510,6 +499,7 @@ const PilihanJurusan = ({
 
     setIsPopulating(false);
   }, [
+    isActive, // <--- TAMBAHAN: Dependency isActive
     selectedKondisiButaWarna,
     hasPerguruanTinggi,
     isLoadingPTAny,
@@ -706,6 +696,7 @@ const PilihanJurusan = ({
 
                   {fields.map((field, index) => (
                     <PerguruanTinggiItem
+                      isActive={isActive} // <--- TAMBAHAN: Teruskan prop ke anak
                       key={field.id}
                       index={index}
                       control={control}

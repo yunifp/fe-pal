@@ -23,6 +23,7 @@ interface SectionCatatan {
 }
 
 interface AsalSekolahProps {
+  isActive?: boolean; // <--- TAMBAHAN: Prop untuk mengecek apakah step sedang aktif
   register: UseFormRegister<BeasiswaFormData>;
   control: Control<BeasiswaFormData>;
   errors: FieldErrors<BeasiswaFormData>;
@@ -37,6 +38,7 @@ interface AsalSekolahProps {
 }
 
 const AsalSekolah = ({
+  isActive = false, // <--- TAMBAHAN: Tangkap prop isActive (default false)
   register,
   control,
   errors,
@@ -58,7 +60,7 @@ const AsalSekolah = ({
     queryKey: ["opsi-kabkot", selectedProvinsi],
     queryFn: () =>
       masterService.getKabkot(selectedProvinsi?.split("#")[0] || ""),
-    enabled: !!selectedProvinsi,
+    enabled: isActive && !!selectedProvinsi, // <--- TAMBAHAN: Tahan query jika step belum aktif
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -77,6 +79,7 @@ const AsalSekolah = ({
   const { data: responseJenjangSekolah } = useQuery({
     queryKey: ["opsi-jenjang-sekolah"],
     queryFn: () => masterService.getJenjangSekolah(),
+    enabled: isActive, // <--- TAMBAHAN: Tahan query jika step belum aktif
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -105,7 +108,7 @@ const AsalSekolah = ({
       masterService.getJurusanSekolahByIdJenjang(
         selectedJenjangSekolah?.split("#")[0] || "",
       ),
-    enabled: !!selectedJenjangSekolah,
+    enabled: isActive && !!selectedJenjangSekolah, // <--- TAMBAHAN: Tahan query jika step belum aktif
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: STALE_TIME,
@@ -138,7 +141,7 @@ const AsalSekolah = ({
         kabkot: selectedKabkot?.split("#")[0],
         jenjang: selectedJenjangSekolah?.split("#")[0],
       }),
-    enabled: !!selectedProvinsi || !!selectedKabkot || !!selectedJenjangSekolah,
+    enabled: isActive && (!!selectedProvinsi || !!selectedKabkot || !!selectedJenjangSekolah), // <--- TAMBAHAN: Tahan query jika step belum aktif
     retry: false,
   });
 

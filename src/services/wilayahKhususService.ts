@@ -17,7 +17,7 @@ export const wilayahKhususService = {
 
   update: async (
     id: number,
-    data: { wilayah_3t: boolean; wilayah_perbatasan: boolean; wilayah_papua_nusateng: boolean }
+    data: { wilayah_3t: boolean; wilayah_perbatasan: boolean; wilayah_papua_nusateng: boolean; wilayah_terluar: boolean }
   ): Promise<Response<null>> => {
     const res = await axiosInstanceJson.put(`${MASTER_SERVICE_BASE_URL}/wilayah-khusus/${id}`, data);
     return res.data;

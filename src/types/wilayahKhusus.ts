@@ -7,6 +7,7 @@ export interface IWilayahKhusus {
   wilayah_3t: boolean; // Disesuaikan
   wilayah_perbatasan: boolean; // Disesuaikan
   wilayah_papua_nusateng: boolean; // Disesuaikan
+  wilayah_terluar: boolean; // <-- Tambahan
   is_khusus: boolean;
 }
 

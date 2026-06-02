@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { CustInput } from "@/components/CustInput";
-import { CustSearchableSelect } from "@/components/CustSearchableSelect";
+import { CustSearchableSelectPT } from "@/components/CustSearchableSelectPT";
 import { CustTextArea } from "@/components/CustTextArea";
 import { STALE_TIME } from "@/constants/reactQuery";
 import { masterService } from "@/services/masterService";
@@ -230,7 +230,7 @@ const Alamat = ({
           <h3 className="text-lg font-semibold">Alamat KTP</h3>
           <div className="grid grid-cols-2 gap-4">
             <div id="tinggal_provinsi">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="tinggal_provinsi"
                 control={control}
                 label="Provinsi"
@@ -241,7 +241,7 @@ const Alamat = ({
               />
             </div>
             <div id="tinggal_kabkot">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="tinggal_kabkot"
                 control={control}
                 label="Kabupaten / Kota"
@@ -254,7 +254,7 @@ const Alamat = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div id="tinggal_kecamatan">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="tinggal_kecamatan"
                 control={control}
                 label="Kecamatan"
@@ -265,7 +265,7 @@ const Alamat = ({
               />
             </div>
             <div id="tinggal_kelurahan">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="tinggal_kelurahan"
                 control={control}
                 label="Kelurahan"
@@ -375,7 +375,7 @@ const Alamat = ({
           <h3 className="text-lg font-semibold">Alamat Kebun / Bekerja</h3>
           <div className="grid grid-cols-2 gap-4">
             <div id="kerja_provinsi">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="kerja_provinsi"
                 control={control}
                 label="Provinsi"
@@ -386,7 +386,7 @@ const Alamat = ({
               />
             </div>
             <div id="kerja_kabkot">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="kerja_kabkot"
                 control={control}
                 label="Kabupaten / Kota"
@@ -399,7 +399,7 @@ const Alamat = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div id="kerja_kecamatan">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="kerja_kecamatan"
                 control={control}
                 label="Kecamatan"
@@ -410,7 +410,7 @@ const Alamat = ({
               />
             </div>
             <div id="kerja_kelurahan">
-              <CustSearchableSelect
+              <CustSearchableSelectPT
                 name="kerja_kelurahan"
                 control={control}
                 label="Kelurahan"
