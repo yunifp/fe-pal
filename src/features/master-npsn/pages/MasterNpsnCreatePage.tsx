@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CustBreadcrumb from "@/components/CustBreadCrumb";
-import { CustInput } from "@/components/CustInput";
-import { Button } from "@/components/ui/button";
+import CustBreadcrumb from "../../../components/CustBreadCrumb";
+import { CustInput } from "../../../components/CustInput";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+} from "../../../components/ui/card";
+import { Label } from "../../../components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { STALE_TIME } from "@/constants/reactQuery";
-import { masterService } from "@/services/masterService";
-import { npsnSchema, type NpsnFormData } from "@/types/master";
+} from "../../../components/ui/select";
+import { STALE_TIME } from "../../../constants/reactQuery";
+import { masterService } from "../../../services/masterService";
+import { npsnSchema, type NpsnFormData } from "../../../types/master";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
@@ -35,6 +35,7 @@ const NpsnCreatePage = () => {
     register,
     handleSubmit,
     control,
+    setError, // <-- Tambahkan setError
     formState: { errors, isSubmitting },
   } = useForm<NpsnFormData>({
     resolver: zodResolver(npsnSchema),
@@ -58,7 +59,16 @@ const NpsnCreatePage = () => {
       navigate("/master-npsn");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data");
+      const errorMessage = error?.response?.data?.message || "Terjadi kesalahan saat menyimpan data";
+      toast.error(errorMessage);
+
+      // Tangkap pesan error duplikasi dari backend dan tembak ke input NPSN
+      if (errorMessage.toLowerCase().includes("npsn")) {
+        setError("npsn", {
+          type: "server",
+          message: errorMessage,
+        });
+      }
     },
   });
 

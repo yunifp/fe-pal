@@ -16,6 +16,7 @@ import {
 } from "react-hook-form";
 import AlertPerbaikanSection from "../AlertPerbaikanSection";
 import NilaiRapor, { type NilaiRaporForm } from "./NilaiRapor";
+import { CustSearchableSelectPT } from "@/components/CustSearchableSelectPT";
 
 interface SectionCatatan {
   isValid?: "Y" | "N" | null;
@@ -207,7 +208,7 @@ const AsalSekolah = ({
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div id="sekolah_provinsi">
-            <CustSearchableSelect
+            <CustSearchableSelectPT
               name="sekolah_provinsi"
               control={control}
               label="Provinsi"
@@ -219,7 +220,7 @@ const AsalSekolah = ({
             />
           </div>
           <div id="sekolah_kabkot">
-            <CustSearchableSelect
+            <CustSearchableSelectPT
               name="sekolah_kabkot"
               control={control}
               label="Kabupaten / Kota"

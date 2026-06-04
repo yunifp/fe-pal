@@ -458,7 +458,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <InfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
+                  value={data_beasiswa.ayah_penghasilan}
                 />
                 <InfoItem
                   icon={HeartPulse}
@@ -527,7 +527,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                 <InfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
+                  value={data_beasiswa.ibu_penghasilan}
                 />
                 <InfoItem
                   icon={HeartPulse}
@@ -602,7 +602,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
                   <InfoItem
                     icon={Wallet}
                     label="Penghasilan"
-                    value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
+                    value={data_beasiswa.wali_penghasilan}
                   />
                   <InfoItem
                     icon={HeartPulse}

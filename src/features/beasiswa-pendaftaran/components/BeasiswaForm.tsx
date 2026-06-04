@@ -122,6 +122,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       "suku",
       "berat_badan",
       "tinggi_badan",
+      "foto",
       "foto_depan",
       "foto_samping_kiri",
       "foto_samping_kanan",
@@ -718,55 +719,89 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
         return;
       }
 
+      // if (currentStep === 0) {
+      //   const nikValue = getValues("nik");
+
+      //   if (!nikValue || nikValue.length !== 16) {
+      //     setCustomErrorMessages(["NIK harus terdiri dari 16 digit."]);
+      //     setShowErrorDialog(true);
+      //     return;
+      //   }
+
+      //   const [cekalResult, duplikatResult] = await Promise.allSettled([
+      //     masterService.checkNikCekal(nikValue),
+      //     beasiswaService.checkNikDuplikat(
+      //       nikValue,
+      //       existBeasiswa.id_trx_beasiswa,
+      //     ),
+      //   ]);
+
+      //   if (cekalResult.status === "fulfilled") {
+      //     if (cekalResult.value?.data?.is_cekal) {
+      //       setCustomErrorMessages([
+      //         "NIK Anda tidak dapat digunakan untuk mendaftar. Silakan hubungi panitia.",
+      //       ]);
+      //       setShowErrorDialog(true);
+      //       return;
+      //     }
+      //   } else {
+      //     setCustomErrorMessages([
+      //       "Gagal memverifikasi NIK. Silakan coba lagi.",
+      //     ]);
+      //     setShowErrorDialog(true);
+      //     return;
+      //   }
+
+      //   if (duplikatResult.status === "fulfilled") {
+      //     if (duplikatResult.value?.data?.is_duplikat) {
+      //       setCustomErrorMessages([
+      //         "NIK ini sudah terdaftar pada pendaftaran lain. Setiap NIK hanya dapat digunakan satu kali.",
+      //       ]);
+      //       setShowErrorDialog(true);
+      //       return;
+      //     }
+      //   } else {
+      //     setCustomErrorMessages([
+      //       "Gagal memverifikasi NIK. Silakan coba lagi.",
+      //     ]);
+      //     setShowErrorDialog(true);
+      //     return;
+      //   }
+      // }
+
       if (currentStep === 0) {
-        const nikValue = getValues("nik");
+        const fotoValue = getValues("foto");
+        const sudahAdaFoto = !!existBeasiswa.foto;
+        const sudahAdaFotoDepan = !!existBeasiswa.foto_depan;
+        const sudahAdaFotoSampingKiri = !!existBeasiswa.foto_samping_kiri;
+        const sudahAdaFotoSampingKanan = !!existBeasiswa.foto_samping_kanan;
+        const sudahAdaFotoBelakang = !!existBeasiswa.foto_belakang;
 
-        if (!nikValue || nikValue.length !== 16) {
-          setCustomErrorMessages(["NIK harus terdiri dari 16 digit."]);
-          setShowErrorDialog(true);
-          return;
+        const fotoErrors: string[] = [];
+
+        if (!fotoValue && !sudahAdaFoto) {
+          fotoErrors.push("Pas foto wajib diunggah.");
+        }
+        if (!getValues("foto_depan") && !sudahAdaFotoDepan) {
+          fotoErrors.push("Foto tampak depan wajib diunggah.");
+        }
+        if (!getValues("foto_samping_kiri") && !sudahAdaFotoSampingKiri) {
+          fotoErrors.push("Foto tampak samping kiri wajib diunggah.");
+        }
+        if (!getValues("foto_samping_kanan") && !sudahAdaFotoSampingKanan) {
+          fotoErrors.push("Foto tampak samping kanan wajib diunggah.");
+        }
+        if (!getValues("foto_belakang") && !sudahAdaFotoBelakang) {
+          fotoErrors.push("Foto tampak belakang wajib diunggah.");
         }
 
-        const [cekalResult, duplikatResult] = await Promise.allSettled([
-          masterService.checkNikCekal(nikValue),
-          beasiswaService.checkNikDuplikat(
-            nikValue,
-            existBeasiswa.id_trx_beasiswa,
-          ),
-        ]);
-
-        if (cekalResult.status === "fulfilled") {
-          if (cekalResult.value?.data?.is_cekal) {
-            setCustomErrorMessages([
-              "NIK Anda tidak dapat digunakan untuk mendaftar. Silakan hubungi panitia.",
-            ]);
-            setShowErrorDialog(true);
-            return;
-          }
-        } else {
-          setCustomErrorMessages([
-            "Gagal memverifikasi NIK. Silakan coba lagi.",
-          ]);
-          setShowErrorDialog(true);
-          return;
-        }
-
-        if (duplikatResult.status === "fulfilled") {
-          if (duplikatResult.value?.data?.is_duplikat) {
-            setCustomErrorMessages([
-              "NIK ini sudah terdaftar pada pendaftaran lain. Setiap NIK hanya dapat digunakan satu kali.",
-            ]);
-            setShowErrorDialog(true);
-            return;
-          }
-        } else {
-          setCustomErrorMessages([
-            "Gagal memverifikasi NIK. Silakan coba lagi.",
-          ]);
+        if (fotoErrors.length > 0) {
+          setCustomErrorMessages(fotoErrors);
           setShowErrorDialog(true);
           return;
         }
       }
+
       if (currentStep === 6) {
         // Cek dokumen khusus yang ada catatan tapi belum diupload ulang
         if (uploadKhususRef.current?.hasCatatanBelumDiuploadUlang()) {

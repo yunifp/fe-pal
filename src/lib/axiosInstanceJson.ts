@@ -3,34 +3,17 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 // import { API_BASE_URL } from "@/constants/api";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/features/Auth/services/authService";
+import { isRefreshing, setIsRefreshing, processQueue, addRequestToQueue } from "./axiosMutex";
 // import { logService } from "@/services/logService";
 // import qs from "qs";
 
 const axiosInstanceJson = axios.create({
   // baseURL: API_BASE_URL,
-  timeout: 60000, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 0 (Tanpa batas waktu)
+  timeout: 60000, 
   headers: {
     "Content-Type": "application/json",
   },
 });
-
-// Flag untuk mencegah refresh berulang
-let isRefreshing = false;
-let failedQueue: {
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
 
 // Request interceptor
 axiosInstanceJson.interceptors.request.use((config) => {
@@ -42,6 +25,7 @@ axiosInstanceJson.interceptors.request.use((config) => {
   }
   return config;
 });
+
 // Response interceptor
 axiosInstanceJson.interceptors.response.use(
   (response) => {
@@ -71,31 +55,12 @@ axiosInstanceJson.interceptors.response.use(
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
     };
-    // const user = useAuthStore.getState().user;
-
-    // // 🔹 Serialize query params untuk error juga
-    // const params = originalRequest.params
-    //   ? "?" + qs.stringify(originalRequest.params, { arrayFormat: "brackets" })
-    //   : "";
-
-    // void logService
-    //   .logActivity({
-    //     actor: user?.nama || "system",
-    //     user_id: user?.id || null,
-    //     http_method: originalRequest?.method?.toUpperCase(),
-    //     api_endpoint: `${originalRequest?.url}${params}`,
-    //     frontend_url: window.location.pathname,
-    //     status: "FAILED",
-    //     ip_address: "0.0.0.0",
-    //     user_agent: navigator.userAgent,
-    //   })
-    //   .catch((err) => console.error("Log gagal:", err));
-
+    
     // ===== handling refresh token =====
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
+          addRequestToQueue(resolve, reject);
         })
           .then((token) => {
             if (typeof token === "string") {
@@ -110,7 +75,7 @@ axiosInstanceJson.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
+      setIsRefreshing(true);
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
@@ -133,7 +98,7 @@ axiosInstanceJson.interceptors.response.use(
         useAuthStore.getState().logout();
         return Promise.reject(err);
       } finally {
-        isRefreshing = false;
+        setIsRefreshing(false);
       }
     }
 

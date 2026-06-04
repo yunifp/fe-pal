@@ -232,7 +232,7 @@ export interface ITrxBeasiswa {
   ayah_nik?: string | null;
   ayah_jenjang_pendidikan?: string | null;
   ayah_pekerjaan?: string | null;
-  ayah_penghasilan?: number | null;
+  ayah_penghasilan?: string | null;
   ayah_id_status_hidup?: number | null;
   ayah_status_hidup?: string | null;
   ayah_id_status_kekerabatan?: number | null;
@@ -250,7 +250,7 @@ export interface ITrxBeasiswa {
   ibu_nik?: string | null;
   ibu_jenjang_pendidikan?: string | null;
   ibu_pekerjaan?: string | null;
-  ibu_penghasilan?: number | null;
+  ibu_penghasilan?: string | null;
   ibu_id_status_hidup?: number | null;
   ibu_status_hidup?: string | null;
   ibu_id_status_kekerabatan?: number | null;
@@ -268,7 +268,7 @@ export interface ITrxBeasiswa {
   wali_nik?: string | null;
   wali_jenjang_pendidikan?: string | null;
   wali_pekerjaan?: string | null;
-  wali_penghasilan?: number | null;
+  wali_penghasilan?: string | null;
   wali_id_status_hidup?: number | null;
   wali_status_hidup?: string | null;
   wali_id_status_kekerabatan?: number | null;

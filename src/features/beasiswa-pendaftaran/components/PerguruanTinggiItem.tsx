@@ -113,20 +113,70 @@ const PerguruanTinggiItem: FC<Props> = ({
       list = list.filter((ps: any) => ps.boleh_buta_warna === "Y");
     }
 
-    if (idPt) {
-      // Kumpulkan id_prodi yang sudah dipilih di slot lain dengan PT yang sama
-      const siblingsSelectedProdiIds = allPilihan
-        .filter(
-          (p, i) =>
-            i !== index && extractIdPT(p?.perguruan_tinggi ?? "") === idPt,
-        )
-        .map((p) => (p?.program_studi ?? "").split("#")[0])
-        .filter((id) => id !== "");
+    // if (idPt) {
+    //   // Kumpulkan id_prodi yang sudah dipilih di slot lain dengan PT yang sama
+    //   const siblingsSelectedProdiIds = allPilihan
+    //     .filter(
+    //       (p, i) =>
+    //         i !== index && extractIdPT(p?.perguruan_tinggi ?? "") === idPt,
+    //     )
+    //     .map((p) => (p?.program_studi ?? "").split("#")[0])
+    //     .filter((id) => id !== "");
 
-      if (siblingsSelectedProdiIds.length > 0) {
-        list = list.filter(
-          (ps: any) => !siblingsSelectedProdiIds.includes(String(ps.id_prodi)),
+    //   if (siblingsSelectedProdiIds.length > 0) {
+    //     list = list.filter(
+    //       (ps: any) => !siblingsSelectedProdiIds.includes(String(ps.id_prodi)),
+    //     );
+    //   }
+    // }
+
+    if (idPt) {
+      const siblings = allPilihan.filter(
+        (p, i) =>
+          i !== index && extractIdPT(p?.perguruan_tinggi ?? "") === idPt,
+      );
+
+      if (siblings.length > 0) {
+        // id_prodi D1/D2 yang sudah dipilih sibling
+        const siblingsD1D2ProdiIds = siblings
+          .filter((p) =>
+            isJenjangD1D2(extractJenjangFromProdiValue(p?.program_studi ?? "")),
+          )
+          .map((p) => (p?.program_studi ?? "").split("#")[0])
+          .filter(Boolean);
+
+        // Apakah sibling sudah pilih Non-D1/D2?
+        const siblingHasNonD1D2 = siblings.some((p) =>
+          isJenjangNonD1D2(
+            extractJenjangFromProdiValue(p?.program_studi ?? ""),
+          ),
         );
+
+        // Semua prodi D1/D2 yang tersedia di list (sudah difilter buta warna)
+        const allD1D2Available = list.filter((ps: any) =>
+          isJenjangD1D2(ps.jenjang),
+        );
+        // D1/D2 yang belum dipilih sibling
+        const remainingD1D2 = allD1D2Available.filter(
+          (ps: any) => !siblingsD1D2ProdiIds.includes(String(ps.id_prodi)),
+        );
+        const allD1D2Taken =
+          allD1D2Available.length > 0 && remainingD1D2.length === 0;
+
+        if (siblingHasNonD1D2 && allD1D2Taken) {
+          list = []; // semua sudah terisi dari semua slot
+        } else if (siblingHasNonD1D2) {
+          // Non-D1/D2 sudah diambil sibling → slot ini hanya boleh D1/D2 yang tersisa
+          list = remainingD1D2;
+        } else if (allD1D2Taken) {
+          // Semua D1/D2 sudah diambil sibling → slot ini hanya boleh Non-D1/D2
+          list = list.filter((ps: any) => isJenjangNonD1D2(ps.jenjang));
+        } else {
+          // Sebagian D1/D2 sudah diambil → sembunyikan yang sudah dipilih
+          list = list.filter(
+            (ps: any) => !siblingsD1D2ProdiIds.includes(String(ps.id_prodi)),
+          );
+        }
       }
     }
 

@@ -882,7 +882,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 <KoreksiInfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
+                  value={data_beasiswa.ayah_penghasilan}
                   showKoreksi={false}
                   fieldKey="ayah_penghasilan"
                 />
@@ -975,7 +975,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 <KoreksiInfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
+                  value={data_beasiswa.ibu_penghasilan}
                   showKoreksi={false}
                   fieldKey="ibu_penghasilan"
                 />
@@ -1074,7 +1074,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   <KoreksiInfoItem
                     icon={Wallet}
                     label="Penghasilan"
-                    value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
+                    value={data_beasiswa.wali_penghasilan}
                     showKoreksi={false}
                     fieldKey="wali_penghasilan"
                   />

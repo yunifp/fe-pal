@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "../lib/axiosInstanceJson";
 import { useAuthStore } from "../stores/authStore";
 
 export const downloadSecureFile = async (fileUrl: string, fileName: string) => {
@@ -8,7 +8,8 @@ export const downloadSecureFile = async (fileUrl: string, fileName: string) => {
   const cleanUrl = fileUrl.split("&token=")[0];
 
   try {
-    const response = await axios.get(cleanUrl, {
+    // Menggunakan axiosInstance agar interceptor (termasuk refresh token otomatis) berjalan
+    const response = await axiosInstance.get(cleanUrl, {
       headers: {
         // [UPDATE DI SINI] Menggunakan custom header untuk bypass Nginx
         "X-Palma-Auth": `Bearer ${token}`,
@@ -49,7 +50,8 @@ export const getSecureFileUrl = async (fileUrl: string): Promise<{ url: string; 
   const cleanUrl = fileUrl.split("&token=")[0];
 
   try {
-    const response = await axios.get(cleanUrl, {
+    // Menggunakan axiosInstance agar interceptor (termasuk refresh token otomatis) berjalan
+    const response = await axiosInstance.get(cleanUrl, {
       headers: {
         "X-Palma-Auth": `Bearer ${token}`,
       },

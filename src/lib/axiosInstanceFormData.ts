@@ -2,33 +2,15 @@ import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "@/constants/api";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/features/Auth/services/authService";
+import { isRefreshing, setIsRefreshing, processQueue, addRequestToQueue } from "./axiosMutex";
 
 const axiosInstanceFormData = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 0 (Tanpa batas waktu)
+  timeout: 60000, 
   headers: {
     "Content-Type": "multipart/form-data",
   },
 });
-
-// =====================
-// Refresh control
-// =====================
-let isRefreshing = false;
-type QueueError = unknown;
-
-let failedQueue: {
-  resolve: (value: string | null) => void;
-  reject: (reason: unknown) => void;
-}[] = [];
-
-const processQueue = (error: QueueError, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
-  });
-  failedQueue = [];
-};
 
 // =====================
 // Request interceptor
@@ -56,7 +38,7 @@ axiosInstanceFormData.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
+          addRequestToQueue(resolve, reject);
         })
           .then((token) => {
             if (typeof token === "string") {
@@ -71,7 +53,7 @@ axiosInstanceFormData.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
+      setIsRefreshing(true);
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
@@ -95,7 +77,7 @@ axiosInstanceFormData.interceptors.response.use(
         useAuthStore.getState().logout();
         return Promise.reject(err);
       } finally {
-        isRefreshing = false;
+        setIsRefreshing(false);
       }
     }
 

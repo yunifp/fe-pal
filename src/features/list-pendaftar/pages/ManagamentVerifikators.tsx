@@ -375,7 +375,7 @@ const ManajemenVerifikator = () => {
         if (idFlow === 3) return "Tidak Lulus Administrasi";
         if (idFlow === 4) return "Perlu Perbaikan";
         if (idFlow === 5) return "Seleksi Hasil Perbaikan";
-        if (idFlow === 6 || idFlow > 6) return "Lulus Administrasi";
+        if (idFlow === 13 || idFlow > 6) return "Lulus Administrasi";
         return "Seleksi Administrasi";
       };
 
