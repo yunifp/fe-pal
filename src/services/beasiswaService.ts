@@ -1222,4 +1222,36 @@ export const beasiswaService = {
 
     return response.data;
   },
+  autosaveSectionVerifikasi: async (
+    idTrxBeasiswa: number,
+    payload: {
+      field: string;
+      value: "Y" | "N";
+      verifikator: string;
+      catatan?: string;
+    },
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/autosave-section`,
+      payload,
+    );
+    return response.data;
+  },
+
+  autosaveDokumenVerifikasi: async (
+    idTrxBeasiswa: number,
+    payload: {
+      fieldName: string;
+      dokumenId: string;
+      value: "Y" | "N";
+      verifikator: string;
+      catatan?: string;
+    },
+  ): Promise<Response<null>> => {
+    const response = await axiosInstanceJson.post(
+      `${BEASISWA_SERVICE_BASE_URL}/beasiswa/${idTrxBeasiswa}/autosave-dokumen`,
+      payload,
+    );
+    return response.data;
+  },
 };

@@ -25,7 +25,8 @@ interface KesesuaianSectionProps {
   register: UseFormRegister<VerifikasiFormData>;
   control: Control<VerifikasiFormData>;
   errors: FieldErrors<VerifikasiFormData>;
-  revisedAt?: string | null; // ✅ tambah
+  revisedAt?: string | null;
+  onAutosave?: (value: "Y" | "N", catatan?: string) => void;
 }
 
 export const KesesuaianSection = ({
@@ -37,9 +38,10 @@ export const KesesuaianSection = ({
   control,
   errors,
   sectionCatatan,
-  revisedAt, // ✅ tambah
+  revisedAt,
+  onAutosave,
 }: KesesuaianSectionProps) => {
-  const { setValue } = useFormContext<VerifikasiFormData>();
+  const { setValue, getValues } = useFormContext<VerifikasiFormData>();
 
   useEffect(() => {
     if (sectionCatatan?.isValid === "Y") {
@@ -82,7 +84,6 @@ export const KesesuaianSection = ({
 
           return (
             <div className="space-y-3">
-              {/* ✅ Banner biru — diperbaiki peserta (gantikan banner amber lama) */}
               {revisedAt ? (
                 <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-r-lg p-3 text-sm text-blue-800">
                   <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-500" />
@@ -94,7 +95,6 @@ export const KesesuaianSection = ({
                       Data pada section ini sudah diperbaiki — periksa perubahan
                       sebelum memverifikasi.
                     </p>
-
                     <p className="text-xs text-blue-600 mt-2">
                       Diperbaiki pada:{" "}
                       {new Date(revisedAt).toLocaleString("id-ID", {
@@ -105,7 +105,6 @@ export const KesesuaianSection = ({
                   </div>
                 </div>
               ) : (
-                /* ✅ Banner amber lama — hanya tampil jika belum ada revised */
                 sectionCatatan?.isValid === "N" &&
                 sectionCatatan.catatan && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
@@ -119,7 +118,6 @@ export const KesesuaianSection = ({
                 )
               )}
 
-              {/* Banner hijau — sebelumnya sesuai */}
               {sectionCatatan?.isValid === "Y" && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0" />
@@ -136,7 +134,6 @@ export const KesesuaianSection = ({
                     <AlertCircle className={`w-4 h-4 ${iconColor}`} />
                     {title}
                   </span>
-                  {/* ✅ Badge revised di title */}
                   {revisedAt && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-2 py-0.5 flex-shrink-0">
                       <FileCheck className="w-3 h-3" />
@@ -147,7 +144,15 @@ export const KesesuaianSection = ({
 
                 <RadioGroup
                   value={field.value?.toString() ?? ""}
-                  onValueChange={field.onChange}
+                  onValueChange={(val) => {
+                    field.onChange(val);
+                    // ✅ Saat "Y" kirim catatan kosong, saat "N" ambil catatan existing
+                    const catatan =
+                      val === "Y"
+                        ? ""
+                        : (getValues(nameCatatan as any) as string | undefined);
+                    onAutosave?.(val as "Y" | "N", catatan);
+                  }}
                   className="flex gap-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Y" id={`${nameValid}-Y`} />
@@ -177,7 +182,12 @@ export const KesesuaianSection = ({
                       }
                       error={!!errors[nameCatatan]}
                       errorMessage={errors[nameCatatan]?.message as string}
-                      {...register(nameCatatan)}
+                      {...register(nameCatatan, {
+                        onBlur: (e) => {
+                          // ✅ Simpan catatan saat user selesai mengetik
+                          onAutosave?.("N", e.target.value);
+                        },
+                      })}
                     />
                   </div>
                 )}

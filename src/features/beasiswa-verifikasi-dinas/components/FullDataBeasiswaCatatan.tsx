@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-extra-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef, useState, type FC } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -165,7 +167,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
 
   // Simpan timeout untuk debounce (per dokumen)
-  const debounceRefs = useRef<Record<number, NodeJS.Timeout>>({});
+const debounceRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   const handleCatatanChange = (
     id: number,

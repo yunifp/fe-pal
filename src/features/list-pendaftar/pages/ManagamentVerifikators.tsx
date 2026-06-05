@@ -99,7 +99,7 @@ const ManajemenVerifikator = () => {
     return verifikatorIds.map((id) => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
       const namaData = namaList.find((n) => n.id === id); // ← ambil dari auth
-     
+
 
       return {
         id,
@@ -369,13 +369,14 @@ const ManajemenVerifikator = () => {
         }
       });
 
-      // ✅ Map id_flow ke label yang lebih lengkap
-      // Catatan: Jika di DB Anda id_flow untuk "Perlu Perbaikan" BUKAN 4, silakan sesuaikan angkanya di bawah ini.
       const flowLabelMap = (idFlow: number): string => {
         if (idFlow === 3) return "Tidak Lulus Administrasi";
         if (idFlow === 4) return "Perlu Perbaikan";
         if (idFlow === 5) return "Seleksi Hasil Perbaikan";
-        if (idFlow === 13 || idFlow > 6) return "Lulus Administrasi";
+
+        // 🔥 PERBAIKAN: Gunakan >= 6 (Otomatis mencakup id_flow 6 hingga 14 termasuk 13)
+        if (idFlow >= 6) return "Lulus Administrasi";
+
         return "Seleksi Administrasi";
       };
 
@@ -651,11 +652,13 @@ const ManajemenVerifikator = () => {
                     <SelectItem value="all">Semua Status</SelectItem>
 
                     {/* 1. Render otomatis data yang dikirim dari API (ID 2, 3, 5, dll) */}
-                    {(responseFlow?.data ?? []).map((opt) => (
-                      <SelectItem key={opt.id} value={String(opt.id)}>
-                        {opt.flow}
-                      </SelectItem>
-                    ))}
+                    {(responseFlow?.data ?? [])
+                      .filter((opt) => opt.id < 6 && opt.id !== 4)
+                      .map((opt) => (
+                        <SelectItem key={opt.id} value={String(opt.id)}>
+                          {opt.flow}
+                        </SelectItem>
+                      ))}
 
                     {/* 2. Tambahkan manual HANYA status yang tidak dikirim oleh API */}
                     <SelectItem value="4">Perlu Perbaikan</SelectItem>

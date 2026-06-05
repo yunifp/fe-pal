@@ -38,7 +38,6 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "@/components/beasiswa/CollapsibleSection";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
-import { formatRupiah } from "@/utils/stringFormatter";
 import { KesesuaianSection } from "./KesesuaianSection";
 import { PilihanProgramStudiItem } from "@/components/beasiswa/PilihanProgramStudiItem";
 import { type VerifikasiFormData } from "@/types/beasiswa";
@@ -795,7 +794,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 <InfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ayah_penghasilan ?? 0)}
+                  value={data_beasiswa.ayah_penghasilan}
                 />
                 <InfoItem
                   icon={HeartPulse}
@@ -864,7 +863,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 <InfoItem
                   icon={Wallet}
                   label="Penghasilan"
-                  value={formatRupiah(data_beasiswa.ibu_penghasilan ?? 0)}
+                  value={data_beasiswa.ibu_penghasilan}
                 />
                 <InfoItem
                   icon={HeartPulse}
@@ -940,7 +939,7 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   <InfoItem
                     icon={Wallet}
                     label="Penghasilan"
-                    value={formatRupiah(data_beasiswa.wali_penghasilan ?? 0)}
+                    value={data_beasiswa.wali_penghasilan}
                   />
                   <InfoItem
                     icon={HeartPulse}

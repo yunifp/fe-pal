@@ -213,8 +213,6 @@ const DetailPendaftar = ({
                 label="Penghasilan"
                 value={
                   pendaftar.ayah_penghasilan
-                    ? `Rp ${pendaftar.ayah_penghasilan.toLocaleString("id-ID")}`
-                    : "-"
                 }
               />
               <DetailItem
@@ -243,8 +241,6 @@ const DetailPendaftar = ({
                 label="Penghasilan"
                 value={
                   pendaftar.ibu_penghasilan
-                    ? `Rp ${pendaftar.ibu_penghasilan.toLocaleString("id-ID")}`
-                    : "-"
                 }
               />
               <DetailItem

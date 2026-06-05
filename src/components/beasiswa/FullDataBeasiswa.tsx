@@ -34,7 +34,6 @@ import {
 import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "./CollapsibleSection";
-import { formatRupiah } from "@/utils/stringFormatter";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
 import { SecureImage } from "@/components/SecureImage";
 import { downloadSecureFile } from "@/utils/fileHelper";
@@ -268,8 +267,8 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
               value={
                 data_beasiswa.tempat_lahir && data_beasiswa.tanggal_lahir
                   ? `${data_beasiswa.tempat_lahir}, ${formatTanggalIndo(
-                      data_beasiswa.tanggal_lahir,
-                    )}`
+                    data_beasiswa.tanggal_lahir,
+                  )}`
                   : null
               }
             />
@@ -570,78 +569,78 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
             {(data_beasiswa.wali_nama ||
               data_beasiswa.wali_nik ||
               data_beasiswa.wali_email) && (
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Data Wali
-                  <Badge variant="secondary" className="text-xs">
-                    Opsional
-                  </Badge>
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-0 md:pl-7">
-                  <InfoItem
-                    icon={User}
-                    label="Nama Wali"
-                    value={data_beasiswa.wali_nama}
-                  />
-                  <InfoItem
-                    icon={IdCard}
-                    label="NIK Wali"
-                    value={data_beasiswa.wali_nik}
-                  />
-                  <InfoItem
-                    icon={GraduationCap}
-                    label="Pendidikan Terakhir"
-                    value={data_beasiswa.wali_jenjang_pendidikan}
-                  />
-                  <InfoItem
-                    icon={Briefcase}
-                    label="Pekerjaan"
-                    value={data_beasiswa.wali_pekerjaan}
-                  />
-                  <InfoItem
-                    icon={Wallet}
-                    label="Penghasilan"
-                    value={data_beasiswa.wali_penghasilan}
-                  />
-                  <InfoItem
-                    icon={HeartPulse}
-                    label="Status Hidup"
-                    value={data_beasiswa.wali_status_hidup}
-                  />
-                  <InfoItem
-                    icon={Users}
-                    label="Status Kekerabatan"
-                    value={data_beasiswa.wali_status_kekerabatan}
-                  />
-                  <InfoItem
-                    icon={MapPin}
-                    label="Tempat Lahir"
-                    value={data_beasiswa.wali_tempat_lahir}
-                  />
-                  <InfoItem
-                    icon={Calendar}
-                    label="Tanggal Lahir"
-                    value={formatTanggalIndo(data_beasiswa.wali_tanggal_lahir)}
-                  />
-                  <InfoItem
-                    icon={Phone}
-                    label="No. HP"
-                    value={data_beasiswa.wali_no_hp}
-                  />
-                  <InfoItem
-                    icon={Mail}
-                    label="Email"
-                    value={data_beasiswa.wali_email}
-                  />
-                  <InfoItem
-                    icon={Map}
-                    label="Alamat"
-                    value={data_beasiswa.wali_alamat}
-                  />
+                <div className="border-t pt-6">
+                  <h4 className="font-semibold text-base mb-4 flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Data Wali
+                    <Badge variant="secondary" className="text-xs">
+                      Opsional
+                    </Badge>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pl-0 md:pl-7">
+                    <InfoItem
+                      icon={User}
+                      label="Nama Wali"
+                      value={data_beasiswa.wali_nama}
+                    />
+                    <InfoItem
+                      icon={IdCard}
+                      label="NIK Wali"
+                      value={data_beasiswa.wali_nik}
+                    />
+                    <InfoItem
+                      icon={GraduationCap}
+                      label="Pendidikan Terakhir"
+                      value={data_beasiswa.wali_jenjang_pendidikan}
+                    />
+                    <InfoItem
+                      icon={Briefcase}
+                      label="Pekerjaan"
+                      value={data_beasiswa.wali_pekerjaan}
+                    />
+                    <InfoItem
+                      icon={Wallet}
+                      label="Penghasilan"
+                      value={data_beasiswa.wali_penghasilan}
+                    />
+                    <InfoItem
+                      icon={HeartPulse}
+                      label="Status Hidup"
+                      value={data_beasiswa.wali_status_hidup}
+                    />
+                    <InfoItem
+                      icon={Users}
+                      label="Status Kekerabatan"
+                      value={data_beasiswa.wali_status_kekerabatan}
+                    />
+                    <InfoItem
+                      icon={MapPin}
+                      label="Tempat Lahir"
+                      value={data_beasiswa.wali_tempat_lahir}
+                    />
+                    <InfoItem
+                      icon={Calendar}
+                      label="Tanggal Lahir"
+                      value={formatTanggalIndo(data_beasiswa.wali_tanggal_lahir)}
+                    />
+                    <InfoItem
+                      icon={Phone}
+                      label="No. HP"
+                      value={data_beasiswa.wali_no_hp}
+                    />
+                    <InfoItem
+                      icon={Mail}
+                      label="Email"
+                      value={data_beasiswa.wali_email}
+                    />
+                    <InfoItem
+                      icon={Map}
+                      label="Alamat"
+                      value={data_beasiswa.wali_alamat}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </>
       </CollapsibleSection>

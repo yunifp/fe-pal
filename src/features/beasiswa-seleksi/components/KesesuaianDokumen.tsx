@@ -20,7 +20,7 @@ import type {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { getSecureFileUrl } from "@/utils/fileHelper"; // GANTI downloadSecureFile dengan getSecureFileUrl
+import { getSecureFileUrl } from "@/utils/fileHelper";
 import { toast } from "sonner";
 
 interface KesesuaianDokumenProps {
@@ -32,6 +32,7 @@ interface KesesuaianDokumenProps {
   errors: FieldErrors<VerifikasiFormData>;
   revisedAt?: string | null;
   isRequired?: boolean;
+  onAutosave?: (value: "Y" | "N", catatan?: string) => void; // ✅ catatan ditambahkan
 }
 
 export const KesesuaianDokumen = ({
@@ -43,6 +44,7 @@ export const KesesuaianDokumen = ({
   errors,
   revisedAt,
   isRequired = true,
+  onAutosave,
 }: KesesuaianDokumenProps) => {
   const nameValid = `${fieldName}.${index}.is_valid` as const;
   const nameCatatan = `${fieldName}.${index}.catatan` as const;
@@ -50,7 +52,7 @@ export const KesesuaianDokumen = ({
 
   const [isLoadingFile, setIsLoadingFile] = useState(false);
 
-  const { setValue } = useFormContext<VerifikasiFormData>();
+  const { setValue, getValues } = useFormContext<VerifikasiFormData>();
 
   useEffect(() => {
     setValue(`${fieldName}.${index}.id` as const, String(dokumen.id));
@@ -83,33 +85,29 @@ export const KesesuaianDokumen = ({
     setValue,
   ]);
 
-  // ✅ Fungsi PRATINJAU untuk menggantikan handleDownload
   const handlePreview = async () => {
     if (!dokumen.file) return;
 
     setIsLoadingFile(true);
     try {
       const data = await getSecureFileUrl(dokumen.file);
-      
-      // Ambil isi blob untuk menghilangkan header download bawaan server
+
       const response = await fetch(data.url);
       const blobContent = await response.blob();
-      
+
       let expectedType = data.type || "application/pdf";
       if (expectedType.includes("octet-stream") || expectedType === "") {
         const lowerUrl = dokumen.file.toLowerCase();
         if (lowerUrl.includes(".png")) expectedType = "image/png";
-        else if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg")) expectedType = "image/jpeg";
+        else if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg"))
+          expectedType = "image/jpeg";
         else expectedType = "application/pdf";
       }
 
       const newBlob = new Blob([blobContent], { type: expectedType });
       const finalUrl = window.URL.createObjectURL(newBlob);
-      
-      // Buka pratinjau di tab baru
-      window.open(finalUrl, "_blank");
 
-      // Revoke URL presigned lama
+      window.open(finalUrl, "_blank");
       window.URL.revokeObjectURL(data.url);
     } catch (error) {
       toast.error("Gagal memuat dokumen. Sesi Anda mungkin sudah berakhir.");
@@ -133,7 +131,8 @@ export const KesesuaianDokumen = ({
               : "bg-white border-gray-200";
 
         return (
-          <div className={`border rounded-lg p-4 space-y-3 transition-all ${bgClass}`}>
+          <div
+            className={`border rounded-lg p-4 space-y-3 transition-all ${bgClass}`}>
             <input
               type="hidden"
               {...register(`${fieldName}.${index}.id` as const)}
@@ -241,7 +240,16 @@ export const KesesuaianDokumen = ({
 
             <RadioGroup
               value={field.value?.toString() ?? ""}
-              onValueChange={field.onChange}
+              onValueChange={(val) => {
+                field.onChange(val);
+                // ✅ Saat "Y" dipilih, kirim catatan kosong agar DB bersih
+                // Saat "N" dipilih, ambil catatan yang sudah ada di form
+                const catatan =
+                  val === "Y"
+                    ? ""
+                    : (getValues(nameCatatan as any) as string | undefined);
+                onAutosave?.(val as "Y" | "N", catatan);
+              }}
               className="flex gap-6">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Y" id={`${nameValid}-Y`} />
@@ -266,7 +274,12 @@ export const KesesuaianDokumen = ({
                 <CustTextArea
                   error={!!errors?.[fieldName]?.[index]?.catatan}
                   errorMessage={errors?.[fieldName]?.[index]?.catatan?.message}
-                  {...register(nameCatatan)}
+                  {...register(nameCatatan, {
+                    onBlur: (e) => {
+                      // ✅ Simpan catatan saat user selesai mengetik
+                      onAutosave?.("N", e.target.value);
+                    },
+                  })}
                 />
               </div>
             )}

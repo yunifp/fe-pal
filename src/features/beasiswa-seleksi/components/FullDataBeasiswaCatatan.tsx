@@ -40,7 +40,6 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { STALE_TIME } from "@/constants/reactQuery";
 import CollapsibleSection from "@/components/beasiswa/CollapsibleSection";
 import { formatTanggalIndo } from "@/utils/dateFormatter";
-import { formatRupiah } from "@/utils/stringFormatter";
 import { KesesuaianSection } from "./KesesuaianSection";
 import { PilihanProgramStudiItem } from "@/components/beasiswa/PilihanProgramStudiItem";
 import { type VerifikasiFormData } from "@/types/beasiswa";
@@ -56,6 +55,7 @@ import { SecureImage } from "@/components/SecureImage";
 import { downloadSecureFile } from "@/utils/fileHelper";
 import { toast } from "sonner";
 import { masterService } from "@/services/masterService";
+import { useAutosave } from "@/hooks/useAutosave";
 
 interface FullDataBeasiswaCatatanProps {
   idTrxBeasiswa: number;
@@ -257,6 +257,8 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   control,
   errors,
 }) => {
+  const { autosaveSection, autosaveDokumen } = useAutosave(idTrxBeasiswa);
+
   const { data, isLoading } = useQuery({
     queryKey: ["full-data-beasiswa", idTrxBeasiswa],
     queryFn: () => beasiswaService.getFullDataBeasiswa(idTrxBeasiswa),
@@ -309,7 +311,22 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
   if (!data || !data.data) return null;
 
   const { data_beasiswa, persyaratan_umum, persyaratan_khusus } = data.data;
+  const handleAutosaveDokumen = (
+    fieldName: "data_persyaratan_umum" | "data_persyaratan_khusus",
+    index: number,
+    value: "Y" | "N",
+    catatan?: string,
+  ) => {
+    // Ambil id dokumen dari data yang sudah di-load
+    const dokumen =
+      fieldName === "data_persyaratan_umum"
+        ? persyaratan_umum?.[index]
+        : persyaratan_khusus?.[index];
 
+    if (!dokumen?.id) return;
+
+    autosaveDokumen(fieldName, dokumen.id, value, catatan);
+  };
   const findDokumenFile = (keyword: string): string | null => {
     if (!persyaratan_umum?.length) return null;
     const doc = persyaratan_umum.find((d) =>
@@ -388,7 +405,10 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
 
   return (
     <>
-      <CollapsibleSection title="Data Identitas Pribadi" icon={User} defaultOpen={true}>
+      <CollapsibleSection
+        title="Data Identitas Pribadi"
+        icon={User}
+        defaultOpen={true}>
         <>
           <FotoGallery
             foto={data_beasiswa.foto}
@@ -578,6 +598,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                 data_beasiswa.catatan_data_section?.data_pribadi_is_valid,
               catatan: data_beasiswa.catatan_data_section?.data_pribadi_catatan,
             }}
+            onAutosave={(val, catatan) =>
+              autosaveSection("data_pribadi_is_valid", val, catatan)
+            }
           />
         </>
       </CollapsibleSection>
@@ -834,6 +857,13 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   data_beasiswa.catatan_data_section
                     ?.data_tempat_tinggal_bekerja_catatan,
               }}
+              onAutosave={(val, catatan) =>
+                autosaveSection(
+                  "data_tempat_tinggal_bekerja_is_valid",
+                  val,
+                  catatan,
+                )
+              }
             />
           </div>
         </>
@@ -1145,6 +1175,13 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_orang_tua_catatan,
             }}
+            onAutosave={(val, catatan) =>
+              autosaveSection(
+                "data_tempat_tinggal_bekerja_is_valid",
+                val,
+                catatan,
+              )
+            }
           />
         </>
       </CollapsibleSection>
@@ -1306,6 +1343,9 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
               catatan:
                 data_beasiswa.catatan_data_section?.data_pendidikan_catatan,
             }}
+            onAutosave={(val, catatan) =>
+              autosaveSection("data_pendidikan_is_valid", val, catatan)
+            }
           />
         </>
       </CollapsibleSection>
@@ -1347,6 +1387,14 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   isRequired={
                     isRequiredMap.get(dokumen.id_ref_dokumen ?? 0) !== "N"
                   }
+                  onAutosave={(val, catatan) =>
+                    handleAutosaveDokumen(
+                      "data_persyaratan_umum",
+                      index,
+                      val,
+                      catatan,
+                    )
+                  }
                 />
               ))}
             </div>
@@ -1370,6 +1418,14 @@ const FullDataBeasiswaCatatan: FC<FullDataBeasiswaCatatanProps> = ({
                   register={register}
                   errors={errors as any}
                   fieldName="data_persyaratan_khusus"
+                  onAutosave={(val, catatan) =>
+                    handleAutosaveDokumen(
+                      "data_persyaratan_khusus",
+                      index,
+                      val,
+                      catatan,
+                    )
+                  }
                 />
               ))}
             </div>
