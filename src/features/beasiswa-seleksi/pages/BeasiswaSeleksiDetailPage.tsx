@@ -96,6 +96,7 @@ const BeasiswaSeleksiDetailPage = () => {
       data_program_studi_is_valid: "Y",
       data_persyaratan_umum: [],
       data_persyaratan_khusus: [],
+      catatan: "",
       data_persyaratan_dinas: [
         {
           kategori: "Dinas",
@@ -124,6 +125,16 @@ const BeasiswaSeleksiDetailPage = () => {
       setShowErrorDialog(true);
     }
   }, [errors]);
+  console.log(fullData?.data);
+
+  useEffect(() => {
+    if (fullData?.data?.data_beasiswa) {
+      const { verifikator_catatan } = fullData.data.data_beasiswa;
+      if (verifikator_catatan) {
+        setValue("catatan", verifikator_catatan);
+      }
+    }
+  }, [fullData, setValue]);
 
   const selectedStatus = watch("selectedStatus");
 

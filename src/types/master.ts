@@ -341,6 +341,7 @@ export interface ICmsKontak {
   telepon: string | null;
   email: string | null;
   whatsapp: string | null;
+  whatsapp_2: string | null;
   jam_operasional: string | null;
   maps_embed_url: string | null;
   maps_lat: string | null;
@@ -357,6 +358,7 @@ export interface ICmsKontakFormData {
   telepon?: string;
   email?: string;
   whatsapp?: string;
+  whatsapp_2?: string;
   jam_operasional?: string;
   maps_embed_url?: string;
   maps_lat?: string;

@@ -100,7 +100,6 @@ const ManajemenVerifikator = () => {
       const beban = bebanList.find((b) => b.id_verifikator === id);
       const namaData = namaList.find((n) => n.id === id); // ← ambil dari auth
 
-
       return {
         id,
         nama:
@@ -179,8 +178,16 @@ const ManajemenVerifikator = () => {
 
   const isOverQuota = totalDiInput > totalBelumAssign;
   const hasAnyInput = totalDiInput > 0;
+  // const canAssign =
+  //   hasAnyInput && !isOverQuota && !isAssigning && totalLocked > 0;
+
+  const isOverLocked = totalDiInput > totalLocked;
   const canAssign =
-    hasAnyInput && !isOverQuota && !isAssigning && totalLocked > 0;
+    hasAnyInput &&
+    !isOverQuota &&
+    !isOverLocked &&
+    !isAssigning &&
+    totalLocked > 0;
 
   const handleJumlahChange = (verifikatorId: number, value: string) => {
     // Hanya terima angka positif
@@ -313,7 +320,13 @@ const ManajemenVerifikator = () => {
     setPageList(1);
   }, [debouncedSearchList, filterSelektor, filterAssign]);
 
-  const columnsListTable = useMemo(() => getPendaftarColumns(), []);
+  // ✅ PERBAIKAN: Mengirimkan pageList dan limit(10) ke fungsi getPendaftarColumns
+  const limitTable = 10;
+  const columnsListTable = useMemo(
+    () => getPendaftarColumns(pageList, limitTable), 
+    [pageList, limitTable] // Dependency array wajib berisi pageList
+  );
+  
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -443,12 +456,13 @@ const ManajemenVerifikator = () => {
           {/* Status badge lock */}
           {!isLoadingPendaftar && totalBelumAssign > 0 && (
             <div
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${totalLocked >= totalBelumAssign
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : totalLocked > 0
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                  : "bg-red-50 text-red-700 border-red-200"
-                }`}>
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${
+                totalLocked >= totalBelumAssign
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : totalLocked > 0
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+              }`}>
               {totalLocked >= totalBelumAssign ? (
                 <Lock className="h-3 w-3" />
               ) : (
@@ -600,18 +614,20 @@ const ManajemenVerifikator = () => {
                   setFilterAssign("filter-unassigned");
                   setFilterSelektor("all");
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-unassigned"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                  }`}>
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
+                  filterAssign === "filter-unassigned"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}>
                 Belum Ter-assign
               </button>
               <button
                 onClick={() => setFilterAssign("filter-assigned")}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-assigned"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                  }`}>
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
+                  filterAssign === "filter-assigned"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}>
                 Sudah Ter-assign
               </button>
             </div>
@@ -720,10 +736,11 @@ const ManajemenVerifikator = () => {
           {/* Quota counter */}
           {hasAnyInput && (
             <div
-              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${isOverQuota
-                ? "bg-red-100 text-red-700 border border-red-200"
-                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                }`}>
+              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${
+                isOverQuota
+                  ? "bg-red-100 text-red-700 border border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}>
               {totalDiInput.toLocaleString("id-ID")} /{" "}
               {totalBelumAssign.toLocaleString("id-ID")} pendaftar
             </div>
@@ -759,17 +776,19 @@ const ManajemenVerifikator = () => {
                     return (
                       <div
                         key={v.id}
-                        className={`rounded-lg border px-4 py-3.5 transition-colors ${hasInput
-                          ? "border-primary/30 bg-primary/5"
-                          : "border-border"
-                          }`}>
+                        className={`rounded-lg border px-4 py-3.5 transition-colors ${
+                          hasInput
+                            ? "border-primary/30 bg-primary/5"
+                            : "border-border"
+                        }`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${hasInput
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-primary/10 text-primary"
-                                }`}>
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                hasInput
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-primary/10 text-primary"
+                              }`}>
                               {v.nama.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -828,6 +847,18 @@ const ManajemenVerifikator = () => {
                     Total yang diinput ({totalDiInput.toLocaleString("id-ID")})
                     melebihi jumlah pendaftar belum assign (
                     {totalBelumAssign.toLocaleString("id-ID")}).
+                  </span>
+                </div>
+              )}
+
+              {!isOverQuota && isOverLocked && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-amber-600">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>
+                    Total yang diinput ({totalDiInput.toLocaleString("id-ID")})
+                    melebihi jumlah pendaftar yang terkunci (
+                    {totalLocked.toLocaleString("id-ID")}). Hanya pendaftar yang
+                    terkunci yang bisa di-assign.
                   </span>
                 </div>
               )}
@@ -916,7 +947,8 @@ const ManajemenVerifikator = () => {
                 .slice()
                 .sort((a, b) => b.total_beban - a.total_beban)
                 .map((v) => {
-                  const pct = maxBeban > 0 ? (v.total_beban / maxBeban) * 100 : 0;
+                  const pct =
+                    maxBeban > 0 ? (v.total_beban / maxBeban) * 100 : 0;
                   const pctTotal =
                     totalBeban > 0
                       ? ((v.total_beban / totalBeban) * 100).toFixed(1)
@@ -981,7 +1013,8 @@ const ManajemenVerifikator = () => {
                               <Loader2 className="h-4 w-4 animate-spin" />
                               Memuat rincian beban kerja...
                             </div>
-                          ) : (rincianPerVerifikator[v.id] ?? []).length === 0 ? (
+                          ) : (rincianPerVerifikator[v.id] ?? []).length ===
+                            0 ? (
                             <p className="text-xs text-muted-foreground py-2">
                               Tidak ada data rincian
                             </p>
@@ -993,38 +1026,51 @@ const ManajemenVerifikator = () => {
                               </p>
 
                               <div className="space-y-4">
-                                {(rincianPerVerifikator[v.id] ?? []).map(({ status, count }) => {
-                                  // Hitung persentase bar (relatif terhadap beban total verifikator)
-                                  const pctStatus = v.total_beban > 0 ? ((count / v.total_beban) * 100) : 0;
+                                {(rincianPerVerifikator[v.id] ?? []).map(
+                                  ({ status, count }) => {
+                                    // Hitung persentase bar (relatif terhadap beban total verifikator)
+                                    const pctStatus =
+                                      v.total_beban > 0
+                                        ? (count / v.total_beban) * 100
+                                        : 0;
 
-                                  // Warnai bar sesuai status agar mudah dibedakan
-                                  let barColor = "bg-slate-400";
-                                  if (status === "Lulus Administrasi") barColor = "bg-emerald-500";
-                                  if (status === "Tidak Lulus Administrasi") barColor = "bg-red-500";
-                                  if (status === "Perlu Perbaikan") barColor = "bg-amber-400";
-                                  if (status === "Seleksi Hasil Perbaikan") barColor = "bg-purple-500";
-                                  if (status === "Seleksi Administrasi") barColor = "bg-blue-400";
+                                    // Warnai bar sesuai status agar mudah dibedakan
+                                    let barColor = "bg-slate-400";
+                                    if (status === "Lulus Administrasi")
+                                      barColor = "bg-emerald-500";
+                                    if (status === "Tidak Lulus Administrasi")
+                                      barColor = "bg-red-500";
+                                    if (status === "Perlu Perbaikan")
+                                      barColor = "bg-amber-400";
+                                    if (status === "Seleksi Hasil Perbaikan")
+                                      barColor = "bg-purple-500";
+                                    if (status === "Seleksi Administrasi")
+                                      barColor = "bg-blue-400";
 
-                                  return (
-                                    <div key={status} className="w-full">
-                                      <div className="flex justify-between items-end mb-1.5">
-                                        <span className="text-xs font-medium text-foreground">
-                                          {status}
-                                        </span>
-                                        <div className="text-xs font-semibold tabular-nums">
-                                          {count} <span className="text-muted-foreground font-normal">({pctStatus.toFixed(1)}%)</span>
+                                    return (
+                                      <div key={status} className="w-full">
+                                        <div className="flex justify-between items-end mb-1.5">
+                                          <span className="text-xs font-medium text-foreground">
+                                            {status}
+                                          </span>
+                                          <div className="text-xs font-semibold tabular-nums">
+                                            {count}{" "}
+                                            <span className="text-muted-foreground font-normal">
+                                              ({pctStatus.toFixed(1)}%)
+                                            </span>
+                                          </div>
+                                        </div>
+                                        {/* Bar (Grafik Batang) */}
+                                        <div className="h-2.5 w-full bg-slate-200/60 dark:bg-slate-800 rounded-full overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
+                                            style={{ width: `${pctStatus}%` }}
+                                          />
                                         </div>
                                       </div>
-                                      {/* Bar (Grafik Batang) */}
-                                      <div className="h-2.5 w-full bg-slate-200/60 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
-                                          style={{ width: `${pctStatus}%` }}
-                                        />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  },
+                                )}
                               </div>
                             </>
                           )}

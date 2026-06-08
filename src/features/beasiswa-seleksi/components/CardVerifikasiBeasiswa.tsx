@@ -15,7 +15,7 @@ interface CardVerifikasiBeasiswaProps {
   errors: FieldErrors<VerifikasiFormData>;
   setValue: UseFormSetValue<VerifikasiFormData>;
   watch: UseFormWatch<VerifikasiFormData>;
-  idTrxBeasiswa: number; // ← tambah
+  idTrxBeasiswa: number;
 }
 
 const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
@@ -46,8 +46,8 @@ const CardVerifikasiBeasiswa: FC<CardVerifikasiBeasiswaProps> = ({
 
   const hasAnyInvalid =
     VALID_FIELDS.some((field) => watch(field) === "N") ||
-    watchUmum.some((d) => d?.is_valid === "N" && d?.is_required !== "N") || // ← hanya blokir jika wajib
-    watchKhusus.some((d) => d?.is_valid === "N" && d?.is_required !== "N"); // ← sama
+    watchUmum.some((d) => d?.is_valid === "N" && d?.is_required !== "N") ||
+    watchKhusus.some((d) => d?.is_valid === "N" && d?.is_required !== "N");
 
   const statusOptions = [
     {

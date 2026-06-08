@@ -136,6 +136,7 @@ const KONTAK_DEFAULTS: ICmsKontak = {
   telepon: null,
   email: null,
   whatsapp: null,
+  whatsapp_2: null,
   jam_operasional: null,
   maps_embed_url: null,
   maps_lat: null,
@@ -319,6 +320,14 @@ const Kontak = () => {
                       href={`https://wa.me/${kontak.whatsapp.replace(/\D/g, "")}`}
                     />
                   )}
+                  {kontak.whatsapp_2 && (
+                    <InfoRow
+                      icon={<IconWhatsapp />}
+                      label="WhatsApp Alternatif"
+                      value={kontak.whatsapp_2}
+                      href={`https://wa.me/${kontak.whatsapp_2.replace(/\D/g, "")}`}
+                    />
+                  )}
                   {kontak.alamat && (
                     <InfoRow
                       icon={<IconPin />}
@@ -329,6 +338,7 @@ const Kontak = () => {
                   {!kontak.telepon &&
                     !kontak.email &&
                     !kontak.whatsapp &&
+                    !kontak.whatsapp_2 &&
                     !kontak.jam_operasional &&
                     !kontak.alamat && (
                       <p

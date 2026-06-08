@@ -11,13 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 
+// ✅ Opsi 5 dan 6 dihapus, opsi 4 disesuaikan labelnya
 const TIPE_LAPORAN_OPTIONS = [
     { value: "1", label: "Data Pendaftar Aktif" },
     { value: "2", label: "Data Pendaftar Non Aktif" },
     { value: "3", label: "Data Pendaftar Cekal" },
-    { value: "4", label: "Data Pendaftar Lulus Seleksi Administrasi" },
-    { value: "5", label: "Data Pendaftar Lulus Verifikasi" },
-    { value: "6", label: "Data Pendaftar Lulus Tes Seleksi" },
+    { value: "4", label: "Data Pendaftar Lulus Administrasi" },
     { value: "7", label: "Data Pendaftar Menerima Beasiswa" },
 ];
 

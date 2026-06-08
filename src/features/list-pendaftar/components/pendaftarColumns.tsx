@@ -29,13 +29,15 @@ const formatWaktuKunci = (dateString?: string | null) => {
 };
 // ──────────────────────────────────────────────────────────────────────────
 
-export const getPendaftarColumns = (): ColumnDef<ITrxBeasiswa>[] => [
+// ✅ Tambahkan parameter page dan limit di sini
+export const getPendaftarColumns = (page: number, limit: number): ColumnDef<ITrxBeasiswa>[] => [
   {
     id: "nomor",
     header: "No",
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground tabular-nums">
-        {row.index + 1}
+        {/* ✅ Gunakan rumus penomoran dinamis berdasarkan halaman */}
+        {(page - 1) * limit + row.index + 1}
       </span>
     ),
     size: 48,

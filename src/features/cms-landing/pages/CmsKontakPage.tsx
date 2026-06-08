@@ -64,6 +64,7 @@ const EMPTY_FORM: ICmsKontakFormData = {
   telepon: "",
   email: "",
   whatsapp: "",
+  whatsapp_2: "",
   jam_operasional: "",
   maps_embed_url: "",
   maps_lat: "",
@@ -95,7 +96,8 @@ const KontakDetailRow = ({
     { icon: MapPin, label: "Alamat", value: kontak.alamat },
     { icon: Phone, label: "Telepon", value: kontak.telepon },
     { icon: Mail, label: "Email", value: kontak.email },
-    { icon: MessageCircle, label: "WhatsApp", value: kontak.whatsapp },
+    { icon: MessageCircle, label: "WhatsApp Utama", value: kontak.whatsapp },
+    { icon: MessageCircle, label: "WhatsApp 2", value: kontak.whatsapp_2 },
     { icon: Clock, label: "Jam Operasional", value: kontak.jam_operasional },
   ].filter((i) => i.value);
 
@@ -363,6 +365,7 @@ const CmsKontakPage = () => {
       telepon: kontak.telepon ?? "",
       email: kontak.email ?? "",
       whatsapp: kontak.whatsapp ?? "",
+      whatsapp_2: kontak.whatsapp_2 ?? "",
       jam_operasional: kontak.jam_operasional ?? "",
       maps_embed_url: kontak.maps_embed_url ?? "",
       maps_lat: kontak.maps_lat ?? "",
@@ -583,13 +586,26 @@ const CmsKontakPage = () => {
               <div className="space-y-1.5">
                 <Label htmlFor="whatsapp" className="flex items-center gap-1.5">
                   <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                  WhatsApp
+                  WhatsApp Utama
                 </Label>
                 <Input
                   id="whatsapp"
                   placeholder="628123456789 (tanpa + atau spasi)"
                   value={formData.whatsapp ?? ""}
                   onChange={field("whatsapp")}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="whatsapp_2" className="flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  WhatsApp Alternatif (Opsional)
+                </Label>
+                <Input
+                  id="whatsapp_2"
+                  placeholder="628987654321 (tanpa + atau spasi)"
+                  value={formData.whatsapp_2 ?? ""}
+                  onChange={field("whatsapp_2")}
                 />
                 <p className="text-xs text-muted-foreground">
                   Format nomor internasional tanpa tanda +, misal: 6281234567890

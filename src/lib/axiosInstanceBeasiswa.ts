@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { BEASISWA_SERVICE_BASE_URL } from "@/constants/api";
 import { useAuthStore } from "@/stores/authStore";
