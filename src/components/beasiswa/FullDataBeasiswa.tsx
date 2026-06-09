@@ -41,9 +41,10 @@ import { toast } from "sonner";
 
 interface FullDataBeasiswaProps {
   idTrxBeasiswa: number;
+  hideDocuments?: boolean;
 }
 
-const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
+const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa, hideDocuments = false }) => {
   const { data, isLoading } = useQuery({
     queryKey: ["full-data-beasiswa", idTrxBeasiswa],
     queryFn: () => beasiswaService.getFullDataBeasiswa(idTrxBeasiswa),
@@ -695,7 +696,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </>
       </CollapsibleSection>
 
-      {persyaratan_umum && persyaratan_umum.length > 0 && (
+      {!hideDocuments && persyaratan_umum && persyaratan_umum.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Umum"
           icon={FileText}
@@ -710,7 +711,7 @@ const FullDataBeasiswa: FC<FullDataBeasiswaProps> = ({ idTrxBeasiswa }) => {
         </CollapsibleSection>
       )}
 
-      {persyaratan_khusus && persyaratan_khusus.length > 0 && (
+      {!hideDocuments && persyaratan_khusus && persyaratan_khusus.length > 0 && (
         <CollapsibleSection
           title="Persyaratan Khusus"
           icon={Award}

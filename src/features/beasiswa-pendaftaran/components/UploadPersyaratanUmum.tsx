@@ -210,7 +210,7 @@ const UploadPersyaratanUmum = ({
                   </svg>
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-amber-800 mb-1">
-                      Catatan dari Verifikator:
+                      Catatan dari Selektor:
                     </p>
                     <p className="text-sm text-amber-900">{catatan}</p>
                   </div>

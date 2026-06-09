@@ -9,6 +9,7 @@ import TentangBeasiswa from "../components/landing-page/Tentangbeasiswa";
 import JalurPendaftaran from "../components/landing-page/Jalurpendaftaran";
 import Kontak from "../components/landing-page/Kontak";
 import Footer from "../components/landing-page/Footer";
+import VideoBeasiswa from "../components/landing-page/VideoBeasiswa";
 // import VideoBeasiswa from "../components/landing-page/VideoBeasiswa"; 
 
 // ─── Global base styles ───────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ const LandingPageAlt = () => {
         onTimeUp={() => setIsTimeUp(true)}
       />
       <TentangBeasiswa />
-      {/* <VideoBeasiswa /> */}
+      <VideoBeasiswa />
       {/* Jangan lupa teruskan props ini di dalam file JalurPendaftaran.tsx Anda agar bisa sampai ke JalurModal */}
       <JalurPendaftaran isPendaftaranTutup={isTimeUp} />
       

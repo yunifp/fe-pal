@@ -4,14 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { laporanPendaftarService } from "@/services/laporanPendaftarService";
 import { nikCekalService } from "@/services/nikCekalService";
 import { DataTable } from "@/components/DataTable";
-import { getColumns, getCekalColumns } from "../components/columns";
+import { getColumns, getCekalColumns } from "../components/columns"; 
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 
-// ✅ Opsi 5 dan 6 dihapus, opsi 4 disesuaikan labelnya
 const TIPE_LAPORAN_OPTIONS = [
     { value: "1", label: "Data Pendaftar Aktif" },
     { value: "2", label: "Data Pendaftar Non Aktif" },
@@ -23,7 +22,6 @@ const TIPE_LAPORAN_OPTIONS = [
 const LaporanPendaftarPage: React.FC = () => {
     const [page, setPage] = useState<number>(1);
     
-    // ✅ Menggunakan 1 pasang state saja untuk pencarian (dihubungkan langsung ke DataTable)
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     
@@ -39,7 +37,6 @@ const LaporanPendaftarPage: React.FC = () => {
     });
     const listJalur = jalurRes?.data || [];
 
-    // ✅ Fitur delay (debounce) pencarian agar tidak memberatkan server saat mengetik
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
@@ -52,8 +49,8 @@ const LaporanPendaftarPage: React.FC = () => {
         setPage(1);
     }, [tipeLaporan, idJalur]);
 
-    // === FETCH DATA TABEL DINAMIS ===
-    const { data: response, isLoading } = useQuery<any>({
+    // Mengambil "refetch" dari useQuery untuk diserahkan ke kolom aksi
+    const { data: response, isLoading, refetch } = useQuery<any>({
         queryKey: ["laporan-pendaftar", page, debouncedSearch, tipeLaporan, idJalur],
         queryFn: async () => {
             if (tipeLaporan === "3") {
@@ -67,7 +64,6 @@ const LaporanPendaftarPage: React.FC = () => {
     const tableData = response?.data?.result || [];
     const totalPages = response?.data?.total_pages || 1;
 
-    // === HANDLER EXPORT EXCEL DINAMIS ===
     const handleExportExcel = async () => {
         try {
             setIsExporting(true);
@@ -102,8 +98,9 @@ const LaporanPendaftarPage: React.FC = () => {
         if (tipeLaporan === "3") {
             return getCekalColumns(page, limit) as any;
         }
-        return getColumns(page, limit) as any;
-    }, [tipeLaporan, page, limit]);
+        // Pastikan refetch dilempar sebagai argumen ketiga di sini
+        return getColumns(page, limit, refetch) as any;
+    }, [tipeLaporan, page, limit, refetch]);
 
     return (
         <div className="p-6 space-y-6">
@@ -149,7 +146,6 @@ const LaporanPendaftarPage: React.FC = () => {
                                 )}
                             </select>
                         </div>
-                        {/* ✅ Manual Search Input dihilangkan dari sini agar tidak tabrakan dengan milik DataTable */}
                     </div>
                 </CardHeader>
                 <CardContent className="p-0 sm:p-4">
@@ -162,8 +158,6 @@ const LaporanPendaftarPage: React.FC = () => {
                             pageCount={totalPages}
                             pageIndex={page - 1}
                             onPageChange={(newPageIndex) => setPage(newPageIndex + 1)}
-                            
-                            // ✅ SEARCH BAR AKTIF (menggunakan komponen bawaan DataTable yang letaknya di atas Tabel)
                             searchValue={search}
                             onSearchChange={(value) => {
                                 setSearch(value);

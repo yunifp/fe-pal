@@ -79,7 +79,7 @@ const S = {
     top: "-1px", 
     left: "0px",
     width: "100%", 
-    height: "70px", // Tinggi ini menutupi avatar dan judul YouTube
+    height: "50px", // Tinggi ini menutupi avatar dan judul YouTube
     zIndex: 99999,  
     background: "#000000", 
     cursor: "default",
@@ -92,7 +92,7 @@ const S = {
     bottom: "0px", 
     right: "0px",
     width: "180px", 
-    height: "90px", 
+    height: "85px", 
     zIndex: 99999,  
     
     // 2. PASANG GAMBAR SEBAGAI BACKGROUND

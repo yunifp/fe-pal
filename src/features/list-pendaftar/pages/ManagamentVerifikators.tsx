@@ -323,10 +323,10 @@ const ManajemenVerifikator = () => {
   // ✅ PERBAIKAN: Mengirimkan pageList dan limit(10) ke fungsi getPendaftarColumns
   const limitTable = 10;
   const columnsListTable = useMemo(
-    () => getPendaftarColumns(pageList, limitTable), 
+    () => getPendaftarColumns(pageList, limitTable),
     [pageList, limitTable] // Dependency array wajib berisi pageList
   );
-  
+
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -456,13 +456,12 @@ const ManajemenVerifikator = () => {
           {/* Status badge lock */}
           {!isLoadingPendaftar && totalBelumAssign > 0 && (
             <div
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${
-                totalLocked >= totalBelumAssign
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border ${totalLocked >= totalBelumAssign
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : totalLocked > 0
                     ? "bg-amber-50 text-amber-700 border-amber-200"
                     : "bg-red-50 text-red-700 border-red-200"
-              }`}>
+                }`}>
               {totalLocked >= totalBelumAssign ? (
                 <Lock className="h-3 w-3" />
               ) : (
@@ -614,20 +613,18 @@ const ManajemenVerifikator = () => {
                   setFilterAssign("filter-unassigned");
                   setFilterSelektor("all");
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
-                  filterAssign === "filter-unassigned"
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-unassigned"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
-                }`}>
+                  }`}>
                 Belum Ter-assign
               </button>
               <button
                 onClick={() => setFilterAssign("filter-assigned")}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
-                  filterAssign === "filter-assigned"
+                className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${filterAssign === "filter-assigned"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
-                }`}>
+                  }`}>
                 Sudah Ter-assign
               </button>
             </div>
@@ -736,11 +733,10 @@ const ManajemenVerifikator = () => {
           {/* Quota counter */}
           {hasAnyInput && (
             <div
-              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${
-                isOverQuota
+              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium ${isOverQuota
                   ? "bg-red-100 text-red-700 border border-red-200"
                   : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              }`}>
+                }`}>
               {totalDiInput.toLocaleString("id-ID")} /{" "}
               {totalBelumAssign.toLocaleString("id-ID")} pendaftar
             </div>
@@ -763,7 +759,7 @@ const ManajemenVerifikator = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {verifikatorList
                   .slice()
-                  .sort((a, b) => a.total_beban - b.total_beban) // ringan di atas
+                  .sort((a, b) => a.nama.localeCompare(b.nama, "id"))
                   .map((v) => {
                     const inputVal = jumlahMap[v.id] ?? "";
                     const inputNum = parseInt(inputVal);
@@ -776,19 +772,17 @@ const ManajemenVerifikator = () => {
                     return (
                       <div
                         key={v.id}
-                        className={`rounded-lg border px-4 py-3.5 transition-colors ${
-                          hasInput
+                        className={`rounded-lg border px-4 py-3.5 transition-colors ${hasInput
                             ? "border-primary/30 bg-primary/5"
                             : "border-border"
-                        }`}>
+                          }`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                                hasInput
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${hasInput
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-primary/10 text-primary"
-                              }`}>
+                                }`}>
                               {v.nama.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">

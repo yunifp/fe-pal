@@ -100,6 +100,7 @@ import NikCekalPage from "./features/nik-cekal/pages/NikCekalPage";
 import SettingWaktuPage from "./features/beasiswa/pages/SettingWaktuPage";
 
 import { beasiswaService } from "@/services/beasiswaService";
+import LaporanPendaftarDetailPage from "./features/laporan-pendaftar/pages/LaporanPendaftarDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -238,6 +239,10 @@ function App() {
               <Route
                 path="/laporan-pendaftar"
                 element={<LaporanPendaftarPage />}
+              />
+              <Route
+                path="/laporan-pendaftar/:idTrxBeasiswa"
+                element={<LaporanPendaftarDetailPage />}
               />
               <Route path="/master/jalur" element={<JalurPage />} />
               <Route

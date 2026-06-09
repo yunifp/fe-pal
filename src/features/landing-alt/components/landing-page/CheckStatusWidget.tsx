@@ -20,13 +20,65 @@ const getStatusTheme = (id_flow: number) => {
     };
   }
 
-  if ([2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(id_flow)) {
+  if ([2, 5].includes(id_flow)) {
     return {
       label: "Seleksi Administrasi",
       style: "bg-orange-500/10 text-orange-700 border-orange-200",
       Icon: Users
     };
   }
+
+  if ([4].includes(id_flow)) {
+    return {
+      label: "Perlu Perbaikan",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+
+  if ([  6, 7, ].includes(id_flow)) {
+    return {
+      label: "Verifikasi Dinas Daerah",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+  if ([ 8].includes(id_flow)) {
+    return {
+      label: "Perbaikan Verifikasi Dinas Daerah",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+  if ([9,10].includes(id_flow)) {
+    return {
+      label: "Tes Seleksi",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+
+  if ([11,12].includes(id_flow)) {
+    return {
+      label: "Proses Penelaahan",
+      style: "bg-orange-500/10 text-orange-700 border-orange-200",
+      Icon: Users
+    };
+  }
+
+
+  if ([13].includes(id_flow)) {
+    return {
+      label: "Lulus Seleksi Administrasi",
+      style: "bg-green-500/10 text-green-700 border-green-200",
+      Icon: Users
+    };
+  }
+
 
   if (id_flow === 3) {
     return {

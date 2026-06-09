@@ -323,7 +323,7 @@ const Kontak = () => {
                   {kontak.whatsapp_2 && (
                     <InfoRow
                       icon={<IconWhatsapp />}
-                      label="WhatsApp Alternatif"
+                      label="WhatsApp"
                       value={kontak.whatsapp_2}
                       href={`https://wa.me/${kontak.whatsapp_2.replace(/\D/g, "")}`}
                     />

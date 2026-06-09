@@ -6,7 +6,7 @@ import { isRefreshing, setIsRefreshing, processQueue, addRequestToQueue } from "
 
 const axiosInstanceFormData = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, 
+  timeout: 120000, 
   headers: {
     "Content-Type": "multipart/form-data",
   },

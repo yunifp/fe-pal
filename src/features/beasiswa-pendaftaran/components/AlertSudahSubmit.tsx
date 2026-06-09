@@ -146,8 +146,8 @@ const AlertSudahSubmit = ({ idTrxBeasiswa, idFlow }: AlertSudahSubmitProps) => {
     // 8. Kondisi Sisa Lulus Administrasi/Menunggu Tahap Lain (Flow: 13)
     if (flow === 13) {
       return {
-        label: "Lulus Tahapan",
-        message: "Selamat, Anda telah lulus tahapan sebelumnya! Harap cek berkala dan menunggu informasi selanjutnya.",
+        label: "Lulus Administrasi",
+        message: "Selamat, Anda telah Lulus Administrasi! mohon selalu cek secara berkala pada akun anda dan menunggu informasi selanjutnya.",
         bgColor: "bg-emerald-50",
         borderColor: "border-emerald-300",
         iconColor: "text-emerald-600",
