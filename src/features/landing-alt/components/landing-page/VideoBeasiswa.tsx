@@ -73,20 +73,20 @@ const S = {
     border: "none",
   }),
   
-  // ─── Trik Penutup Judul di Atas ───
+  // ─── Trik Penutup Judul di Atas (Mungkin tidak diperlukan lagi untuk MP4) ───
   topCoverAgresif: (): React.CSSProperties => ({
     position: "absolute",
     top: "-1px", 
     left: "0px",
     width: "100%", 
-    height: "50px", // Tinggi ini menutupi avatar dan judul YouTube
+    height: "50px", 
     zIndex: 99999,  
     background: "#000000", 
     cursor: "default",
     pointerEvents: "auto",
   }),
 
-  // ─── Trik Penutup Menggunakan Gambar di Kanan Bawah ───
+  // ─── Trik Penutup Menggunakan Gambar di Kanan Bawah (Mungkin tidak diperlukan lagi untuk MP4) ───
   logoCoverAgresif: (): React.CSSProperties => ({
     position: "absolute",
     bottom: "0px", 
@@ -94,14 +94,11 @@ const S = {
     width: "180px", 
     height: "85px", 
     zIndex: 99999,  
-    
-    // 2. PASANG GAMBAR SEBAGAI BACKGROUND
     backgroundImage: `url(${GambarPenutup})`,
     backgroundSize: "cover", 
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundColor: "#000000", 
-    
     cursor: "default",
     borderRadius: "0 0 12px 0",
     pointerEvents: "auto",
@@ -132,10 +129,8 @@ const VideoBeasiswa = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
 
-  const videoId = "6Uf_qqAZGhg";
-  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  
-  const videoUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&fs=0&disablekb=1&iv_load_policy=3`;
+  // Link Video MP4 Baru
+  const videoUrl = "https://palma-landing-page.nos.wjv-1.neo.id/Video%20Tutorial%20Beasiswa%20SDM%20SAWIT%202026%20V2.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260609T133613Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604799&X-Amz-Credential=21b7a692674d8f999515%2F20260609%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=62d917819725456b2db271502856ac7be9d9c8b394407dc98d485a1ab420d6af";
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -175,29 +170,32 @@ const VideoBeasiswa = () => {
                 style={S.overlay()} 
                 onClick={() => setIsPlaying(true)}
               >
-                <img 
-                  src={thumbnailUrl} 
+                {/* UNCOMMENT DAN MASUKKAN LINK GAMBAR JIKA INGIN PAKAI THUMBNAIL CUSTOM */}
+                {/* <img 
+                  src="LINK_GAMBAR_THUMBNAIL_ANDA_DISINI" 
                   alt="Panduan Pendaftaran" 
                   style={S.thumbnailImg()} 
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                  }}
-                />
+                /> */}
                 <div className="play-btn">
                   <div className="play-icon" />
                 </div>
               </div>
             ) : (
               <>
-                <iframe
+                {/* Menggunakan tag <video> karena source berupa file .mp4 langsung */}
+                <video
                   src={videoUrl}
                   style={S.iframe()}
-                  allow="autoplay; encrypted-media"
-                  title="Panduan Pendaftaran"
+                  autoPlay
+                  controls
+                  controlsList="nodownload"
                 />
                 
                 {/* ─── Penutup Judul & Channel di Atas ─── */}
-                <div 
+                {/* SAYA COMMENT OUT karena video MP4 bawaan tidak ada watermark YouTube. 
+                    Jika diaktifkan, ini malah bisa menutupi UI/kontrol video bawaan browser. 
+                    Uncomment jika masih dibutuhkan. */}
+                {/* <div 
                   style={S.topCoverAgresif()} 
                   onClick={(e) => {
                     e.preventDefault();
@@ -207,10 +205,11 @@ const VideoBeasiswa = () => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                />
+                /> */}
 
                 {/* ─── Penutup Gambar & Blokir Interaksi (Logo Bawah) ─── */}
-                <div 
+                {/* SAYA COMMENT OUT juga karena alasan yang sama. */}
+                {/* <div 
                   style={S.logoCoverAgresif()} 
                   onClick={(e) => {
                     e.preventDefault();
@@ -220,7 +219,7 @@ const VideoBeasiswa = () => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                />
+                /> */}
               </>
             )}
           </div>

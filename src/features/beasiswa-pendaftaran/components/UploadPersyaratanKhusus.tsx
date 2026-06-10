@@ -38,9 +38,6 @@ const UploadPersyaratanKhusus = forwardRef<
   const [catatanMap, setCatatanMap] = useState<Record<number, string>>({});
   const [pendingFiles, setPendingFiles] = useState<Record<number, File>>({});
   const [skipNextFetch, setSkipNextFetch] = useState(false);
-  // const [statusVerifikasiMap, setStatusVerifikasiMap] = useState<
-  //   Record<number, string>
-  // >({});
 
   const uploadAllPending = async () => {
     for (const [idStr, file] of Object.entries(pendingFiles)) {
@@ -119,23 +116,30 @@ const UploadPersyaratanKhusus = forwardRef<
 
         const fileMap: Record<number, string> = {};
         const catatanMapTemp: Record<number, string> = {};
-        const statusVerifikasiMapTemp: Record<number, string> = {}; // ← local var
 
         uploaded.forEach((item: any) => {
           if (!relevantIds.has(item.id_ref_dokumen)) return;
           fileMap[item.id_ref_dokumen] = item.file;
-          // console.log(item);
 
           if (item.verifikator_catatan) {
-            catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
-            statusVerifikasiMapTemp[item.id_ref_dokumen] =
-              item.verifikator_catatan;
+            // ✅ PERBAIKAN: Hilangkan catatan jika sudah di-upload ulang (timestamp baru)
+            let isSudahDiperbaiki = false;
+            if (item.waktu_upload && item.waktu_catatan) {
+              const waktuUpload = new Date(item.waktu_upload).getTime();
+              const waktuCatatan = new Date(item.waktu_catatan).getTime();
+              if (waktuUpload > waktuCatatan) {
+                isSudahDiperbaiki = true;
+              }
+            }
+
+            if (!isSudahDiperbaiki) {
+              catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
+            }
           }
         });
 
         setUploadedFiles(fileMap);
         setCatatanMap(catatanMapTemp);
-        // setStatusVerifikasiMap(statusVerifikasiMapTemp);
       } catch (error) {
         toast.error("Gagal memuat data persyaratan yang sudah diunggah");
       }
@@ -240,11 +244,11 @@ const UploadPersyaratanKhusus = forwardRef<
                     className="w-3.5 h-3.5"
                     fill="currentColor"
                     viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                   </svg>
                   Terunggah
                 </span>

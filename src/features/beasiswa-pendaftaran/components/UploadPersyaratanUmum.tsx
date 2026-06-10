@@ -36,15 +36,27 @@ const UploadPersyaratanUmum = ({
           idTrxBeasiswa,
         );
         const uploaded = res.data ?? [];
-        // console.log(uploaded);
 
         const fileMap: Record<number, string> = {};
         const catatanMapTemp: Record<number, string> = {};
 
         uploaded.forEach((item: any) => {
           fileMap[item.id_ref_dokumen] = item.file;
+          
           if (item.verifikator_catatan) {
-            catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
+            // ✅ PERBAIKAN: Hilangkan catatan jika sudah di-upload ulang (timestamp baru)
+            let isSudahDiperbaiki = false;
+            if (item.waktu_upload && item.waktu_catatan) {
+              const waktuUpload = new Date(item.waktu_upload).getTime();
+              const waktuCatatan = new Date(item.waktu_catatan).getTime();
+              if (waktuUpload > waktuCatatan) {
+                isSudahDiperbaiki = true;
+              }
+            }
+
+            if (!isSudahDiperbaiki) {
+              catatanMapTemp[item.id_ref_dokumen] = item.verifikator_catatan;
+            }
           }
         });
 

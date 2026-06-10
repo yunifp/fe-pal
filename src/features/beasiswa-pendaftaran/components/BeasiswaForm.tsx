@@ -169,6 +169,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       "ayah_status_kekerabatan",
       "ayah_no_hp",
       "ayah_alamat",
+      "ayah_email",
       "ibu_nama",
       "ibu_nik",
       "ibu_jenjang_pendidikan",
@@ -180,6 +181,8 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       "ibu_status_kekerabatan",
       "ibu_no_hp",
       "ibu_alamat",
+      "ibu_email",
+      
     ],
     3: [
       "jenjang_sekolah",
@@ -839,11 +842,14 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
             "umum",
             existBeasiswa.id_trx_beasiswa,
           );
-          const uploaded = (res.data ?? []) as Array<{
+          // ✅ PERBAIKAN: Ditambahkan tipe untuk waktu_upload dan waktu_catatan
+          // SESUDAH DIPERBAIKI
+          const uploaded = (res.data ?? []) as unknown as Array<{
             id_ref_dokumen: number | null;
             verifikator_catatan: string | null;
+            waktu_upload: string | null;
+            waktu_catatan: string | null;
           }>;
-
           const uploadedIds = new Set(
             uploaded
               .filter((u) => u.id_ref_dokumen !== null)
@@ -863,9 +869,23 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
             return;
           }
 
-          const belumDiperbaiki = uploaded.filter(
-            (u) => u.verifikator_catatan && u.verifikator_catatan.trim() !== "",
-          );
+          // ✅ PERBAIKAN: Validasi berbasis Waktu untuk menghilangkan blokiran
+          const belumDiperbaiki = uploaded.filter((u) => {
+            // Jika tidak ada catatan, berarti aman (tidak perlu diperbaiki)
+            if (!u.verifikator_catatan || u.verifikator_catatan.trim() === "") return false;
+            
+            // Jika waktu upload file LEBIH BARU dari waktu catatan, berarti user SUDAH UPLOAD PERBAIKAN
+            if (u.waktu_upload && u.waktu_catatan) {
+              const waktuUpload = new Date(u.waktu_upload).getTime();
+              const waktuCatatan = new Date(u.waktu_catatan).getTime();
+              if (waktuUpload > waktuCatatan) {
+                return false; // Anggap aman (file sudah diupdate)
+              }
+            }
+            
+            // Masih ada catatan dan file belum diperbarui
+            return true;
+          });
 
           if (belumDiperbaiki.length > 0) {
             setCustomErrorMessages([

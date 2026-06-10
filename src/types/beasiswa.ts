@@ -500,7 +500,11 @@ const createBaseBeasiswaSchema = () => {
     ayah_tempat_lahir: z.string().min(1, "Tempat Lahir Ayah wajib diisi"),
     ayah_tanggal_lahir: z.string().min(1, "Tanggal Lahir Ayah wajib diisi"),
     ayah_no_hp: z.string().min(1, "No. Telepon Ayah wajib diisi"),
-    ayah_email: z.string().optional(),
+    ayah_email: z
+      .string()
+      .email("Format Email Ayah tidak valid")
+      .optional()
+      .or(z.literal("")),
 
     // Data Ibu
     ibu_nama: z.string().min(1, "Nama Ibu wajib diisi"),
@@ -521,7 +525,11 @@ const createBaseBeasiswaSchema = () => {
     ibu_tempat_lahir: z.string().min(1, "Tempat Lahir Ibu wajib diisi"),
     ibu_tanggal_lahir: z.string().min(1, "Tanggal Lahir Ibu wajib diisi"),
     ibu_no_hp: z.string().min(1, "No. Telepon Ibu wajib diisi"),
-    ibu_email: z.string().optional(),
+    ibu_email: z
+      .string()
+      .email("Format Email Ibu tidak valid")
+      .optional()
+      .or(z.literal("")),
 
     // Data Wali (opsional)
     wali_nama: z.string().optional(),
