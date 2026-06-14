@@ -22,8 +22,11 @@ import { dbService } from "../services/dbService";
 import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
 import { CustPassword } from "../../../components/CustPassword";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DbAdminVerifikatorDinasCreatePage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 

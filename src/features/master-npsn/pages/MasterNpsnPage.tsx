@@ -15,8 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, School } from "lucide-react";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { Card, CardContent } from "@/components/ui/card";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const NpsnPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+  
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const canUpdate = useHasAccess("U");

@@ -8,7 +8,7 @@ import { isRefreshing, setIsRefreshing, processQueue, addRequestToQueue } from "
 
 const axiosInstanceJson = axios.create({
   // baseURL: API_BASE_URL,
-  timeout: 120000, 
+  timeout: 160000, 
   headers: {
     "Content-Type": "application/json",
   },

@@ -13,8 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
 import { Users, ArrowLeft, Settings2, CheckSquare, Clock } from "lucide-react";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const PembagianWilayahDetailPage = () => {
+  useRedirectIfHasNotAccess("R"); 
   const { kodeKab } = useParams<{ kodeKab: string }>();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");

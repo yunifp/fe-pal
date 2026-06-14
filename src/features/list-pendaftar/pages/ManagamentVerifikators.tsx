@@ -36,6 +36,8 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "../../../components/DataTable";
 import { getPendaftarColumns } from "../components/pendaftarColumns"; // sesuaikan path
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -51,6 +53,7 @@ interface Verifikator {
 type JumlahMap = Record<number, string>; // verifikator.id → string input
 
 const ManajemenVerifikator = () => {
+  useRedirectIfHasNotAccess("R"); 
   const queryClient = useQueryClient();
 
   const [jumlahMap, setJumlahMap] = useState<JumlahMap>({});

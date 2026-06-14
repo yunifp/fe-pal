@@ -73,6 +73,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -696,6 +697,8 @@ const TentangDetailRow = ({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const CmsTentangPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [isFormOpen, setIsFormOpen] = useState(false);

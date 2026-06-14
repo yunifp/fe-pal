@@ -25,8 +25,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { INikCekal } from "@/types/nikCekal";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const NikCekalPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState<number>(1);

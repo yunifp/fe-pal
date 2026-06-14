@@ -11,8 +11,11 @@ import { getWawancaraColumns } from "../components/columns";
 import { wawancaraService } from "../../../services/wawancaraService";
 import { toast } from "sonner";
 import { FileDown, FileUp, Send, Users, Info } from "lucide-react";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const WawancaraSeleksiPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   

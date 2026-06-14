@@ -22,6 +22,8 @@ import type { IProgramStudi } from "@/types/programStudi";
 import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const SettingJurusanProdiPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   useRedirectIfHasNotAccess("U");
 
   const queryClient = useQueryClient();

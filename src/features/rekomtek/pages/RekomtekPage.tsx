@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // ✅ Import helper unduh dokumen aman
 import { downloadSecureFile } from "@/utils/fileHelper";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ✅ Tambahkan Helper URL Proxy Auth Service
 const getSecureProxyUrl = (filename: string, folder: string) => {
@@ -65,6 +66,8 @@ const getSecureProxyUrl = (filename: string, folder: string) => {
 
 
 const RekomtekPage = () => {
+  useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"pendaftar" | "kuota">("pendaftar");
   

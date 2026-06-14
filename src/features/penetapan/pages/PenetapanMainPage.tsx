@@ -8,8 +8,10 @@ import { DataTable } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
 import { penetapanService } from "../../../services/penetapanService";
 import { GraduationCap, Eye } from "lucide-react";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const PenetapanMainPage = () => {
+    useRedirectIfHasNotAccess("R"); 
   const navigate = useNavigate();
   
   const [search, setSearch] = useState("");

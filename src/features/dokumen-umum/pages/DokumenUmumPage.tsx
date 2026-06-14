@@ -23,8 +23,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import type { IDokumenUmum } from "@/types/dokumenUmum";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DokumenUmumPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState<number>(1);

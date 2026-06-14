@@ -22,8 +22,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const PenelaahanPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("pendaftar");
 

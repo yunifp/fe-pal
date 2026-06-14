@@ -30,6 +30,7 @@ import type { RekapProvinsiRow } from "@/types/beasiswa";
 
 // ✅ Import helper unduh dokumen
 import { downloadSecureFile } from "@/utils/fileHelper";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ✅ Tambahkan Helper URL Proxy Auth Service
 const getSecureProxyUrl = (filename: string, folder: string) => {
@@ -58,6 +59,8 @@ const getSecureProxyUrl = (filename: string, folder: string) => {
 };
 
 const RekapProvinsiPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const [data, setData] = useState<RekapProvinsiRow[]>([]);
   const [stats, setStats] = useState<{ afirmasi: number; reguler: number }>({
     afirmasi: 0,

@@ -39,6 +39,7 @@ import type {
   ITrxDokumenKhusus,
 } from "@/types/beasiswa";
 import type { IWilayah } from "@/types/master";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ── Tipe & config keputusan ───────────────────────────────────────────────────
 type KeputusanType = "lulus" | "tidak_lulus" | "mengundurkan_diri";
@@ -105,6 +106,8 @@ const KEPUTUSAN_TO_FLOW: Record<KeputusanType, number> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DetailPendaftarLembagaSeleksiPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { idTrxBeasiswa, kodeProvinsi } = useParams<{

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const TIPE_LAPORAN_OPTIONS = [
     { value: "1", label: "Data Pendaftar Aktif" },
@@ -20,6 +21,8 @@ const TIPE_LAPORAN_OPTIONS = [
 ];
 
 const LaporanPendaftarPage: React.FC = () => {
+      useRedirectIfHasNotAccess("R"); 
+
     const [page, setPage] = useState<number>(1);
     
     const [search, setSearch] = useState<string>("");

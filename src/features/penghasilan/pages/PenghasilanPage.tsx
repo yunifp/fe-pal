@@ -22,8 +22,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import type { IPenghasilan } from "@/types/penghasilan";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const PenghasilanPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState<number>(1);

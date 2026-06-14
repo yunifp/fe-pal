@@ -21,6 +21,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
 import FlowBeasiswaStepper from "@/components/beasiswa/FlowBeasiswaStepper";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const extractErrorMessages = (errors: any, parentKey = ""): string[] => {
   let messages: string[] = [];
@@ -41,6 +42,8 @@ const extractErrorMessages = (errors: any, parentKey = ""): string[] => {
 };
 
 const BeasiswaVerifikasiKotaDetailPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const { idTrxBeasiswa } = useParams();
   const id = parseInt(idTrxBeasiswa ?? "");
 

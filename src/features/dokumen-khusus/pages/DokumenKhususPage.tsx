@@ -25,8 +25,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import type { IDokumenKhusus } from "@/types/dokumenkhusus";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DokumenKhususPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState<number>(1);

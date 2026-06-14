@@ -21,8 +21,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPinned, Loader2, RefreshCw } from "lucide-react";
 import type { IWilayahKhusus } from "@/types/wilayahKhusus";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const WilayahKhususPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState<number>(1);

@@ -40,6 +40,7 @@ import {
   formatBytes,
   streamDownloadToDisk,
 } from "../components/Utils";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Default progress state
@@ -59,6 +60,7 @@ const IDLE_PROGRESS: DownloadProgress = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DownloadManajemenPage = () => {
+    useRedirectIfHasNotAccess("R"); 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filterJalur, setFilterJalur] = useState<string>("all");

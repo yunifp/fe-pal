@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { GraduationCap, BookOpen } from "lucide-react";
 
 const ProgramStudiCreatePage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   useRedirectIfHasNotAccess("C");
 
   const { id_pt } = useParams();

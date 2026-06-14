@@ -10,8 +10,11 @@ import { beasiswaService } from "@/services/beasiswaService";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Map, MapPin, Settings2, Clock, Send } from "lucide-react"; 
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const PembagianWilayahPage = () => {
+  useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [pageIndex, setPageIndex] = useState(0); 

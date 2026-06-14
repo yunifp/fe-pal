@@ -23,6 +23,7 @@ import type { DetailPendaftarRow } from "@/types/beasiswa";
 
 // ✅ Import helper unduh dokumen
 import { downloadSecureFile } from "@/utils/fileHelper";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ✅ Tambahkan Helper URL Proxy Auth Service
 const getSecureProxyUrl = (filename: string, folder: string) => {
@@ -51,6 +52,8 @@ const getSecureProxyUrl = (filename: string, folder: string) => {
 };
 
 const DetailProvinsiPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const { kode_prov } = useParams<{ kode_prov: string }>();
   
   const [viewMode, setViewMode] = useState<"kabkota" | "pendaftar">("kabkota");

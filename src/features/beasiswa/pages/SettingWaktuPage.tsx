@@ -11,8 +11,11 @@ import { Calendar, Save, Loader2, Settings } from "lucide-react";
 
 // PERBAIKAN IMPORT (Gunakan Named Import)
 import { SectionHeader } from "@/components/SectionHeader";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const SettingWaktuPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [mulai, setMulai] = useState("");

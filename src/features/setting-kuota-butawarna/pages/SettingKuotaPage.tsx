@@ -15,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SlidersHorizontal } from "lucide-react";
 
 const SettingKuotaPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
+  
   useRedirectIfHasNotAccess("U");
 
   const queryClient = useQueryClient();

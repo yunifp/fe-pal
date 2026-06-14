@@ -14,8 +14,10 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link2, Settings2 } from "lucide-react";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const MappingProdiByPtPage = () => {
+    useRedirectIfHasNotAccess("R"); 
 
 
   const { id_pt } = useParams<{ id_pt: string }>();

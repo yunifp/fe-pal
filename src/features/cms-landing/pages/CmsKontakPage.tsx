@@ -54,6 +54,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ─── Empty Form ───────────────────────────────────────────────────────────────
 
@@ -285,6 +286,7 @@ const KontakDetailRow = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const CmsKontakPage = () => {
+    useRedirectIfHasNotAccess("R"); 
   const queryClient = useQueryClient();
 
   const [isFormOpen, setIsFormOpen] = useState(false);

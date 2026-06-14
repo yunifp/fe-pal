@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 // ✅ Import helper untuk download aman
 import { downloadSecureFile } from "@/utils/fileHelper";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ✅ Tambahkan Helper URL Proxy Auth Service
 const getSecureProxyUrl = (filename: string, folder: string) => {
@@ -41,6 +42,8 @@ const getSecureProxyUrl = (filename: string, folder: string) => {
 };
 
 const PenetapanDetailPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const { id } = useParams();
   const navigate = useNavigate();
 

@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ─── Empty Form State ──────────────────────────────────────────────────────────
 
@@ -82,6 +83,8 @@ const EMPTY_FORM: ICmsHeroFormData = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const CmsHeroPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
 
   // ── Local state ──

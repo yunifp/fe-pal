@@ -502,7 +502,7 @@ const createBaseBeasiswaSchema = () => {
     ayah_no_hp: z.string().min(1, "No. Telepon Ayah wajib diisi"),
     ayah_email: z
       .string()
-      .email("Format Email Ayah tidak valid")
+      // .email("Format Email Ayah tidak valid")
       .optional()
       .or(z.literal("")),
 
@@ -527,7 +527,7 @@ const createBaseBeasiswaSchema = () => {
     ibu_no_hp: z.string().min(1, "No. Telepon Ibu wajib diisi"),
     ibu_email: z
       .string()
-      .email("Format Email Ibu tidak valid")
+      // .email("Format Email Ibu tidak valid")
       .optional()
       .or(z.literal("")),
 
@@ -545,7 +545,7 @@ const createBaseBeasiswaSchema = () => {
     wali_no_hp: z.string().optional(),
     wali_email: z
       .string()
-      .email("Format Email Wali tidak valid")
+      // .email("Format Email Wali tidak valid")
       .optional()
       .or(z.literal("")),
 
@@ -708,7 +708,7 @@ export const createBeasiswaDraftSchema = () => {
     ayah_no_hp: z.string().min(1, "No. Telepon Ayah wajib diisi"),
     ayah_email: z
       .string()
-      .email("Format Email Ayah tidak valid")
+      // .email("Format Email Ayah tidak valid")
       .optional()
       .or(z.literal("")),
 
@@ -732,7 +732,7 @@ export const createBeasiswaDraftSchema = () => {
     ibu_no_hp: z.string().min(1, "No. Telepon Ibu wajib diisi"),
     ibu_email: z
       .string()
-      .email("Format Email Ibu tidak valid")
+      // .email("Format Email Ibu tidak valid")
       .optional()
       .or(z.literal("")),
 
@@ -749,7 +749,7 @@ export const createBeasiswaDraftSchema = () => {
     wali_no_hp: z.string().optional(),
     wali_email: z
       .string()
-      .email("Format Email Wali tidak valid")
+      // .email("Format Email Wali tidak valid")
       .optional()
       .or(z.literal("")),
 

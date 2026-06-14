@@ -9,7 +9,7 @@ import { isRefreshing, setIsRefreshing, processQueue, addRequestToQueue } from "
 const baseUrl = BEASISWA_SERVICE_BASE_URL.replace(/\/beasiswa$/, "");
 const axiosInstanceBeasiswa = axios.create({
   baseURL: baseUrl,
-  timeout: 120000, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 120000 (2 menit)
+  timeout: 160000, // ✅ PERBAIKAN: Diubah dari 40000 menjadi 160000 (2.67 menit)
   headers: {
     "Content-Type": "application/json",
   },

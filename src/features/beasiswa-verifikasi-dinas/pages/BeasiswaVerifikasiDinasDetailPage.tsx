@@ -2,8 +2,11 @@ import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { useParams } from "react-router-dom";
 import CardVerifikasiBeasiswa from "../components/CardVerifikasiBeasiswa";
 import FullDataBeasiswaCatatan from "../components/FullDataBeasiswaCatatan";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const BeasiswaVerifikasiDinasDetailPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   // useRedirectIfHasNotAccess("U");
 
   const { idTrxBeasiswa } = useParams();

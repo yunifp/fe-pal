@@ -29,8 +29,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Map, MapPin, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import type { IReferensiWilayah } from "@/types/wilayah";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const ReferensiWilayahPage: React.FC = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const { kodePro, kodeKab } = useParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();

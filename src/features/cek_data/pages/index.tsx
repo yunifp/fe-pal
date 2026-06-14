@@ -11,6 +11,7 @@ import {
   Search, User, MapPin, GraduationCap, 
   Users, Award, Phone, Mail, Calendar, Info, CheckCircle2, Circle, XCircle
 } from "lucide-react";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess"; 
 
 // Definisikan Urutan Flow Pendaftaran
 const MAIN_FLOW_STEPS = [
@@ -27,6 +28,10 @@ const MAIN_FLOW_STEPS = [
 ];
 
 const CekDataPage = () => {
+  // <-- TAMBAHAN: Cek hak akses "Read" (R) sebelum merender halaman.
+  // Jika tidak punya akses, otomatis redirect ke /not-authorized
+  useRedirectIfHasNotAccess("R"); 
+
   const [keywordInput, setKeywordInput] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
 

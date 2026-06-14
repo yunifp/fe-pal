@@ -25,8 +25,11 @@ import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
 import { CustPassword } from "../../../components/CustPassword";
 import { SecureDownloadButton } from "../../../components/SecureDownloadButton";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DbAdminVerifikatorDinasEditPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 

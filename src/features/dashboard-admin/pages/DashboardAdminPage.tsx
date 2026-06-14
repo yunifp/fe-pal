@@ -22,8 +22,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DashboardAdminPage: React.FC = () => {
+  useRedirectIfHasNotAccess("R"); 
+
   const [selectedPeriode, setSelectedPeriode] = useState<string>("all");
 
   const { data: masterResponse, isLoading: isLoadingMaster } = useQuery({

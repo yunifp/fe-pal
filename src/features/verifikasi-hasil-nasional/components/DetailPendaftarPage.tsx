@@ -29,8 +29,11 @@ import type {
   ITrxDokumenKhusus,
 } from "@/types/beasiswa";
 import type { IWilayah } from "@/types/master";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const DetailPendaftarPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const navigate = useNavigate();
   const { idTrxBeasiswa, kodeProvinsi } = useParams<{
     idTrxBeasiswa: string;

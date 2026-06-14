@@ -182,6 +182,7 @@ const BeasiswaForm: FC<BeasiswaFormProps> = ({
       "ibu_no_hp",
       "ibu_alamat",
       "ibu_email",
+      "wali_email",
       
     ],
     3: [

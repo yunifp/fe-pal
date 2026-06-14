@@ -1,8 +1,10 @@
 import CustBreadcrumb from "@/components/CustBreadCrumb";
 import FullDataBeasiswa from "@/components/beasiswa/FullDataBeasiswa";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 import { useParams } from "react-router-dom";
 
 const LaporanPendaftarDetailPage = () => {
+    useRedirectIfHasNotAccess("R"); 
   const { idTrxBeasiswa } = useParams();
   const id = parseInt(idTrxBeasiswa ?? "0");
 

@@ -41,6 +41,7 @@ const extractErrorMessages = (errors: any, parentKey = ""): string[] => {
 };
 
 const BeasiswaVerifikasiProvinsiDetailPage = () => {
+  
   const { idTrxBeasiswa } = useParams();
   const id = parseInt(idTrxBeasiswa ?? "");
 

@@ -86,6 +86,7 @@ import LinkExtension from "@tiptap/extension-link";
 import ImageExtension from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -957,6 +958,7 @@ const JalurDetailRow = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const JalurPendaftaranPage = () => {
+  useRedirectIfHasNotAccess("R"); 
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");

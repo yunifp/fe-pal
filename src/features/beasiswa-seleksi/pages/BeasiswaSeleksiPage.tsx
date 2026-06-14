@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "../../../components/DataTable";

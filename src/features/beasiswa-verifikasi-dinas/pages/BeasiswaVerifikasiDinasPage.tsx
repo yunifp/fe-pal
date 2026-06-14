@@ -10,8 +10,11 @@ import CustBreadcrumb from "@/components/CustBreadCrumb";
 import { DataTable } from "@/components/DataTable";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import UploadBeritaAcara from "../components/UploadBeritaAcara";
+import useRedirectIfHasNotAccess from "@/hooks/useRedirectIfHasNotAccess";
 
 const BeasiswaVerifikasiDinasPage = () => {
+    useRedirectIfHasNotAccess("R"); 
+
   const [page, setPage] = useState(1);
   const [deleteTrxBeasiswa, setDeleteTrxBeasiswa] = useState<number | null>(
     null,
